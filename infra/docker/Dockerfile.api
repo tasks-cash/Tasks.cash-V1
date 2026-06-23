@@ -1,0 +1,41 @@
+FROM node:20-alpine AS base
+RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
+WORKDIR /app
+
+FROM base AS deps
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml* .npmrc ./
+COPY packages/types/package.json ./packages/types/
+COPY packages/utils/package.json ./packages/utils/
+COPY services/game-engine/package.json ./services/game-engine/
+COPY services/api/package.json ./services/api/
+
+RUN pnpm install --frozen-lockfile --filter @tasks-cash/api...
+
+FROM base AS builder
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/packages ./packages
+COPY --from=deps /app/services ./services
+COPY package.json pnpm-workspace.yaml .npmrc ./
+COPY packages/ ./packages/
+COPY services/api/ ./services/api/
+COPY services/game-engine/ ./services/game-engine/
+
+RUN pnpm --filter @tasks-cash/api build
+
+FROM node:20-alpine AS runner
+WORKDIR /app
+ENV NODE_ENV=production
+
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 apiuser
+
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/packages ./packages
+COPY --from=builder /app/services/api/dist ./services/api/dist
+COPY --from=builder /app/services/api/package.json ./services/api/
+COPY --from=builder /app/services/game-engine ./services/game-engine
+COPY package.json pnpm-workspace.yaml ./
+
+USER apiuser
+EXPOSE 4000
+CMD ["node", "services/api/dist/index.js"]

@@ -1,0 +1,123 @@
+
+services:
+  mongodb:
+    image: mongo:7
+    container_name: tasks-cash-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: tasks_cash
+      MONGO_INITDB_ROOT_PASSWORD: tasks_cash_secret
+      MONGO_INITDB_DATABASE: tasks_cash
+    volumes:
+      - mongo_data:/data/db
+      - ./infra/docker/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    networks:
+      - tasks-cash-net
+
+  redis:
+    image: redis:7-alpine
+    container_name: tasks-cash-redis
+    restart: unless-stopped
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - tasks-cash-net
+
+  api:
+    build:
+      context: .
+      dockerfile: infra/docker/Dockerfile.api
+    container_name: tasks-cash-api
+    restart: unless-stopped
+    ports:
+      - "4000:4000"
+    env_file:
+      - .env
+    environment:
+      MONGODB_URI: mongodb://tasks_cash:tasks_cash_secret@mongodb:27017/tasks_cash?authSource=admin
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      - mongodb
+      - redis
+    networks:
+      - tasks-cash-net
+
+  worker:
+    build:
+      context: .
+      dockerfile: infra/docker/Dockerfile.worker
+    container_name: tasks-cash-worker
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      MONGODB_URI: mongodb://tasks_cash:tasks_cash_secret@mongodb:27017/tasks_cash?authSource=admin
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      - mongodb
+      - redis
+      - api
+    networks:
+      - tasks-cash-net
+
+  web:
+    build:
+      context: .
+      dockerfile: infra/docker/Dockerfile.web
+    container_name: tasks-cash-web
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    environment:
+      NEXT_PUBLIC_API_URL: http://api:4000
+    depends_on:
+      - api
+    networks:
+      - tasks-cash-net
+
+  admin:
+    build:
+      context: .
+      dockerfile: infra/docker/Dockerfile.admin
+    container_name: tasks-cash-admin
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    env_file:
+      - .env
+    environment:
+      NEXT_PUBLIC_API_URL: http://api:4000
+    depends_on:
+      - api
+    networks:
+      - tasks-cash-net
+
+  nginx:
+    image: nginx:alpine
+    container_name: tasks-cash-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./infra/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./infra/nginx/conf.d:/etc/nginx/conf.d:ro
+    depends_on:
+      - web
+      - admin
+      - api
+    networks:
+      - tasks-cash-net
+
+volumes:
+  mongo_data:
+  redis_data:
+
+networks:
+  tasks-cash-net:
+    driver: bridge

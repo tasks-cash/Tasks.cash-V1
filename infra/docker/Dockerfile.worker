@@ -1,0 +1,33 @@
+FROM node:20-alpine AS base
+RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
+WORKDIR /app
+
+FROM base AS deps
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml* .npmrc ./
+COPY packages/types/package.json ./packages/types/
+COPY packages/utils/package.json ./packages/utils/
+COPY services/worker/package.json ./services/worker/
+
+RUN pnpm install --frozen-lockfile --filter @tasks-cash/worker...
+
+FROM base AS builder
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/packages ./packages
+COPY --from=deps /app/services/worker/node_modules ./services/worker/node_modules
+COPY package.json pnpm-workspace.yaml .npmrc ./
+COPY packages/ ./packages/
+COPY services/worker/ ./services/worker/
+
+RUN pnpm --filter @tasks-cash/worker build
+
+FROM node:20-alpine AS runner
+WORKDIR /app
+ENV NODE_ENV=production
+
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/packages ./packages
+COPY --from=builder /app/services/worker/dist ./services/worker/dist
+COPY --from=builder /app/services/worker/package.json ./services/worker/
+COPY package.json pnpm-workspace.yaml ./
+
+CMD ["node", "services/worker/dist/index.js"]

@@ -1,0 +1,91 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 270 100% 2%;
+    --foreground: 270 20% 98%;
+    --primary: 263 70% 50%;
+    --accent: 43 74% 52%;
+    --border: 270 40% 18%;
+    --radius: 0.75rem;
+  }
+
+  html {
+    width: 100%;
+    overflow-x: hidden;
+  }
+
+  body {
+    min-height: 100vh;
+    width: 100%;
+    overflow-x: hidden;
+    background-color: #000000;
+    color: hsl(var(--foreground));
+  }
+}
+
+@layer components {
+  .portal-bg {
+    background:
+      radial-gradient(ellipse 80% 50% at 50% -20%, rgba(124, 58, 237, 0.3), transparent),
+      radial-gradient(ellipse 60% 40% at 80% 60%, rgba(212, 175, 55, 0.08), transparent),
+      #000000;
+  }
+
+  .portal-divider {
+    @apply relative h-px w-full;
+    background: linear-gradient(90deg, transparent, rgba(124, 58, 237, 0.5), rgba(212, 175, 55, 0.4), transparent);
+  }
+
+  .game-grid-bg {
+    background-image:
+      linear-gradient(rgba(124, 58, 237, 0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(124, 58, 237, 0.04) 1px, transparent 1px);
+    background-size: 48px 48px;
+  }
+
+  .auth-input {
+    @apply w-full rounded-xl border border-purple-500/25 bg-black/50 px-4 py-3 text-white placeholder:text-purple-400/40;
+    @apply focus:border-violet-400/60 focus:outline-none focus:ring-2 focus:ring-purple-500/30;
+    @apply transition-all duration-300;
+  }
+
+  .portal-ring {
+    @apply rounded-full border border-purple-500/30;
+    background: conic-gradient(
+      from 0deg,
+      rgba(124, 58, 237, 0.35),
+      rgba(212, 175, 55, 0.25),
+      rgba(168, 85, 247, 0.3),
+      rgba(124, 58, 237, 0.35)
+    );
+    animation: portalSpin 20s linear infinite;
+  }
+
+  .glass-panel {
+    @apply rounded-2xl border border-purple-500/20 backdrop-blur-2xl;
+    background: linear-gradient(135deg, rgba(109, 40, 217, 0.1) 0%, rgba(0, 0, 0, 0.75) 100%);
+  }
+}
+
+@keyframes portalSpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #000000;
+}
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #7c3aed, #d4af37);
+  border-radius: 3px;
+}

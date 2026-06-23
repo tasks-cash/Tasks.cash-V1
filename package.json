@@ -1,0 +1,34 @@
+{
+  "name": "tasks-cash",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Tasks.cash — premium gamified task platform. Complete missions, earn coins, level up.",
+  "packageManager": "pnpm@9.15.0",
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "@types/react": "^18.3.18",
+      "@types/react-dom": "^18.3.5",
+      "react": "^18.3.1",
+      "react-dom": "^18.3.1"
+    }
+  },
+  "scripts": {
+    "dev": "pnpm --filter @tasks-cash/web --filter @tasks-cash/admin --filter @tasks-cash/api --parallel dev",
+    "dev:web": "pnpm --filter @tasks-cash/web dev",
+    "dev:admin": "pnpm --filter @tasks-cash/admin dev",
+    "dev:api": "pnpm --filter @tasks-cash/api dev",
+    "dev:worker": "pnpm --filter @tasks-cash/worker dev",
+    "clean": "rm -rf apps/web/.next apps/admin/.next services/api/dist services/worker/dist packages/types/dist packages/utils/dist",
+    "build": "pnpm -r build",
+    "lint": "pnpm -r lint",
+    "seed": "pnpm --filter @tasks-cash/api seed",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "docker:build": "docker compose build",
+    "docker:logs": "docker compose logs -f"
+  }
+}
