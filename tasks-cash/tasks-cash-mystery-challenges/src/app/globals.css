@@ -1,0 +1,104 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    overflow-x: hidden;
+  }
+
+  body {
+    @apply bg-black text-white antialiased;
+    width: 100vw;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+}
+
+@layer components {
+  .arena-screen {
+    width: 100vw;
+    min-height: 100vh;
+    position: relative;
+  }
+
+  .arena-section {
+    width: 100vw;
+    min-height: 100vh;
+    position: relative;
+    padding: clamp(2rem, 5vw, 4rem) clamp(1rem, 4vw, 3rem);
+  }
+
+  .arena-section-inner {
+    width: 100%;
+    max-width: none;
+  }
+
+  .glow-card {
+    @apply relative rounded-2xl border backdrop-blur-2xl overflow-hidden;
+    background: linear-gradient(135deg, rgba(109, 40, 217, 0.12) 0%, rgba(0, 0, 0, 0.85) 100%);
+  }
+
+  .glow-card-purple {
+    @apply glow-card border-purple-500/30 shadow-glow-purple;
+  }
+
+  .glow-card-gold {
+    @apply glow-card border-amber-400/30 shadow-glow-gold;
+  }
+
+  .glow-card-violet {
+    @apply glow-card border-violet-500/30 shadow-glow-violet;
+  }
+
+  .arena-heading {
+    @apply font-display font-black uppercase tracking-wider;
+    background: linear-gradient(135deg, #e2e8f0 0%, #a855f7 40%, #fbbf24 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .arena-subheading {
+    @apply text-purple-300/60 uppercase tracking-[0.35em] text-xs md:text-sm font-semibold;
+  }
+
+  .portal-divider {
+    @apply relative h-px w-full my-8;
+    background: linear-gradient(90deg, transparent, rgba(124, 58, 237, 0.6), rgba(212, 175, 55, 0.5), rgba(168, 85, 247, 0.6), transparent);
+  }
+
+  .status-live {
+    @apply inline-flex items-center gap-1.5 rounded-full border border-emerald-400/40 bg-emerald-950/40 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-emerald-400;
+  }
+
+  .status-upcoming {
+    @apply inline-flex items-center gap-1.5 rounded-full border border-amber-400/40 bg-amber-950/30 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-amber-300;
+  }
+
+  .status-past {
+    @apply inline-flex items-center gap-1.5 rounded-full border border-purple-400/30 bg-purple-950/40 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-purple-400/70;
+  }
+
+  .portal-ring {
+    @apply rounded-full border border-purple-500/30;
+    background: conic-gradient(from 0deg, rgba(124,58,237,0.35), rgba(212,175,55,0.25), rgba(168,85,247,0.3), rgba(124,58,237,0.35));
+    animation: portalSpin 24s linear infinite;
+  }
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #000;
+}
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #7c3aed, #d4af37);
+  border-radius: 3px;
+}
