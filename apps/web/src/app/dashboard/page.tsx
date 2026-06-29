@@ -47,10 +47,16 @@ const DEFAULT_CURRENCIES: ICurrencies = {
 export default function DashboardOverviewPage() {
   const { profile, loading: gameLoading, claimDailyReward } = useGame();
   const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [statsError, setStatsError] = useState("");
 
   useEffect(() => {
     apiFetch<DashboardStats>("/api/users/dashboard").then((res) => {
-      if (res.success && res.data) setStats(res.data);
+      if (res.success && res.data) {
+        setStats(res.data);
+        setStatsError("");
+      } else if (res.error) {
+        setStatsError(res.error);
+      }
     });
   }, []);
 
@@ -107,6 +113,10 @@ export default function DashboardOverviewPage() {
         subtitle="Your RPG progression hub — currencies, levels, challenges, and secrets."
         badge="Player Dashboard"
       />
+
+      {statsError && (
+        <p className="text-amber-400/80 text-sm mb-4">Dashboard sync note: {statsError} — showing cached explorer data.</p>
+      )}
 
       {profile && <ProfileCard profile={profile} className="mb-8" />}
 

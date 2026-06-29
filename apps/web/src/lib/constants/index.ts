@@ -53,6 +53,12 @@ export const ROUTES = {
   },
 } as const;
 
+export const MAIN_APP_DASHBOARD_URL = ROUTES.dashboard.overview;
+
+/** Explorer DNA user page lives on the admin app port (:3001) */
+export const EXPLORER_DNA_URL =
+  process.env.NEXT_PUBLIC_EXPLORER_DNA_URL ?? "http://localhost:3001/explorer-dna";
+
 export const GAME = {
   xpPerLevel: Number(process.env.XP_PER_LEVEL ?? 1000),
   coinMultiplier: Number(process.env.COIN_MULTIPLIER ?? 1),

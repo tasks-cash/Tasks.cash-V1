@@ -1,12 +1,15 @@
 import { Router, Response } from "express";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
+import { isDbConnected } from "../config/database";
 import { User, IUserDocument } from "../models/User";
 import { Referral } from "../models/Referral";
 import { Transaction } from "../models/Transaction";
 import { authMiddleware, signToken, AuthRequest } from "../middleware/auth";
 import { generateReferralCode } from "@tasks-cash/utils";
 import { getOrCreateUserSettings } from "../services/notificationService";
+import { createReferralOnRegister } from "../services/referralService";
+import { memoryStore } from "../lib/memoryStore";
 
 const router = Router();
 
@@ -27,6 +30,28 @@ router.post("/register", async (req, res: Response) => {
   try {
     const data = registerSchema.parse(req.body);
 
+    if (!isDbConnected()) {
+      const result = memoryStore.createUser({
+        username: data.username,
+        email: data.email,
+        password: data.password,
+        referralCode: data.referralCode,
+      });
+
+      if ("error" in result) {
+        const status = result.error === "User already exists" ? 409 : 400;
+        res.status(status).json({ success: false, error: result.error });
+        return;
+      }
+
+      const token = signToken(result.user._id, result.user.role);
+      res.status(201).json({
+        success: true,
+        data: { accessToken: token, user: result.user },
+      });
+      return;
+    }
+
     const existing = await User.findOne({
       $or: [{ email: data.email }, { username: data.username }],
     });
@@ -36,38 +61,48 @@ router.post("/register", async (req, res: Response) => {
     }
 
     const passwordHash = await bcrypt.hash(data.password, 12);
-    const referralCode = generateReferralCode(data.username);
+    const generatedReferralCode = generateReferralCode(data.username).toUpperCase();
+
+    if (data.referralCode?.trim().toUpperCase() === generatedReferralCode) {
+      res.status(400).json({ success: false, error: "You cannot use your own referral code" });
+      return;
+    }
+
+    let referrer: IUserDocument | null = null;
+    if (data.referralCode?.trim()) {
+      referrer = await User.findOne({ referralCode: data.referralCode.trim().toUpperCase() });
+      if (!referrer) {
+        res.status(400).json({ success: false, error: "Invalid referral code" });
+        return;
+      }
+    }
 
     const user = await User.create({
       username: data.username,
       email: data.email,
       passwordHash,
-      referralCode,
+      referralCode: generatedReferralCode,
+      referredBy: referrer?._id,
     });
 
-    // Handle referral bonus
-    if (data.referralCode) {
-      const referrer = await User.findOne({ referralCode: data.referralCode.toUpperCase() });
-      if (referrer && referrer._id.toString() !== user._id.toString()) {
-        const bonus = Number(process.env.REFERRAL_BONUS_COINS ?? 50);
-        user.referredBy = referrer._id;
-        referrer.coins += bonus;
-        await referrer.save();
-        await Referral.create({
-          referrerId: referrer._id,
-          referredUserId: user._id,
-          bonusCoins: bonus,
-        });
-        await Transaction.create({
-          userId: referrer._id,
-          type: "referral_bonus",
-          amount: bonus,
-          description: `Referral bonus for ${user.username}`,
-        });
-      }
+    if (referrer) {
+      const bonus = Number(process.env.REFERRAL_BONUS_COINS ?? 50);
+      referrer.coins += bonus;
+      await referrer.save();
+      await createReferralOnRegister(
+        referrer._id.toString(),
+        user._id.toString(),
+        referrer.referralCode,
+        bonus
+      );
+      await Transaction.create({
+        userId: referrer._id,
+        type: "referral_bonus",
+        amount: bonus,
+        description: `Referral bonus for ${user.username}`,
+      });
     }
 
-    await user.save();
     await getOrCreateUserSettings(user._id.toString());
     const token = signToken(user._id.toString(), user.role);
 
@@ -83,6 +118,10 @@ router.post("/register", async (req, res: Response) => {
       res.status(400).json({ success: false, error: err.errors[0].message });
       return;
     }
+    if ((err as { code?: number }).code === 11000) {
+      res.status(409).json({ success: false, error: "Duplicate referral registration is not allowed" });
+      return;
+    }
     res.status(500).json({ success: false, error: "Registration failed" });
   }
 });
@@ -91,6 +130,18 @@ router.post("/register", async (req, res: Response) => {
 router.post("/login", async (req, res: Response) => {
   try {
     const data = loginSchema.parse(req.body);
+
+    if (!isDbConnected()) {
+      const user = memoryStore.verifyLogin(data.email, data.password);
+      if (!user) {
+        res.status(401).json({ success: false, error: "Invalid credentials" });
+        return;
+      }
+      const token = signToken(user._id, user.role);
+      res.json({ success: true, data: { accessToken: token, user } });
+      return;
+    }
+
     const user = await User.findOne({ email: data.email });
     if (!user) {
       res.status(401).json({ success: false, error: "Invalid credentials" });

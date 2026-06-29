@@ -17,11 +17,19 @@ export default function WalletPage() {
   const { profile, refresh } = useGame();
   const [currencies, setCurrencies] = useState<ICurrencies | null>(null);
   const [exchangeMsg, setExchangeMsg] = useState("");
+  const [walletError, setWalletError] = useState("");
+  const [walletLoading, setWalletLoading] = useState(true);
 
   useEffect(() => {
-    apiFetch<{ currencies: ICurrencies; transactions: unknown[] }>("/api/users/wallet").then((res) => {
+    async function loadWallet() {
+      setWalletLoading(true);
+      setWalletError("");
+      const res = await apiFetch<{ currencies: ICurrencies; transactions: unknown[] }>("/api/users/wallet");
       if (res.success && res.data?.currencies) setCurrencies(res.data.currencies);
-    });
+      else if (res.error) setWalletError(res.error);
+      setWalletLoading(false);
+    }
+    loadWallet();
     refresh();
   }, [refresh]);
 
@@ -57,6 +65,9 @@ export default function WalletPage() {
         subtitle="Bronze, silver, gold, gems, crystals, tokens, and portal energy."
         badge="Economy System"
       />
+
+      {walletLoading && <p className="text-xs text-purple-400/50 mb-4">Loading wallet...</p>}
+      {walletError && <p className="text-amber-400 text-sm mb-4">{walletError}</p>}
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <StatCard label="Bronze" value={display.bronze.toLocaleString()} icon="🟤" glow="gold" />

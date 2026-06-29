@@ -10,6 +10,7 @@ interface NavItem {
   href: string;
   label: string;
   icon?: string;
+  badge?: number;
 }
 
 interface DashboardSidebarProps {
@@ -48,7 +49,12 @@ export function DashboardSidebar({ items, pathname = "", subtitle = "Explorer Co
                 )}
               >
                 {item.icon && <span className="text-base">{item.icon}</span>}
-                {item.label}
+                <span className="flex-1">{item.label}</span>
+                {item.badge != null && item.badge > 0 && (
+                  <span className="flex h-[18px] min-w-[18px] items-center justify-center rounded-full border border-red-400/60 bg-red-600 px-1 text-[9px] font-black leading-none text-white shadow-[0_0_10px_rgba(239,68,68,0.65)]">
+                    {item.badge > 9 ? "9+" : item.badge}
+                  </span>
+                )}
               </a>
             </motion.div>
           );

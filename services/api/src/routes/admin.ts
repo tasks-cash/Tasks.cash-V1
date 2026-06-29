@@ -146,4 +146,67 @@ router.delete("/mystery-missions/:id", async (req, res: Response) => {
   res.json({ success: true, message: "Mystery mission deleted" });
 });
 
+/** GET /api/admin/referrals */
+router.get("/referrals", async (_req, res: Response) => {
+  const { listAdminReferrals } = await import("../services/referralService");
+  const data = await listAdminReferrals();
+  res.json({ success: true, data });
+});
+
+/** PATCH /api/admin/referrals/:id/status */
+router.patch("/referrals/:id/status", async (req, res: Response) => {
+  const schema = z.object({
+    status: z.enum(["pending", "active", "rewarded", "rejected"]),
+    adminNote: z.string().optional(),
+  });
+  const { status, adminNote } = schema.parse(req.body);
+  const { updateReferralStatus } = await import("../services/referralService");
+  const updated = await updateReferralStatus(String(req.params.id), status, adminNote);
+  if (!updated) {
+    res.status(404).json({ success: false, error: "Referral not found" });
+    return;
+  }
+  res.json({ success: true, data: updated });
+});
+
+/** GET /api/admin/video-submissions */
+router.get("/video-submissions", async (_req, res: Response) => {
+  const { listAllVideoSubmissions } = await import("../services/videoSubmissionService");
+  const data = await listAllVideoSubmissions();
+  res.json({ success: true, data });
+});
+
+/** PATCH /api/admin/video-submissions/:id/approve */
+router.patch("/video-submissions/:id/approve", async (req: AuthRequest, res: Response) => {
+  const schema = z.object({
+    adminResponse: z.string().optional(),
+    rewardXp: z.number().optional(),
+    bronzeCoins: z.number().optional(),
+    silverCoins: z.number().optional(),
+    goldCoins: z.number().optional(),
+    diamondGems: z.number().optional(),
+  });
+  const payload = schema.parse(req.body);
+  const { approveVideoSubmission } = await import("../services/videoSubmissionService");
+  const updated = await approveVideoSubmission(String(req.params.id), req.user!._id.toString(), payload);
+  if (!updated) {
+    res.status(404).json({ success: false, error: "Submission not found" });
+    return;
+  }
+  res.json({ success: true, data: updated });
+});
+
+/** PATCH /api/admin/video-submissions/:id/reject */
+router.patch("/video-submissions/:id/reject", async (req: AuthRequest, res: Response) => {
+  const schema = z.object({ adminResponse: z.string().min(1) });
+  const { adminResponse } = schema.parse(req.body);
+  const { rejectVideoSubmission } = await import("../services/videoSubmissionService");
+  const updated = await rejectVideoSubmission(String(req.params.id), req.user!._id.toString(), adminResponse);
+  if (!updated) {
+    res.status(404).json({ success: false, error: "Submission not found" });
+    return;
+  }
+  res.json({ success: true, data: updated });
+});
+
 export default router;

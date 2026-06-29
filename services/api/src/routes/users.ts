@@ -1,9 +1,11 @@
 import { Router, Response } from "express";
 import { authMiddleware, AuthRequest } from "../middleware/auth";
+import { isDbConnected } from "../config/database";
 import { Referral } from "../models/Referral";
 import { User } from "../models/User";
 import { getLevelTitle, xpProgress } from "@tasks-cash/utils";
 import { buildPlayerProfile } from "../services/gameService";
+import { memoryStore } from "../lib/memoryStore";
 
 const router = Router();
 
@@ -12,6 +14,36 @@ router.get("/dashboard", authMiddleware, async (req: AuthRequest, res: Response)
   const user = req.user!;
   const baseXp = Number(process.env.XP_PER_LEVEL ?? 1000);
   const progress = xpProgress(user.xp, baseXp);
+
+  if (!isDbConnected()) {
+    const referralMe = memoryStore.getReferralMe(user._id.toString());
+    res.json({
+      success: true,
+      data: {
+        coins: user.coins,
+        xp: user.xp,
+        level: progress.level,
+        levelTitle: getLevelTitle(progress.level),
+        xpToNextLevel: progress.xpToNextLevel,
+        xpProgress: progress.progress,
+        completedMissions: user.completedMissions.length,
+        rank: 128,
+        referralCount: referralMe?.totalInvites ?? 0,
+        referralCode: user.referralCode,
+        badges: user.badges,
+        currencies: user.currencies,
+        rpgStats: user.rpgStats,
+        explorerRank: user.explorerRank,
+        playerTitle: user.playerTitle,
+        achievements: user.achievements,
+        streakDays: user.streakDays,
+        dailyRewardAvailable: true,
+        profile: null,
+      },
+    });
+    return;
+  }
+
   const referralCount = await Referral.countDocuments({ referrerId: user._id });
   const rank = await User.countDocuments({ xp: { $gt: user.xp } }) + 1;
 
@@ -50,6 +82,18 @@ router.get("/dashboard", authMiddleware, async (req: AuthRequest, res: Response)
 
 /** GET /api/users/wallet — coin balance + recent transactions */
 router.get("/wallet", authMiddleware, async (req: AuthRequest, res: Response) => {
+  if (!isDbConnected()) {
+    res.json({
+      success: true,
+      data: {
+        balance: req.user!.coins,
+        currencies: req.user!.currencies,
+        transactions: [],
+      },
+    });
+    return;
+  }
+
   const { Transaction } = await import("../models/Transaction");
   const transactions = await Transaction.find({ userId: req.user!._id })
     .sort({ createdAt: -1 })

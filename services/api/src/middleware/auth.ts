@@ -1,6 +1,9 @@
 import { Request, Response, NextFunction } from "express";
 import jwt, { type SignOptions } from "jsonwebtoken";
 import { User, IUserDocument } from "../models/User";
+import { isDbConnected } from "../config/database";
+import { memoryStore } from "../lib/memoryStore";
+import { defaultCurrencies, defaultRPGStats } from "@tasks-cash/utils";
 
 export interface AuthRequest extends Request {
   user?: IUserDocument;
@@ -28,6 +31,18 @@ export async function authMiddleware(
 
   try {
     const payload = jwt.verify(token, secret) as JwtPayload;
+
+    if (!isDbConnected()) {
+      const memUser = memoryStore.findUserById(payload.userId);
+      if (!memUser) {
+        res.status(401).json({ success: false, error: "User not found" });
+        return;
+      }
+      req.user = memoryStore.asAuthUser(memUser);
+      next();
+      return;
+    }
+
     const user = await User.findById(payload.userId).select("-passwordHash");
     if (!user) {
       res.status(401).json({ success: false, error: "User not found" });

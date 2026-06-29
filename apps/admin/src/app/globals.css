@@ -68,6 +68,25 @@
     @apply rounded-2xl border border-purple-500/20 backdrop-blur-2xl;
     background: linear-gradient(135deg, rgba(109, 40, 217, 0.1) 0%, rgba(0, 0, 0, 0.75) 100%);
   }
+
+  .dna-completion-hero {
+    @apply relative overflow-hidden;
+    background: linear-gradient(135deg, rgba(109, 40, 217, 0.14) 0%, rgba(0, 0, 0, 0.85) 55%, rgba(212, 175, 55, 0.08) 100%);
+  }
+
+  .dna-bar-track {
+    box-shadow: inset 0 0 12px rgba(124, 58, 237, 0.15);
+  }
+
+  .dna-bar-fill {
+    box-shadow: 0 0 16px rgba(212, 175, 55, 0.45);
+  }
+
+  .dna-helix-bg {
+    background:
+      radial-gradient(ellipse 80% 50% at 50% 0%, rgba(124, 58, 237, 0.12), transparent),
+      radial-gradient(ellipse 60% 40% at 80% 100%, rgba(212, 175, 55, 0.06), transparent);
+  }
 }
 
 @keyframes portalSpin {
@@ -76,6 +95,34 @@
   }
   to {
     transform: rotate(360deg);
+  }
+}
+
+.cinematic-vignette {
+  box-shadow: inset 0 0 120px rgba(0, 0, 0, 0.8);
+}
+
+.mystery-fog {
+  background:
+    radial-gradient(ellipse at 30% 20%, rgba(124, 58, 237, 0.15), transparent 50%),
+    radial-gradient(ellipse at 70% 80%, rgba(0, 0, 0, 0.8), transparent 60%);
+  animation: mysteryFog 8s ease-in-out infinite;
+}
+
+.mystery-vault-fog {
+  background:
+    radial-gradient(ellipse 100% 80% at 50% 0%, rgba(124, 58, 237, 0.12), transparent),
+    radial-gradient(ellipse 60% 40% at 80% 100%, rgba(212, 175, 55, 0.05), transparent),
+    linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.9));
+}
+
+@keyframes mysteryFog {
+  0%,
+  100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
   }
 }
 

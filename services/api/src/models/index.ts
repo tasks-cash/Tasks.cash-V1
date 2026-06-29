@@ -18,3 +18,7 @@ export { AuditLog } from "./AuditLog";
 export { Role } from "./Role";
 export { Permission } from "./Permission";
 export { MysteryMission } from "./MysteryMission";
+export { DNAQuestion } from "./DNAQuestion";
+export { DNAAnswer } from "./DNAAnswer";
+export { DNAModule } from "./DNAModule";
+export { DNARecommendation } from "./DNARecommendation";

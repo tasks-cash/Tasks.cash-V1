@@ -1,53 +1,109 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import type { IReferralMeResponse } from "@tasks-cash/types";
 import { GlassCard, PortalButton, StatWidget } from "@tasks-cash/ui";
 import { DashboardPageShell } from "@/components/dashboard/DashboardPageShell";
-import { DASHBOARD_REFERRALS } from "@/lib/page-data";
+import { ReferralQrCode } from "@/components/referrals/ReferralQrCode";
+import { apiFetch } from "@/lib/api";
+import { buildReferralLink } from "@/lib/referral-storage";
+import { REFERRAL_STATUS_LABELS } from "@/lib/referral-utils";
+import { DEV_MOCK_REFERRAL_ME } from "@/lib/dev-mocks/referrals";
 
 export default function ReferralsPage() {
-  const code = "VOID-7X9K";
-  const totalEarned = DASHBOARD_REFERRALS.reduce((sum, r) => sum + r.earned, 0);
+  const [data, setData] = useState<IReferralMeResponse>(DEV_MOCK_REFERRAL_ME);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function load() {
+      const res = await apiFetch<IReferralMeResponse>("/api/referrals/me");
+      if (res.success && res.data) {
+        setData({
+          ...res.data,
+          referralLink: res.data.referralLink || buildReferralLink(res.data.referralCode),
+        });
+      }
+      setLoading(false);
+    }
+    load();
+  }, []);
 
   return (
-    <DashboardPageShell title="Referrals" subtitle="Invite allies and earn bonus coins">
-      <div className="grid md:grid-cols-3 gap-4 mb-8">
-        <StatWidget label="Allies Recruited" value={DASHBOARD_REFERRALS.length} icon="🔗" />
-        <StatWidget label="Coins Earned" value={totalEarned} icon="◈" glow="gold" />
-        <StatWidget label="Bonus Per Ally" value="500 ◈" icon="🎁" />
+    <DashboardPageShell title="Referrals" subtitle="Invite allies, share your QR code, and earn referral rewards">
+      <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-4 mb-8">
+        <StatWidget label="Total Invited" value={data.totalInvites} icon="🔗" />
+        <StatWidget label="Active Referrals" value={data.activeReferrals} icon="⚡" glow="purple" />
+        <StatWidget label="Pending Rewards" value={`${data.pendingRewards} ◈`} icon="⏳" />
+        <StatWidget label="Earned Rewards" value={`${data.earnedRewards} ◈`} icon="🎁" glow="gold" />
       </div>
 
-      <GlassCard glow="gold" className="p-8 mb-8 text-center">
-        <p className="text-xs uppercase tracking-widest text-purple-400/60 mb-2">Your Referral Code</p>
-        <p className="text-4xl font-black text-amber-400 tracking-widest mb-4">{code}</p>
-        <PortalButton variant="gold" size="sm" onClick={() => navigator.clipboard?.writeText(code)}>
-          Copy Code
-        </PortalButton>
-        <p className="text-sm text-purple-400/50 mt-4">Share: https://tasks.cash/register?ref={code}</p>
+      <GlassCard glow="gold" className="p-6 md:p-8 mb-8">
+        <div className="text-center mb-6">
+          <p className="text-xs uppercase tracking-widest text-purple-400/60 mb-2">Your Referral Code</p>
+          <p className="text-3xl md:text-4xl font-black text-amber-400 tracking-widest">{data.referralCode}</p>
+        </div>
+
+        <ReferralQrCode
+          referralCode={data.referralCode}
+          referralLink={data.referralLink || buildReferralLink(data.referralCode)}
+        />
       </GlassCard>
 
       <GlassCard className="p-6">
-        <h2 className="font-bold text-white mb-4">Your Allies</h2>
+        <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
+          <h2 className="font-bold text-white">Referral History</h2>
+          {loading && <span className="text-xs text-purple-400/50">Syncing...</span>}
+        </div>
+
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full text-sm min-w-[720px]">
             <thead>
               <tr className="text-left text-purple-400/60 border-b border-purple-500/20">
-                <th className="pb-3 pr-4">Username</th>
-                <th className="pb-3 pr-4">Joined</th>
-                <th className="pb-3 pr-4">Earned</th>
-                <th className="pb-3">Status</th>
+                <th className="pb-3 pr-4">Referred User</th>
+                <th className="pb-3 pr-4">Date</th>
+                <th className="pb-3 pr-4">Status</th>
+                <th className="pb-3 pr-4">Reward</th>
+                <th className="pb-3">Admin Note</th>
               </tr>
             </thead>
             <tbody>
-              {DASHBOARD_REFERRALS.map((r) => (
-                <tr key={r.username} className="border-b border-purple-500/10">
-                  <td className="py-3 pr-4 text-white">{r.username}</td>
-                  <td className="py-3 pr-4 text-purple-300">{r.joined}</td>
-                  <td className="py-3 pr-4 text-amber-400">{r.earned} ◈</td>
-                  <td className="py-3 text-green-400 capitalize">{r.status}</td>
+              {data.history.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="py-8 text-center text-purple-400/50">
+                    No referrals yet — share your invite link to begin.
+                  </td>
                 </tr>
-              ))}
+              ) : (
+                data.history.map((row) => {
+                  const status = REFERRAL_STATUS_LABELS[row.status] ?? REFERRAL_STATUS_LABELS.pending;
+                  return (
+                    <tr key={row.id} className="border-b border-purple-500/10">
+                      <td className="py-3 pr-4 text-white">{row.referredUser?.username ?? "Explorer"}</td>
+                      <td className="py-3 pr-4 text-purple-300">
+                        {new Date(row.createdAt).toLocaleDateString()}
+                      </td>
+                      <td className={`py-3 pr-4 capitalize ${status.className}`}>{status.label}</td>
+                      <td className="py-3 pr-4 text-amber-400">
+                        {row.rewardCoins > 0 ? `${row.rewardCoins} ◈` : "—"}
+                        {row.rewardXp > 0 ? ` · ${row.rewardXp} XP` : ""}
+                      </td>
+                      <td className="py-3 text-purple-300/70">{row.adminNote ?? "—"}</td>
+                    </tr>
+                  );
+                })
+              )}
             </tbody>
           </table>
+        </div>
+
+        <div className="mt-6">
+          <PortalButton
+            variant="gold"
+            size="sm"
+            onClick={() => navigator.clipboard?.writeText(data.referralLink || buildReferralLink(data.referralCode))}
+          >
+            Copy Referral Link
+          </PortalButton>
         </div>
       </GlassCard>
     </DashboardPageShell>

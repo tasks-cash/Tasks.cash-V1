@@ -1,26 +1,49 @@
 import { Router, Response } from "express";
+import { z } from "zod";
 import { authMiddleware, AuthRequest } from "../middleware/auth";
-import { Referral } from "../models/Referral";
+import {
+  getReferralHistory,
+  getReferralMe,
+  validateReferralCode,
+} from "../services/referralService";
 
 const router = Router();
 
-/** GET /api/referrals — referral stats and history */
+/** Legacy GET /api/referrals */
 router.get("/", authMiddleware, async (req: AuthRequest, res: Response) => {
-  const referrals = await Referral.find({ referrerId: req.user!._id })
-    .populate("referredUserId", "username createdAt level")
-    .sort({ createdAt: -1 });
+  const data = await getReferralMe(req.user!._id.toString(), req.user!.referralCode);
+  res.json({ success: true, data });
+});
 
-  const totalBonus = referrals.reduce((sum, r) => sum + r.bonusCoins, 0);
+/** GET /api/referrals/me */
+router.get("/me", authMiddleware, async (req: AuthRequest, res: Response) => {
+  const data = await getReferralMe(req.user!._id.toString(), req.user!.referralCode);
+  res.json({ success: true, data });
+});
 
-  res.json({
-    success: true,
-    data: {
-      referralCode: req.user!.referralCode,
-      totalReferrals: referrals.length,
-      totalBonus,
-      referrals,
-    },
-  });
+/** GET /api/referrals/history */
+router.get("/history", authMiddleware, async (req: AuthRequest, res: Response) => {
+  const history = await getReferralHistory(req.user!._id.toString());
+  res.json({ success: true, data: history });
+});
+
+/** POST /api/referrals/validate-code */
+router.post("/validate-code", async (req, res: Response) => {
+  try {
+    const schema = z.object({
+      code: z.string().min(2),
+      selfReferralCode: z.string().optional(),
+    });
+    const { code, selfReferralCode } = schema.parse(req.body);
+    const result = await validateReferralCode(code, selfReferralCode);
+    res.json({ success: true, data: result });
+  } catch (err) {
+    if (err instanceof z.ZodError) {
+      res.status(400).json({ success: false, error: err.errors[0].message });
+      return;
+    }
+    res.status(500).json({ success: false, error: "Validation failed" });
+  }
 });
 
 export default router;

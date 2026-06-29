@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { EXPLORER_DNA_URL } from "@/lib/constants";
 import { Navbar, CoinBadge, Badge, PageTransition, DashboardSidebar } from "@tasks-cash/ui";
 import { MysteryChallengesButton } from "@/components/mystery/MysteryChallengesButton";
 import { clearToken, getToken, apiFetch } from "@/lib/api";
@@ -15,6 +16,7 @@ const NAV_LINKS = [
   { href: "/dashboard/wallet", label: "Wallet", icon: "💰" },
   { href: "/dashboard/withdrawals", label: "Withdrawals", icon: "◈" },
   { href: "/dashboard/referrals", label: "Referrals", icon: "🔗" },
+  { href: EXPLORER_DNA_URL, label: "Explorer DNA", icon: "🧬", badgeKey: "dna" as const, external: true },
   { href: "/dashboard/level", label: "Level", icon: "⚡" },
   { href: "/dashboard/leaderboard", label: "Rank", icon: "🏆" },
   { href: "/dashboard/notifications", label: "Alerts", icon: "🔔" },
@@ -29,6 +31,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [coins, setCoins] = useState(0);
   const [username, setUsername] = useState("");
   const [unreadCount, setUnreadCount] = useState(0);
+  const [dnaPending, setDnaPending] = useState(0);
 
   useEffect(() => {
     if (!getToken()) { router.push("/login"); return; }
@@ -45,12 +48,22 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     apiFetch<{ count: number }>("/api/notifications/unread-count").then((res) => {
       if (res.success && res.data) setUnreadCount(res.data.count);
     });
+    apiFetch<{ profile: { pendingQuestions: number } }>("/api/explorer-dna/me").then((res) => {
+      if (res.success && res.data?.profile) setDnaPending(res.data.profile.pendingQuestions);
+    });
   }, [router, pathname]);
+
+  const sidebarItems = NAV_LINKS.map((item) => ({
+    href: item.href,
+    label: item.label,
+    icon: item.icon,
+    badge: "badgeKey" in item && item.badgeKey === "dna" ? dnaPending : undefined,
+  }));
 
   return (
     <div className="min-h-screen flex w-full bg-black">
       <DashboardSidebar
-        items={NAV_LINKS}
+        items={sidebarItems}
         pathname={pathname}
         subtitle="Explorer Command Center"
         onLogout={() => { clearToken(); router.push("/"); }}

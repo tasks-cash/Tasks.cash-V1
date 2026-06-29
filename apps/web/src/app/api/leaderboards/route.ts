@@ -5,7 +5,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 /** Proxy to Express API — leaderboards */
 export async function GET(request: Request) {
   const url = new URL(request.url);
-  const res = await fetch(`${API_URL}/api/leaderboards${url.search}`, {
+  const res = await fetch(`${API_URL}/api/leaderboard${url.search}`, {
     headers: { Authorization: request.headers.get("Authorization") ?? "" },
   });
   return NextResponse.json(await res.json());
@@ -13,7 +13,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   const body = await request.json();
-  const res = await fetch(`${API_URL}/api/leaderboards`, {
+  const res = await fetch(`${API_URL}/api/leaderboard`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

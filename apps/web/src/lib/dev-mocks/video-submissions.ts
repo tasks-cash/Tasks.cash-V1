@@ -1,0 +1,35 @@
+import type { IVideoSubmission } from "@tasks-cash/types";
+
+export const DEV_MOCK_VIDEO_SUBMISSIONS: IVideoSubmission[] = [
+  {
+    id: "mock_vid_1",
+    userId: "mock_user",
+    videoUrl: "https://www.tiktok.com/@explorer/video/123456",
+    platform: "tiktok",
+    visibleViews: 12500,
+    description: "Portal challenge promo",
+    status: "approved",
+    rewardXp: 250,
+    bronzeCoins: 0,
+    silverCoins: 100,
+    goldCoins: 50,
+    diamondGems: 0,
+    adminResponse: "Strong reach — approved for Video Hunter rewards.",
+    submittedAt: "2026-06-10T12:00:00.000Z",
+    reviewedAt: "2026-06-11T09:00:00.000Z",
+  },
+  {
+    id: "mock_vid_2",
+    userId: "mock_user",
+    videoUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+    platform: "youtube",
+    visibleViews: 8200,
+    status: "pending",
+    rewardXp: 0,
+    bronzeCoins: 0,
+    silverCoins: 0,
+    goldCoins: 0,
+    diamondGems: 0,
+    submittedAt: "2026-06-18T15:30:00.000Z",
+  },
+];

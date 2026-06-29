@@ -26,6 +26,11 @@ import treasureRoutes from "./routes/treasures";
 import supportRoutes from "./routes/support";
 import gameRoutes from "./routes/game";
 import mysteryMissionRoutes from "./routes/mysteryMissions";
+import videoSubmissionRoutes from "./routes/videoSubmissions";
+import counterRoutes from "./routes/counters";
+import adminCounterRoutes from "./routes/adminCounters";
+import explorerDnaRoutes from "./routes/explorerDna";
+import adminExplorerDnaRoutes from "./routes/adminExplorerDna";
 
 // Load .env from monorepo root
 dotenv.config({ path: path.resolve(__dirname, "../../../.env") });
@@ -70,6 +75,11 @@ app.use("/api/treasures", treasureRoutes);
 app.use("/api/support", supportRoutes);
 app.use("/api/game", gameRoutes);
 app.use("/api/mystery-missions", mysteryMissionRoutes);
+app.use("/api/video-submissions", videoSubmissionRoutes);
+app.use("/api/counters", counterRoutes);
+app.use("/api/admin/counters", adminCounterRoutes);
+app.use("/api/explorer-dna", explorerDnaRoutes);
+app.use("/api/admin/explorer-dna", adminExplorerDnaRoutes);
 
 // 404 handler
 app.use((_req, res) => {
@@ -77,8 +87,17 @@ app.use((_req, res) => {
 });
 
 async function bootstrap() {
-  await connectDatabase();
-  await connectRedis();
+  try {
+    await connectDatabase();
+  } catch (err) {
+    console.warn("[DB] MongoDB unavailable — using in-memory fallback store");
+  }
+
+  try {
+    await connectRedis();
+  } catch {
+    console.warn("[Redis] unavailable — continuing without cache");
+  }
 
   app.listen(PORT, () => {
     console.log(`[API] Tasks.cash API running on http://localhost:${PORT}`);

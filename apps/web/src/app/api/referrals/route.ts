@@ -1,25 +1,13 @@
-import { NextResponse } from "next/server";
+import { proxyRequest } from "@/lib/proxy";
+import { DEV_MOCK_REFERRAL_ME } from "@/lib/dev-mocks/referrals";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
-
-/** Proxy to Express API — referrals */
+/** Proxy to Express API — referrals (legacy + me stats) */
 export async function GET(request: Request) {
-  const url = new URL(request.url);
-  const res = await fetch(`${API_URL}/api/referrals${url.search}`, {
-    headers: { Authorization: request.headers.get("Authorization") ?? "" },
+  return proxyRequest("/api/referrals/me", request, {
+    fallback: { success: true, data: DEV_MOCK_REFERRAL_ME },
   });
-  return NextResponse.json(await res.json());
 }
 
 export async function POST(request: Request) {
-  const body = await request.json();
-  const res = await fetch(`${API_URL}/api/referrals`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: request.headers.get("Authorization") ?? "",
-    },
-    body: JSON.stringify(body),
-  });
-  return NextResponse.json(await res.json());
+  return proxyRequest("/api/referrals/validate-code", request);
 }
