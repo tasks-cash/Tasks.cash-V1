@@ -17,12 +17,8 @@ import { useGame } from "@/components/game/GameProvider";
 import { apiFetch } from "@/lib/api";
 import { buildRPGProgress } from "@tasks-cash/utils";
 import type { DashboardStats, RPGStatType, ICurrencies } from "@tasks-cash/types";
-import {
-  DASHBOARD_CURRENCY_HISTORY,
-  TOP_10_EXPLORERS,
-  PLAYER_ACTIVITY,
-  DASHBOARD_CHALLENGES,
-} from "@/lib/dashboard-mock-data";
+import type { ExplorerEntry } from "@tasks-cash/ui";
+import type { ActivityEntry } from "@tasks-cash/ui";
 
 const DASHBOARD_LEVEL_STATS: RPGStatType[] = [
   "global",
@@ -34,20 +30,21 @@ const DASHBOARD_LEVEL_STATS: RPGStatType[] = [
 ];
 
 const DEFAULT_CURRENCIES: ICurrencies = {
-  bronze: 2450,
-  silver: 120,
-  gold: 15,
-  diamonds: 8,
-  crystals: 24,
-  legendTokens: 2,
+  bronze: 0,
+  silver: 0,
+  gold: 0,
+  diamonds: 0,
+  crystals: 0,
+  legendTokens: 0,
   mythicCoins: 0,
-  portalEnergy: 85,
+  portalEnergy: 0,
 };
 
 export default function DashboardOverviewPage() {
   const { profile, loading: gameLoading, claimDailyReward } = useGame();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [statsError, setStatsError] = useState("");
+  const [topExplorers, setTopExplorers] = useState<ExplorerEntry[]>([]);
 
   useEffect(() => {
     apiFetch<DashboardStats>("/api/users/dashboard").then((res) => {
@@ -58,6 +55,24 @@ export default function DashboardOverviewPage() {
         setStatsError(res.error);
       }
     });
+
+    fetch("/api/leaderboards?limit=10")
+      .then((r) => r.json())
+      .then((res) => {
+        if (res.success && res.data) {
+          setTopExplorers(
+            res.data.map((e: { rank: number; username: string; level: number; xp: number; coins: number }) => ({
+              rank: e.rank,
+              username: e.username,
+              level: e.level,
+              xp: e.xp,
+              rewards: `${e.coins} ◈`,
+              badge: "⚔️",
+            }))
+          );
+        }
+      })
+      .catch(() => setTopExplorers([]));
   }, []);
 
   if (gameLoading && !profile && !stats) {
@@ -70,33 +85,30 @@ export default function DashboardOverviewPage() {
   }
 
   const display = stats ?? {
-    coins: 2450,
-    xp: 6500,
-    level: 12,
-    levelTitle: "Void Walker",
-    xpToNextLevel: 10000,
-    xpProgress: 65,
-    completedMissions: 34,
-    rank: 128,
-    referralCount: 12,
-    referralCode: "VOID-7X9K",
+    coins: 0,
+    xp: 0,
+    level: 1,
+    levelTitle: "Explorer",
+    xpToNextLevel: 1000,
+    xpProgress: 0,
+    completedMissions: 0,
+    rank: 0,
+    referralCount: 0,
+    referralCode: "",
   };
 
-  const currencies = profile?.currencies ?? stats?.currencies ?? {
-    ...DEFAULT_CURRENCIES,
-    bronze: display.coins,
-  };
+  const currencies = profile?.currencies ?? stats?.currencies ?? DEFAULT_CURRENCIES;
 
   const defaultRpgStats = {
     global: { level: display.level, xp: display.xp },
-    strength: { level: 4, xp: 680 },
-    intelligence: { level: 3, xp: 420 },
-    energy: { level: 6, xp: 1100 },
-    life: { level: 3, xp: 320 },
-    speed: { level: 5, xp: 890 },
-    luck: { level: 2, xp: 150 },
-    defense: { level: 2, xp: 180 },
-    reputation: { level: 4, xp: 750 },
+    strength: { level: 1, xp: 0 },
+    intelligence: { level: 1, xp: 0 },
+    energy: { level: 1, xp: 0 },
+    life: { level: 1, xp: 0 },
+    speed: { level: 1, xp: 0 },
+    luck: { level: 1, xp: 0 },
+    defense: { level: 1, xp: 0 },
+    reputation: { level: 1, xp: 0 },
   };
 
   const rpgProgress =
@@ -104,7 +116,8 @@ export default function DashboardOverviewPage() {
       ? profile.rpgStats
       : buildRPGProgress(defaultRpgStats);
 
-  const activeChallenges = DASHBOARD_CHALLENGES.filter((c) => c.status === "active").length;
+  const activeChallenges = 0;
+  const activities: ActivityEntry[] = [];
 
   return (
     <div>
@@ -115,7 +128,7 @@ export default function DashboardOverviewPage() {
       />
 
       {statsError && (
-        <p className="text-amber-400/80 text-sm mb-4">Dashboard sync note: {statsError} — showing cached explorer data.</p>
+        <p className="text-amber-400/80 text-sm mb-4">Dashboard sync error: {statsError}</p>
       )}
 
       {profile && <ProfileCard profile={profile} className="mb-8" />}
@@ -147,7 +160,7 @@ export default function DashboardOverviewPage() {
       {/* Currency cards */}
       <section className="mb-10">
         <h2 className="text-xl font-black text-white mb-4 font-[family-name:var(--font-cinzel)]">Currency Vault</h2>
-        <CurrencyCardGrid currencies={currencies} historyMap={DASHBOARD_CURRENCY_HISTORY} />
+        <CurrencyCardGrid currencies={currencies} historyMap={{}} />
       </section>
 
       {/* RPG level cards */}
@@ -158,8 +171,8 @@ export default function DashboardOverviewPage() {
 
       {/* Top 10 + Activity */}
       <div className="grid lg:grid-cols-2 gap-8 mb-8">
-        <TopExplorersPanel entries={TOP_10_EXPLORERS} />
-        <PlayerActivityFeed activities={PLAYER_ACTIVITY} />
+        <TopExplorersPanel entries={topExplorers} />
+        <PlayerActivityFeed activities={activities} />
       </div>
     </div>
   );

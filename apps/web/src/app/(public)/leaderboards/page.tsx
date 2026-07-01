@@ -1,29 +1,60 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { GlassCard, PortalButton, LeaderboardRow, MotionReveal } from "@tasks-cash/ui";
 import { PageHero } from "@/components/layout/PageHero";
 import { PublicPageWrapper } from "@/components/premium/PublicPageWrapper";
 import { EpicCTA, SectionHeader, StatsBanner } from "@/components/pages/PublicSections";
-import { LEADERBOARD_MOCK } from "@/lib/mock-data";
+import type { ILeaderboardEntry } from "@tasks-cash/types";
 
 export default function LeaderboardsPage() {
+  const [entries, setEntries] = useState<ILeaderboardEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    fetch("/api/leaderboards?limit=10")
+      .then((r) => r.json())
+      .then((res) => {
+        if (res.success && res.data) {
+          setEntries(res.data);
+          setError("");
+        } else {
+          setEntries([]);
+          setError(res.error ?? "Failed to load leaderboard");
+        }
+        setLoading(false);
+      })
+      .catch(() => {
+        setEntries([]);
+        setError("Failed to load leaderboard");
+        setLoading(false);
+      });
+  }, []);
+
+  const topXp = entries[0]?.xp ?? 0;
+
   return (
     <PublicPageWrapper>
       <PageHero eyebrow="Rankings" title="Global Leaderboards" subtitle="The elite warriors dominating the portal multiverse." variant="gold" />
 
       <StatsBanner stats={[
-        { label: "Ranked Explorers", value: 12847, icon: "👥" },
-        { label: "Season 4 Active", value: 1, icon: "🏆" },
-        { label: "Top XP", value: 98500, icon: "⚡" },
-        { label: "Prize Pool", value: 100000, suffix: " ◈", icon: "💰" },
+        { label: "Ranked Explorers", value: entries.length, icon: "👥" },
+        { label: "Top XP", value: topXp, icon: "⚡" },
+        { label: "Showing", value: entries.length, icon: "🏆" },
       ]} />
 
       <div className="mx-auto max-w-3xl px-4 py-16">
-        <SectionHeader eyebrow="Season 4" title="Top Warriors" subtitle="Updated in real-time as explorers complete missions." />
+        <SectionHeader eyebrow="Live Rankings" title="Top Warriors" subtitle="Updated from the database as explorers complete missions." />
+        {loading && <p className="text-purple-400/50 text-sm text-center mb-4">Loading rankings...</p>}
+        {error && <p className="text-amber-400 text-sm text-center mb-4">{error}</p>}
         <GlassCard className="p-6">
-          {LEADERBOARD_MOCK.map((entry) => (
-            <MotionReveal key={entry.rank}>
+          {!loading && entries.length === 0 && !error && (
+            <p className="text-purple-400/60 text-center py-8">No ranked explorers yet.</p>
+          )}
+          {entries.map((entry) => (
+            <MotionReveal key={entry.userId}>
               <LeaderboardRow
                 rank={entry.rank}
                 username={entry.username}
@@ -34,23 +65,6 @@ export default function LeaderboardsPage() {
             </MotionReveal>
           ))}
         </GlassCard>
-        <p className="text-center text-purple-400/50 text-sm mt-6">Showing top 5 of 12,847 ranked explorers</p>
-      </div>
-
-      <div className="mx-auto max-w-6xl px-4 pb-16">
-        <div className="grid md:grid-cols-3 gap-6">
-          {[
-            { title: "Weekly Rankings", desc: "Resets every Monday. Top 10 earn bonus coins.", icon: "📅" },
-            { title: "Monthly Champions", desc: "Season-long competition with legendary prizes.", icon: "👑" },
-            { title: "Guild Leaderboards", desc: "Team up and compete as a guild for shared rewards.", icon: "⚔️" },
-          ].map((item) => (
-            <GlassCard key={item.title} className="p-6" hover>
-              <span className="text-3xl">{item.icon}</span>
-              <h3 className="font-bold text-white mt-3">{item.title}</h3>
-              <p className="text-purple-200/60 text-sm mt-2">{item.desc}</p>
-            </GlassCard>
-          ))}
-        </div>
       </div>
 
       <EpicCTA title="Climb the Rankings" subtitle="Complete missions, earn XP, and claim your place among legends." primaryLabel="Join the Competition" />

@@ -7,17 +7,10 @@ import type { ILeaderboardEntry } from "@tasks-cash/types";
 
 const router = Router();
 
-/** GET /api/leaderboard */
-router.get("/", authMiddleware, async (req, res: Response) => {
-  const period = (req.query.period as string) ?? "all";
-  const limit = Math.min(Number(req.query.limit ?? 50), 100);
+async function buildLeaderboard(limit: number, period: string): Promise<ILeaderboardEntry[]> {
   const cacheKey = RedisKeys.leaderboard(period);
-
   const cached = await cacheGet<ILeaderboardEntry[]>(cacheKey);
-  if (cached) {
-    res.json({ success: true, data: cached });
-    return;
-  }
+  if (cached) return cached.slice(0, limit);
 
   const users = await User.find({ role: "user" })
     .select("username xp coins level completedMissions")
@@ -35,7 +28,33 @@ router.get("/", authMiddleware, async (req, res: Response) => {
   }));
 
   await cacheSet(cacheKey, entries, 60);
-  res.json({ success: true, data: entries });
+  return entries;
+}
+
+/** GET /api/leaderboard/public — no auth required */
+router.get("/public", async (req, res: Response) => {
+  try {
+    const limit = Math.min(Number(req.query.limit ?? 50), 100);
+    const period = (req.query.period as string) ?? "all";
+    const entries = await buildLeaderboard(limit, period);
+    res.json({ success: true, data: entries });
+  } catch (err) {
+    console.error("[leaderboard] public error:", err);
+    res.status(500).json({ success: false, error: "Failed to load leaderboard" });
+  }
+});
+
+/** GET /api/leaderboard */
+router.get("/", authMiddleware, async (req, res: Response) => {
+  const period = (req.query.period as string) ?? "all";
+  const limit = Math.min(Number(req.query.limit ?? 50), 100);
+  try {
+    const entries = await buildLeaderboard(limit, period);
+    res.json({ success: true, data: entries });
+  } catch (err) {
+    console.error("[leaderboard] error:", err);
+    res.status(500).json({ success: false, error: "Failed to load leaderboard" });
+  }
 });
 
 /** POST /api/leaderboard/invalidate — admin cache bust */

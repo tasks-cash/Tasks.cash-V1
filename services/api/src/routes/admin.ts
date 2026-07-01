@@ -209,4 +209,198 @@ router.patch("/video-submissions/:id/reject", async (req: AuthRequest, res: Resp
   res.json({ success: true, data: updated });
 });
 
+/** GET /api/admin/employees */
+router.get("/employees", async (_req, res: Response) => {
+  const { Employee } = await import("../models/Employee");
+  const rows = await Employee.find().sort({ createdAt: -1 }).lean();
+  const userIds = rows.map((e) => e.userId).filter(Boolean);
+  const users = await User.find({ _id: { $in: userIds } }).select("username email role").lean();
+  const userMap = new Map(users.map((u) => [String(u._id), u]));
+  res.json({
+    success: true,
+    data: rows.map((e) => {
+      const user = userMap.get(String(e.userId));
+      return {
+        id: String(e._id),
+        name: user?.username ?? "—",
+        email: user?.email ?? "",
+        role: user?.role ?? e.position ?? "—",
+        department: e.department,
+        status: e.isActive ? "active" : "inactive",
+      };
+    }),
+  });
+});
+
+/** GET /api/admin/withdrawals */
+router.get("/withdrawals", async (_req, res: Response) => {
+  const { Withdrawal } = await import("../models/Withdrawal");
+  const rows = await Withdrawal.find().sort({ createdAt: -1 }).lean();
+  const userIds = [...new Set(rows.map((w) => String(w.userId)))];
+  const users = await User.find({ _id: { $in: userIds } }).select("username").lean();
+  const userMap = new Map(users.map((u) => [String(u._id), u.username]));
+  res.json({
+    success: true,
+    data: rows.map((w) => ({
+      id: String(w._id),
+      user: userMap.get(String(w.userId)) ?? "—",
+      amount: w.amount,
+      method: w.method,
+      status: w.status,
+      date: w.createdAt?.toISOString?.()?.slice(0, 10) ?? "",
+    })),
+  });
+});
+
+/** GET /api/admin/support-tickets */
+router.get("/support-tickets", async (_req, res: Response) => {
+  const { SupportTicket } = await import("../models/SupportTicket");
+  const rows = await SupportTicket.find().sort({ createdAt: -1 }).lean();
+  const userIds = [...new Set(rows.map((t) => String(t.userId)))];
+  const users = await User.find({ _id: { $in: userIds } }).select("username").lean();
+  const userMap = new Map(users.map((u) => [String(u._id), u.username]));
+  res.json({
+    success: true,
+    data: rows.map((t) => ({
+      id: String(t._id),
+      user: userMap.get(String(t.userId)) ?? "—",
+      subject: t.subject,
+      priority: t.priority,
+      status: t.status,
+    })),
+  });
+});
+
+/** GET /api/admin/challenges */
+router.get("/challenges", async (_req, res: Response) => {
+  const { Challenge } = await import("../models/Challenge");
+  const rows = await Challenge.find().sort({ createdAt: -1 }).lean();
+  res.json({
+    success: true,
+    data: rows.map((c) => ({
+      id: String(c._id),
+      title: c.title,
+      participants: 0,
+      status: c.isActive ? "active" : "scheduled",
+      ends: c.endsAt?.toISOString?.()?.slice(0, 10) ?? "",
+    })),
+  });
+});
+
+/** GET /api/admin/treasures */
+router.get("/treasures", async (_req, res: Response) => {
+  const { Treasure } = await import("../models/Treasure");
+  const rows = await Treasure.find().sort({ createdAt: -1 }).lean();
+  res.json({
+    success: true,
+    data: rows.map((t) => ({
+      id: String(t._id),
+      name: t.name,
+      rarity: t.rarity,
+      unlocked: 0,
+    })),
+  });
+});
+
+/** GET /api/admin/levels */
+router.get("/levels", async (_req, res: Response) => {
+  const { Level } = await import("../models/Level");
+  const rows = await Level.find().sort({ level: 1 }).lean();
+  res.json({
+    success: true,
+    data: rows.map((l) => ({
+      id: String(l._id),
+      level: l.level,
+      title: l.title,
+      xpRequired: l.xpRequired,
+      reward: l.perks?.[0] ?? "",
+    })),
+  });
+});
+
+/** GET /api/admin/notifications */
+router.get("/notifications", async (_req, res: Response) => {
+  const { Notification } = await import("../models/Notification");
+  const rows = await Notification.find().sort({ createdAt: -1 }).limit(100).lean();
+  res.json({
+    success: true,
+    data: rows.map((n) => ({
+      id: String(n._id),
+      title: n.title,
+      audience: "User",
+      sent: n.createdAt?.toISOString?.()?.slice(0, 10) ?? "",
+      status: n.read ? "delivered" : "pending",
+    })),
+  });
+});
+
+/** GET /api/admin/leaderboards */
+router.get("/leaderboards", async (_req, res: Response) => {
+  const { Leaderboard } = await import("../models/Leaderboard");
+  const rows = await Leaderboard.find().sort({ createdAt: -1 }).lean();
+  res.json({
+    success: true,
+    data: rows.map((lb) => ({
+      id: String(lb._id),
+      season: lb.name,
+      leader: (lb.entries?.[0] as { username?: string })?.username ?? "—",
+      participants: Array.isArray(lb.entries) ? lb.entries.length : 0,
+      status: lb.isActive ? "active" : "completed",
+    })),
+  });
+});
+
+/** GET /api/admin/roles */
+router.get("/roles", async (_req, res: Response) => {
+  const { Role } = await import("../models/Role");
+  const rows = await Role.find().sort({ createdAt: -1 }).lean();
+  res.json({
+    success: true,
+    data: rows.map((r) => ({
+      id: String(r._id),
+      name: r.name,
+      permissions: Array.isArray(r.permissions) ? r.permissions.length : 0,
+      users: 0,
+    })),
+  });
+});
+
+/** GET /api/admin/permissions */
+router.get("/permissions", async (_req, res: Response) => {
+  const { Permission } = await import("../models/Permission");
+  const { Role } = await import("../models/Role");
+  const [permissions, roles] = await Promise.all([
+    Permission.find().sort({ name: 1 }).lean(),
+    Role.find().lean(),
+  ]);
+  res.json({
+    success: true,
+    data: permissions.map((p) => ({
+      id: String(p._id),
+      name: p.slug ?? p.name,
+      category: p.name?.split(".")?.[0] ?? "General",
+      roles: roles.filter((r) => Array.isArray(r.permissions) && r.permissions.includes(p.slug ?? p.name)).length,
+    })),
+  });
+});
+
+/** GET /api/admin/audit-logs */
+router.get("/audit-logs", async (_req, res: Response) => {
+  const { AuditLog } = await import("../models/AuditLog");
+  const rows = await AuditLog.find().sort({ createdAt: -1 }).limit(100).lean();
+  const actorIds = [...new Set(rows.map((a) => String(a.actorId)))];
+  const actors = await User.find({ _id: { $in: actorIds } }).select("username").lean();
+  const actorMap = new Map(actors.map((u) => [String(u._id), u.username]));
+  res.json({
+    success: true,
+    data: rows.map((a) => ({
+      id: String(a._id),
+      action: a.action,
+      actor: actorMap.get(String(a.actorId)) ?? "—",
+      target: a.resource,
+      time: a.createdAt?.toISOString?.()?.slice(0, 16) ?? "",
+    })),
+  });
+});
+
 export default router;

@@ -18,7 +18,6 @@ import {
 } from "@tasks-cash/ui";
 import { PublicPageWrapper } from "@/components/premium/PublicPageWrapper";
 import {
-  MYSTERY_MISSIONS_DATA,
   filterMysteryMissions,
   countByCategory,
   getDemoUnlockMission,
@@ -26,14 +25,15 @@ import {
 import { apiFetch } from "@/lib/api";
 
 export default function MysteryMissionsPage() {
-  const [missions, setMissions] = useState<IMysteryMissionView[]>(MYSTERY_MISSIONS_DATA);
+  const [missions, setMissions] = useState<IMysteryMissionView[]>([]);
   const [category, setCategory] = useState<MysteryMissionCategory | "all">("all");
   const [popupMission, setPopupMission] = useState<IMysteryMissionView | null>(null);
   const [showPopup, setShowPopup] = useState(false);
 
   useEffect(() => {
     apiFetch<IMysteryMissionView[]>("/api/mystery-missions").then((res) => {
-      if (res.success && res.data?.length) setMissions(res.data);
+      if (res.success && res.data) setMissions(res.data);
+      else setMissions([]);
     });
   }, []);
 
