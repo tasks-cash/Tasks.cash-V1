@@ -5,7 +5,14 @@ import type { IReferralRecord, ReferralStatus } from "@tasks-cash/types";
 import { AdminPageShell, AdminTable } from "@/components/AdminPageShell";
 import { PortalButton } from "@tasks-cash/ui";
 import { adminFetch } from "@/lib/api";
-import { ADMIN_REFERRALS, STATUS_BADGE } from "@/lib/mock-data";
+
+const STATUS_BADGE: Record<string, string> = {
+  pending: "text-amber-400",
+  active: "text-emerald-400",
+  rewarded: "text-green-400",
+  rejected: "text-red-400",
+  paid: "text-green-400",
+};
 
 export default function AdminReferralsPage() {
   const [rows, setRows] = useState<IReferralRecord[]>([]);
@@ -21,20 +28,7 @@ export default function AdminReferralsPage() {
       if (res.success && res.data) {
         setRows(res.data);
       } else {
-        setRows(
-          ADMIN_REFERRALS.map((r) => ({
-            id: r.id,
-            referrerId: "mock",
-            referredUserId: "mock",
-            referralCode: "VOID-7X9K",
-            status: (r.status === "paid" ? "rewarded" : r.status) as ReferralStatus,
-            rewardXp: 100,
-            rewardCoins: r.bonus,
-            createdAt: "2026-06-01T00:00:00.000Z",
-            referredUser: { id: "mock", username: r.referred, createdAt: "2026-06-01T00:00:00.000Z" },
-          }))
-        );
-        if (res.error) setError(`${res.error} — showing fallback data`);
+        setError(res.error ?? "Failed to load referrals");
       }
       setLoading(false);
     }
@@ -79,25 +73,13 @@ export default function AdminReferralsPage() {
           r.referralCode,
           r.referredUser?.username ?? "—",
           `${r.rewardCoins} ◈`,
-          <span key={`${r.id}-status`} className={STATUS_BADGE[r.status] ?? "text-purple-300"}>
-            {r.status}
-          </span>,
+          <span key={`${r.id}-status`} className={STATUS_BADGE[r.status] ?? "text-purple-300"}>{r.status}</span>,
           r.status === "pending" ? (
             <div key={`${r.id}-actions`} className="flex gap-2">
-              <PortalButton size="sm" variant="gold" disabled={updatingId === r.id} onClick={() => updateStatus(r.id, "active")}>
-                Activate
-              </PortalButton>
-              <PortalButton size="sm" variant="secondary" disabled={updatingId === r.id} onClick={() => updateStatus(r.id, "rejected")}>
-                Reject
-              </PortalButton>
+              <PortalButton size="sm" disabled={updatingId === r.id} onClick={() => updateStatus(r.id, "active")}>Activate</PortalButton>
+              <PortalButton size="sm" variant="secondary" disabled={updatingId === r.id} onClick={() => updateStatus(r.id, "rewarded")}>Reward</PortalButton>
             </div>
-          ) : r.status === "active" ? (
-            <PortalButton key={`${r.id}-reward`} size="sm" variant="gold" disabled={updatingId === r.id} onClick={() => updateStatus(r.id, "rewarded")}>
-              Mark Rewarded
-            </PortalButton>
-          ) : (
-            "—"
-          ),
+          ) : "—",
         ])}
       />
     </AdminPageShell>

@@ -1,19 +1,45 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { GameHubLayout } from "@/components/hub/GameHubLayout";
 import { GlassCard, GameButton } from "@tasks-cash/ui";
-import {
-  VAULT_NOTIFICATIONS,
-  LOCKED_MYSTERIES,
-  UNLOCK_CONDITIONS,
-  REVEALED_MYSTERY,
-} from "@/data/mystery-vault-data";
+import { UNLOCK_CONDITIONS } from "@/data/mystery-vault-data";
+import { apiFetch } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
+type VaultItemApi = {
+  id: string;
+  name: string;
+  rarity?: string;
+  description?: string;
+  rewardPreview?: string;
+  revealed?: boolean;
+};
+
 export function MysteryVaultPage() {
-  const [revealed, setRevealed] = useState(false);
+  const [items, setItems] = useState<VaultItemApi[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [revealedId, setRevealedId] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function load() {
+      setLoading(true);
+      setError("");
+      const res = await apiFetch<{ items: VaultItemApi[] }>("/api/vault");
+      if (res.success && res.data) {
+        setItems(res.data.items ?? []);
+      } else {
+        setError(res.error ?? "Failed to load vault");
+      }
+      setLoading(false);
+    }
+    load();
+  }, []);
+
+  const locked = items.filter((m) => !m.revealed);
+  const revealedItem = items.find((m) => m.id === revealedId);
 
   return (
     <GameHubLayout
@@ -22,38 +48,33 @@ export function MysteryVaultPage() {
       title="MYSTERY VAULT"
       subtitle="Hidden missions, secret maps, locked rewards, and unknown paths."
     >
-      <GlassCard glow="violet" className="p-5 mb-8">
-        <h3 className="text-sm font-black text-white mb-3">Mystery Notifications</h3>
-        <div className="space-y-2">
-          {VAULT_NOTIFICATIONS.map((n) => (
-            <div key={n.id} className="flex items-center gap-3 rounded-xl border border-purple-500/15 bg-black/40 px-4 py-3">
-              <span className="text-sm text-purple-200/80 flex-1">{n.message}</span>
-              {n.isNew && <span className="portal-badge h-2 w-2 rounded-full bg-red-500 shrink-0" />}
-            </div>
-          ))}
-        </div>
-      </GlassCard>
+      {loading && <p className="text-purple-400/50 text-sm mb-6">Loading vault…</p>}
+      {error && !loading && <p className="text-amber-400 text-sm mb-6">{error}</p>}
 
       <section className="mb-10">
         <h3 className="text-lg font-black text-white mb-4">Locked Mysteries</h3>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-          {LOCKED_MYSTERIES.map((m, i) => (
-            <motion.div
-              key={m.id}
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: i * 0.06 }}
-              whileHover={{ y: -4 }}
-            >
-              <GlassCard glow="purple" className="mystery-locked-card p-5 text-center h-full">
-                <span className="text-4xl block mb-3 opacity-60">{m.icon}</span>
-                <p className="font-black text-purple-300/70 mb-2">{m.label}</p>
-                <p className="text-[10px] uppercase tracking-wider text-purple-400/40">🔒 Locked</p>
-                <p className="text-xs text-purple-300/50 mt-3">{m.unlockCondition}</p>
-              </GlassCard>
-            </motion.div>
-          ))}
-        </div>
+        {locked.length === 0 && !loading ? (
+          <GlassCard className="p-8 text-center text-purple-400/60">No vault items available yet.</GlassCard>
+        ) : (
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+            {locked.map((m, i) => (
+              <motion.div
+                key={m.id}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: i * 0.06 }}
+                whileHover={{ y: -4 }}
+              >
+                <GlassCard glow="purple" className="mystery-locked-card p-5 text-center h-full">
+                  <span className="text-4xl block mb-3 opacity-60">🔒</span>
+                  <p className="font-black text-purple-300/70 mb-2">{m.name}</p>
+                  <p className="text-[10px] uppercase tracking-wider text-purple-400/40">{m.rarity ?? "Mystery"}</p>
+                  {m.description && <p className="text-xs text-purple-300/50 mt-3">{m.description}</p>}
+                </GlassCard>
+              </motion.div>
+            ))}
+          </div>
+        )}
       </section>
 
       <section className="mb-10">
@@ -72,11 +93,15 @@ export function MysteryVaultPage() {
         <h3 className="text-lg font-black text-white mb-4">Mystery Reveal</h3>
         <GlassCard glow="gold" className="p-6 md:p-8 text-center">
           <AnimatePresence mode="wait">
-            {!revealed ? (
+            {!revealedItem ? (
               <motion.div key="locked" initial={{ opacity: 1 }} exit={{ opacity: 0, scale: 0.9 }}>
                 <span className="text-6xl block mb-4 opacity-40">❓</span>
                 <p className="text-purple-300/50 mb-6">A mystery awaits those who meet the vault conditions...</p>
-                <GameButton variant="gold" onClick={() => setRevealed(true)}>Reveal Mystery Mission</GameButton>
+                {locked[0] ? (
+                  <GameButton variant="gold" onClick={() => setRevealedId(locked[0].id)}>Reveal Mystery Mission</GameButton>
+                ) : (
+                  <p className="text-sm text-purple-400/50">No mysteries to reveal yet.</p>
+                )}
               </motion.div>
             ) : (
               <motion.div
@@ -92,9 +117,9 @@ export function MysteryVaultPage() {
                 >
                   🔮
                 </motion.span>
-                <h4 className="text-2xl font-black text-amber-400 mb-2">{REVEALED_MYSTERY.title}</h4>
-                <p className="text-purple-300/60 mb-3 max-w-md mx-auto">{REVEALED_MYSTERY.description}</p>
-                <p className="text-sm font-bold text-emerald-400">{REVEALED_MYSTERY.reward}</p>
+                <h4 className="text-2xl font-black text-amber-400 mb-2">{revealedItem.name}</h4>
+                <p className="text-purple-300/60 mb-3 max-w-md mx-auto">{revealedItem.description ?? "—"}</p>
+                <p className="text-sm font-bold text-emerald-400">{revealedItem.rewardPreview ?? "—"}</p>
               </motion.div>
             )}
           </AnimatePresence>

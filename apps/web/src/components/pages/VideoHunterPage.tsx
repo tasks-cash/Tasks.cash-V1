@@ -5,11 +5,10 @@ import type { IVideoSubmission } from "@tasks-cash/types";
 import { GlassCard, PortalButton, Input, Label } from "@tasks-cash/ui";
 import { GameHubLayout } from "@/components/hub/GameHubLayout";
 import { apiFetch } from "@/lib/api";
-import { DEV_MOCK_VIDEO_SUBMISSIONS } from "@/lib/dev-mocks/video-submissions";
 import { detectVideoPlatform, platformLabel, STATUS_LABELS } from "@/lib/referral-utils";
 
 export function VideoHunterPage() {
-  const [submissions, setSubmissions] = useState<IVideoSubmission[]>(DEV_MOCK_VIDEO_SUBMISSIONS);
+  const [submissions, setSubmissions] = useState<IVideoSubmission[]>([]);
   const [videoUrl, setVideoUrl] = useState("");
   const [description, setDescription] = useState("");
   const [visibleViews, setVisibleViews] = useState("");

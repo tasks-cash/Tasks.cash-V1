@@ -2,12 +2,13 @@
 
 import { motion } from "framer-motion";
 import { PLAYER_PROGRESSION } from "@/data/player-progression-data";
+import type { PlayerProgressionData } from "@/types/player-progression";
 import { GlassCard } from "@tasks-cash/ui";
 import { AnimatedProgressBar } from "./AnimatedProgressBar";
 import { ProgressionSection } from "./ProgressionSection";
 
-export function GlobalLevelPanel() {
-  const g = PLAYER_PROGRESSION.globalLevel;
+export function GlobalLevelPanel({ data = PLAYER_PROGRESSION }: { data?: PlayerProgressionData }) {
+  const g = data.globalLevel;
   const pct = Math.round((g.currentXp / g.requiredXp) * 100);
 
   return (

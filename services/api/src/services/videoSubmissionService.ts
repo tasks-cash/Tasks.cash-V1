@@ -1,7 +1,5 @@
 import type { IVideoSubmission } from "@tasks-cash/types";
-import { isDbConnected } from "../config/database";
 import { VideoSubmission, IVideoSubmissionDocument } from "../models/VideoSubmission";
-import { memoryStore } from "../lib/memoryStore";
 
 function mapVideo(doc: IVideoSubmissionDocument): IVideoSubmission {
   return {
@@ -26,10 +24,6 @@ function mapVideo(doc: IVideoSubmissionDocument): IVideoSubmission {
 }
 
 export async function listAllVideoSubmissions() {
-  if (!isDbConnected()) {
-    return memoryStore.listVideoSubmissions();
-  }
-
   const docs = await VideoSubmission.find().sort({ submittedAt: -1 }).limit(100);
   return docs.map(mapVideo);
 }
@@ -46,14 +40,6 @@ export async function approveVideoSubmission(
     diamondGems?: number;
   }
 ) {
-  if (!isDbConnected()) {
-    return memoryStore.reviewVideoSubmission(id, "approved", {
-      ...payload,
-      reviewedBy: reviewerId,
-      status: "approved",
-    });
-  }
-
   const doc = await VideoSubmission.findByIdAndUpdate(
     id,
     {
@@ -74,13 +60,6 @@ export async function approveVideoSubmission(
 }
 
 export async function rejectVideoSubmission(id: string, reviewerId: string, adminResponse: string) {
-  if (!isDbConnected()) {
-    return memoryStore.reviewVideoSubmission(id, "rejected", {
-      adminResponse,
-      reviewedBy: reviewerId,
-    });
-  }
-
   const doc = await VideoSubmission.findByIdAndUpdate(
     id,
     {

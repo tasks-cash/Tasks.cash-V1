@@ -222,8 +222,39 @@ export const PLAYER_PROGRESSION: PlayerProgressionData = {
   overallCompletion: 58,
 };
 
+export const EMPTY_PLAYER_PROGRESSION: PlayerProgressionData = {
+  profile: {
+    username: "",
+    avatar: "🎯",
+    joinDate: "—",
+    currentRankId: "explorer-1",
+    rankProgress: 0,
+    nextRankId: "explorer-2",
+    activeTitleId: "",
+  },
+  ranks: PLAYER_RANKS,
+  globalLevel: { level: 1, currentXp: 0, requiredXp: 1000, nextLevel: 2, nextReward: "" },
+  attributes: [],
+  titles: [],
+  badges: [],
+  achievementCategories: [],
+  statistics: {
+    daysActive: 0,
+    totalXpEarned: 0,
+    missionsCompleted: 0,
+    raidsJoined: 0,
+    videosApproved: 0,
+    referralsActive: 0,
+    secretsFound: 0,
+    totalWealth: "—",
+    seasonRank: 0,
+    globalRank: 0,
+  },
+  overallCompletion: 0,
+};
+
 export function getRankById(id: string) {
-  return PLAYER_RANKS.find((r) => r.id === id)!;
+  return PLAYER_RANKS.find((r) => r.id === id) ?? PLAYER_RANKS[0];
 }
 
 export function getActiveTitle(data: PlayerProgressionData) {

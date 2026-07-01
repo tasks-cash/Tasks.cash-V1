@@ -1,11 +1,10 @@
 import { Router, Response } from "express";
 import { z } from "zod";
 import type { IVideoSubmission } from "@tasks-cash/types";
-import { isDbConnected } from "../config/database";
 import { authMiddleware, AuthRequest } from "../middleware/auth";
 import { VideoSubmission, IVideoSubmissionDocument } from "../models/VideoSubmission";
 import { detectVideoPlatform } from "../lib/videoPlatform";
-import { memoryStore } from "../lib/memoryStore";
+import { requireDbConnection } from "../lib/requireDb";
 
 const router = Router();
 
@@ -40,12 +39,7 @@ function mapVideo(doc: IVideoSubmissionDocument): IVideoSubmission {
 
 /** GET /api/video-submissions */
 router.get("/", authMiddleware, async (req: AuthRequest, res: Response) => {
-  const userId = req.user!._id.toString();
-
-  if (!isDbConnected()) {
-    res.json({ success: true, data: memoryStore.listVideoSubmissions(userId) });
-    return;
-  }
+  if (!requireDbConnection(res)) return;
 
   const docs = await VideoSubmission.find({ userId: req.user!._id }).sort({ submittedAt: -1 });
   res.json({ success: true, data: docs.map(mapVideo) });
@@ -53,23 +47,11 @@ router.get("/", authMiddleware, async (req: AuthRequest, res: Response) => {
 
 /** POST /api/video-submissions */
 router.post("/", authMiddleware, async (req: AuthRequest, res: Response) => {
+  if (!requireDbConnection(res)) return;
+
   try {
     const data = createSchema.parse(req.body);
     const platform = detectVideoPlatform(data.videoUrl);
-    const userId = req.user!._id.toString();
-
-    if (!isDbConnected()) {
-      const created = memoryStore.createVideoSubmission({
-        userId,
-        videoUrl: data.videoUrl,
-        platform,
-        visibleViews: data.visibleViews,
-        screenshotProofUrl: data.screenshotProofUrl,
-        description: data.description,
-      });
-      res.status(201).json({ success: true, data: created });
-      return;
-    }
 
     const doc = await VideoSubmission.create({
       userId: req.user!._id,
@@ -92,17 +74,7 @@ router.post("/", authMiddleware, async (req: AuthRequest, res: Response) => {
 
 /** GET /api/video-submissions/:id */
 router.get("/:id", authMiddleware, async (req: AuthRequest, res: Response) => {
-  const userId = req.user!._id.toString();
-
-  if (!isDbConnected()) {
-    const item = memoryStore.getVideoSubmission(String(req.params.id));
-    if (!item || item.userId !== userId) {
-      res.status(404).json({ success: false, error: "Submission not found" });
-      return;
-    }
-    res.json({ success: true, data: item });
-    return;
-  }
+  if (!requireDbConnection(res)) return;
 
   const doc = await VideoSubmission.findOne({ _id: req.params.id, userId: req.user!._id });
   if (!doc) {

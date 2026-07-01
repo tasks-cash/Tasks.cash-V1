@@ -6,29 +6,34 @@ import {
   getReferralMe,
   validateReferralCode,
 } from "../services/referralService";
+import { requireDbConnection } from "../lib/requireDb";
 
 const router = Router();
 
 /** Legacy GET /api/referrals */
 router.get("/", authMiddleware, async (req: AuthRequest, res: Response) => {
+  if (!requireDbConnection(res)) return;
   const data = await getReferralMe(req.user!._id.toString(), req.user!.referralCode);
   res.json({ success: true, data });
 });
 
 /** GET /api/referrals/me */
 router.get("/me", authMiddleware, async (req: AuthRequest, res: Response) => {
+  if (!requireDbConnection(res)) return;
   const data = await getReferralMe(req.user!._id.toString(), req.user!.referralCode);
   res.json({ success: true, data });
 });
 
 /** GET /api/referrals/history */
 router.get("/history", authMiddleware, async (req: AuthRequest, res: Response) => {
+  if (!requireDbConnection(res)) return;
   const history = await getReferralHistory(req.user!._id.toString());
   res.json({ success: true, data: history });
 });
 
 /** POST /api/referrals/validate-code */
 router.post("/validate-code", async (req, res: Response) => {
+  if (!requireDbConnection(res)) return;
   try {
     const schema = z.object({
       code: z.string().min(2),

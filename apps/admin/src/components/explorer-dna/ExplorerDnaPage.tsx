@@ -5,7 +5,6 @@ import { GameHubLayout } from "@/components/hub/GameHubLayout";
 import { GlassCard } from "@tasks-cash/ui";
 import type { ExplorerDNAData } from "@tasks-cash/types";
 import { userApiFetch } from "@/lib/userApi";
-import { EXPLORER_DNA } from "@/data/explorer-dna-data";
 import { DnaHelixBackground } from "./DnaHelixBackground";
 import { DnaCompletionHero } from "./DnaCompletionHero";
 import { DnaModulesPanel } from "./DnaModulesPanel";
@@ -14,8 +13,26 @@ import { DnaMatchEngine } from "./DnaMatchEngine";
 import { RecommendedForYou } from "./RecommendedForYou";
 import { DnaRewards } from "./DnaRewards";
 
+const EMPTY_DNA: ExplorerDNAData = {
+  profile: {
+    completionPercent: 0,
+    completedModules: 0,
+    totalModules: 0,
+    intelligenceScore: 0,
+    nextReward: "",
+    pendingQuestions: 0,
+    totalXpEarned: 0,
+    badges: [],
+  },
+  modules: [],
+  questions: [],
+  answers: [],
+  matchScores: [],
+  recommendations: [],
+};
+
 export function ExplorerDnaPage() {
-  const [data, setData] = useState<ExplorerDNAData>(EXPLORER_DNA);
+  const [data, setData] = useState<ExplorerDNAData>(EMPTY_DNA);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [lastReward, setLastReward] = useState<{ xp: number; coins: number } | null>(null);
@@ -28,8 +45,7 @@ export function ExplorerDnaPage() {
       if (res.success && res.data) {
         setData(res.data);
       } else {
-        setData(EXPLORER_DNA);
-        if (res.error) setError(`${res.error} — showing local DNA profile`);
+        setError(res.error ?? "Failed to load Explorer DNA");
       }
       setLoading(false);
     }
@@ -56,19 +72,7 @@ export function ExplorerDnaPage() {
       return;
     }
 
-    const question = data.questions.find((q) => q.id === questionId);
-    setData((prev) => ({
-      ...prev,
-      profile: {
-        ...prev.profile,
-        completionPercent: Math.min(100, prev.profile.completionPercent + 1),
-        pendingQuestions: Math.max(0, prev.profile.pendingQuestions - 1),
-        totalXpEarned: prev.profile.totalXpEarned + (question?.xpReward ?? 50),
-        intelligenceScore: prev.profile.intelligenceScore + 12,
-      },
-      questions: prev.questions.map((q) => (q.id === questionId ? { ...q, isNew: false } : q)),
-    }));
-    setLastReward({ xp: question?.xpReward ?? 50, coins: question?.coinReward ?? 25 });
+    setError(res.error ?? "Failed to submit answer");
   }
 
   return (
@@ -91,7 +95,7 @@ export function ExplorerDnaPage() {
           </p>
         )}
 
-        {!loading && (
+        {!loading && !error && (
           <>
             <DnaCompletionHero profile={data.profile} />
             <DnaRewards profile={data.profile} lastReward={lastReward} />

@@ -1,22 +1,15 @@
 import { Router, Response } from "express";
 import { authMiddleware, AuthRequest } from "../middleware/auth";
-import { isDbConnected } from "../config/database";
 import { Reward } from "../models/Reward";
 import { User } from "../models/User";
 import { Transaction } from "../models/Transaction";
-import { getMemoryRewards, claimMemoryReward } from "../lib/memoryRewards";
+import { requireDbConnection } from "../lib/requireDb";
 
 const router = Router();
 
 /** GET /api/rewards — list available rewards */
 router.get("/", authMiddleware, async (req: AuthRequest, res: Response) => {
-  if (!isDbConnected()) {
-    res.json({
-      success: true,
-      data: getMemoryRewards(req.user!),
-    });
-    return;
-  }
+  if (!requireDbConnection(res)) return;
 
   const rewards = await Reward.find({ isActive: true }).sort({ requiredLevel: 1 });
   const user = req.user!;
@@ -33,15 +26,7 @@ router.get("/", authMiddleware, async (req: AuthRequest, res: Response) => {
 
 /** POST /api/rewards/:id/claim */
 router.post("/:id/claim", authMiddleware, async (req: AuthRequest, res: Response) => {
-  if (!isDbConnected()) {
-    const result = claimMemoryReward(req.user!._id.toString(), String(req.params.id));
-    if ("error" in result) {
-      res.status(400).json({ success: false, error: result.error });
-      return;
-    }
-    res.json({ success: true, data: result });
-    return;
-  }
+  if (!requireDbConnection(res)) return;
 
   const reward = await Reward.findById(req.params.id);
   if (!reward || !reward.isActive) {

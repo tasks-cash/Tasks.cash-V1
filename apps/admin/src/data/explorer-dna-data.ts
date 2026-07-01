@@ -250,6 +250,12 @@ export const EXPLORER_DNA: ExplorerDNAData = {
 export const ADMIN_DNA_QUESTIONS: IDNAQuestion[] = EXPLORER_DNA.questions.map((q) => ({ ...q }));
 
 export const DNA_QUESTION_TYPE_LABELS: Record<string, string> = {
+  text: "Text",
+  textarea: "Text Area",
+  country: "Country",
+  number: "Number",
+  time: "Time",
+  image_upload: "Image Upload",
   short_text: "Short Text",
   paragraph: "Paragraph",
   single_choice: "Single Choice",
@@ -273,3 +279,11 @@ export const DNA_CATEGORY_LABELS: Record<string, string> = {
   interest: "Interest DNA",
   continuous: "Continuous",
 };
+export const DNA_DIFFICULTY_LABELS = {
+  simple: "Simple",
+  easy: "Easy",
+  medium: "Medium",
+  advanced: "Advanced",
+  hard: "Hard",
+  expert: "Expert",
+} as const;

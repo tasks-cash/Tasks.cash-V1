@@ -4,10 +4,9 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 
 type ProxyOptions = {
   method?: string;
-  fallback?: unknown;
 };
 
-/** Safe proxy to Express API with optional fallback when backend is offline. */
+/** Proxy to Express API — no mock/runtime fallback data. */
 export async function proxyRequest(
   apiPath: string,
   request: Request,
@@ -30,28 +29,6 @@ export async function proxyRequest(
     const data = await res.json().catch(() => ({ success: false, error: "Invalid API response" }));
     return NextResponse.json(data, { status: res.status });
   } catch {
-    if (options?.fallback !== undefined) {
-      return NextResponse.json(options.fallback);
-    }
     return NextResponse.json({ success: false, error: "API unavailable" }, { status: 503 });
   }
 }
-
-export const DEV_MOCK_USER = {
-  _id: "dev-mock-user",
-  username: "Explorer",
-  email: "dev@tasks.cash",
-  coins: 2450,
-  xp: 6500,
-  level: 12,
-  role: "user",
-  referralCode: "VOID-7X9K",
-};
-
-export const DEV_MOCK_AUTH = {
-  success: true,
-  data: {
-    accessToken: "dev-mock-token",
-    user: DEV_MOCK_USER,
-  },
-};

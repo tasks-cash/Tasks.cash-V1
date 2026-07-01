@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { GlassCard, PortalButton, Badge, StatWidget } from "@tasks-cash/ui";
 import { DashboardPageShell } from "@/components/dashboard/DashboardPageShell";
 import { apiFetch } from "@/lib/api";
-import { DEV_MOCK_REWARDS } from "@/lib/dev-mocks/rewards";
 
 type RewardItem = {
   _id: string;
@@ -24,7 +23,7 @@ const STATUS_STYLE: Record<string, string> = {
 };
 
 export default function DashboardRewardsPage() {
-  const [rewards, setRewards] = useState<RewardItem[]>(DEV_MOCK_REWARDS);
+  const [rewards, setRewards] = useState<RewardItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [claimMsg, setClaimMsg] = useState("");

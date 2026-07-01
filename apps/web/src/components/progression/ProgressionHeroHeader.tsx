@@ -2,14 +2,15 @@
 
 import { motion } from "framer-motion";
 import { PLAYER_PROGRESSION, getActiveTitle, getRankById, RANK_COLOR_CLASS } from "@/data/player-progression-data";
+import type { PlayerProgressionData } from "@/types/player-progression";
 import { GlassCard } from "@tasks-cash/ui";
 import { cn } from "@/lib/utils";
 
-export function ProgressionHeroHeader() {
-  const { profile } = PLAYER_PROGRESSION;
+export function ProgressionHeroHeader({ data = PLAYER_PROGRESSION }: { data?: PlayerProgressionData }) {
+  const { profile } = data;
   const rank = getRankById(profile.currentRankId);
   const nextRank = getRankById(profile.nextRankId);
-  const title = getActiveTitle(PLAYER_PROGRESSION);
+  const title = getActiveTitle(data);
 
   return (
     <motion.header
@@ -59,7 +60,7 @@ export function ProgressionHeroHeader() {
               transition={{ delay: 0.3, type: "spring" }}
               className="text-5xl md:text-6xl font-black text-amber-400 tabular-nums"
             >
-              {PLAYER_PROGRESSION.overallCompletion}%
+              {data.overallCompletion}%
             </motion.p>
           </div>
         </div>

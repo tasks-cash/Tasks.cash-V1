@@ -22,3 +22,6 @@ export { DNAQuestion } from "./DNAQuestion";
 export { DNAAnswer } from "./DNAAnswer";
 export { DNAModule } from "./DNAModule";
 export { DNARecommendation } from "./DNARecommendation";
+export { RaidEvent } from "./RaidEvent";
+export { DuelMatch } from "./DuelMatch";
+export { VaultItem } from "./VaultItem";

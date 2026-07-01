@@ -8,11 +8,20 @@ import { ReferralQrCode } from "@/components/referrals/ReferralQrCode";
 import { apiFetch } from "@/lib/api";
 import { buildReferralLink } from "@/lib/referral-storage";
 import { REFERRAL_STATUS_LABELS } from "@/lib/referral-utils";
-import { DEV_MOCK_REFERRAL_ME } from "@/lib/dev-mocks/referrals";
+const EMPTY_REFERRAL: IReferralMeResponse = {
+  referralCode: "",
+  referralLink: "",
+  totalInvites: 0,
+  activeReferrals: 0,
+  pendingRewards: 0,
+  earnedRewards: 0,
+  history: [],
+};
 
 export default function ReferralsPage() {
-  const [data, setData] = useState<IReferralMeResponse>(DEV_MOCK_REFERRAL_ME);
+  const [data, setData] = useState<IReferralMeResponse>(EMPTY_REFERRAL);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     async function load() {
@@ -22,6 +31,8 @@ export default function ReferralsPage() {
           ...res.data,
           referralLink: res.data.referralLink || buildReferralLink(res.data.referralCode),
         });
+      } else if (res.error) {
+        setError(res.error);
       }
       setLoading(false);
     }

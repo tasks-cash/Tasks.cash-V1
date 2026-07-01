@@ -3,15 +3,31 @@
 import { useEffect, useState } from "react";
 import { AdminPageShell } from "@/components/AdminPageShell";
 import { GlassCard, PortalButton, Input, Label } from "@tasks-cash/ui";
-import type { IDNAQuestion, DNAQuestionType } from "@tasks-cash/types";
+import type { DNAQuestionType } from "@tasks-cash/types";
 import { adminFetch } from "@/lib/api";
-import {
-  ADMIN_DNA_QUESTIONS,
-  DNA_QUESTION_TYPE_LABELS,
-  DNA_CATEGORY_LABELS,
-} from "@/data/explorer-dna-data";
+import { DNA_QUESTION_TYPE_LABELS, DNA_CATEGORY_LABELS } from "@/data/explorer-dna-data";
+
+type AdminDnaQuestion = {
+  id: string;
+  title?: string;
+  prompt?: string;
+  moduleId?: string;
+  category?: string;
+  questionType?: string;
+  answerType?: string;
+  difficulty?: string;
+  options?: string[];
+  xpReward?: number;
+  coinReward?: number;
+  enabled?: boolean;
+  order?: number;
+  displayOrder?: number;
+  unlockCondition?: string;
+};
 
 const ANSWER_TYPES: DNAQuestionType[] = [
+  "text",
+  "textarea",
   "short_text",
   "paragraph",
   "single_choice",
@@ -22,23 +38,46 @@ const ANSWER_TYPES: DNAQuestionType[] = [
   "rating",
   "date",
   "file_upload",
+  "country",
+  "number",
+  "time",
+  "image_upload",
 ];
 
-const emptyQuestion = (): IDNAQuestion => ({
-  id: `q_${Date.now()}`,
+function questionTitle(q: AdminDnaQuestion): string {
+  return q.title || q.prompt || "Untitled question";
+}
+
+function questionTypeLabel(q: AdminDnaQuestion): string {
+  const type = q.questionType || q.answerType || "text";
+  return DNA_QUESTION_TYPE_LABELS[type] ?? type;
+}
+
+function questionCategory(q: AdminDnaQuestion): string {
+  const key = q.moduleId || q.category || "continuous";
+  return DNA_CATEGORY_LABELS[key] ?? key;
+}
+
+const emptyQuestion = (): AdminDnaQuestion => ({
+  id: "",
+  title: "",
   prompt: "",
   category: "continuous",
-  answerType: "single_choice",
+  moduleId: "continuous",
+  answerType: "text",
+  questionType: "text",
+  difficulty: "simple",
   options: ["Option A", "Option B"],
   xpReward: 50,
   coinReward: 0,
   enabled: true,
-  order: 99,
+  order: 0,
+  displayOrder: 0,
 });
 
-export default function AdminExplorerDnaPage() {
-  const [questions, setQuestions] = useState<IDNAQuestion[]>([]);
-  const [editing, setEditing] = useState<IDNAQuestion | null>(null);
+export default function AdminDnaQuestionsPage() {
+  const [questions, setQuestions] = useState<AdminDnaQuestion[]>([]);
+  const [editing, setEditing] = useState<AdminDnaQuestion | null>(null);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
@@ -47,44 +86,54 @@ export default function AdminExplorerDnaPage() {
   async function loadQuestions() {
     setLoading(true);
     setError("");
-    const res = await adminFetch<IDNAQuestion[]>("/api/admin/explorer-dna/questions");
-    if (res.success && res.data) {
+    const res = await adminFetch<AdminDnaQuestion[]>("/api/admin/dna-questions");
+    if (res.success && Array.isArray(res.data)) {
       setQuestions(res.data);
     } else {
-      setQuestions(ADMIN_DNA_QUESTIONS);
-      if (res.error) setError(`${res.error} — showing fallback data`);
+      setQuestions([]);
+      setError(res.error ?? "Failed to load DNA questions");
     }
     setLoading(false);
   }
 
   useEffect(() => {
-    loadQuestions();
+    void loadQuestions();
   }, []);
 
   async function saveQuestion() {
-    if (!editing?.prompt.trim()) return;
+    if (!editing) return;
+    const title = editing.title?.trim() || editing.prompt?.trim();
+    if (!title) return;
+
     setSaving(true);
     setMessage("");
     setError("");
 
-    const exists = questions.some((q) => q.id === editing.id);
+    const payload = {
+      ...editing,
+      title,
+      prompt: editing.prompt?.trim() || title,
+      questionType: editing.questionType || editing.answerType || "text",
+      answerType: editing.answerType || editing.questionType || "text",
+      difficulty: editing.difficulty || "simple",
+      moduleId: editing.moduleId || editing.category || "continuous",
+      category: editing.category || editing.moduleId || "continuous",
+    };
+
+    const exists = Boolean(editing.id) && questions.some((q) => q.id === editing.id);
     const res = exists
-      ? await adminFetch<IDNAQuestion>(`/api/admin/explorer-dna/questions/${editing.id}`, {
+      ? await adminFetch<AdminDnaQuestion>(`/api/admin/dna-questions/${editing.id}`, {
           method: "PUT",
-          body: JSON.stringify(editing),
+          body: JSON.stringify(payload),
         })
-      : await adminFetch<IDNAQuestion>("/api/admin/explorer-dna/questions", {
+      : await adminFetch<AdminDnaQuestion>("/api/admin/dna-questions", {
           method: "POST",
-          body: JSON.stringify(editing),
+          body: JSON.stringify(payload),
         });
 
     setSaving(false);
     if (res.success && res.data) {
-      setQuestions((prev) => {
-        const idx = prev.findIndex((q) => q.id === res.data!.id);
-        if (idx >= 0) return prev.map((q) => (q.id === res.data!.id ? res.data! : q));
-        return [...prev, res.data!].sort((a, b) => a.order - b.order);
-      });
+      await loadQuestions();
       setMessage("DNA question saved");
       setEditing(null);
       setTimeout(() => setMessage(""), 3000);
@@ -94,7 +143,7 @@ export default function AdminExplorerDnaPage() {
   }
 
   async function deleteQuestion(id: string) {
-    const res = await adminFetch(`/api/admin/explorer-dna/questions/${id}`, { method: "DELETE" });
+    const res = await adminFetch(`/api/admin/dna-questions/${id}`, { method: "DELETE" });
     if (res.success) {
       setQuestions((prev) => prev.filter((q) => q.id !== id));
       setMessage("Question deleted");
@@ -107,9 +156,9 @@ export default function AdminExplorerDnaPage() {
   async function toggleEnabled(id: string) {
     const question = questions.find((q) => q.id === id);
     if (!question) return;
-    const res = await adminFetch<IDNAQuestion>(`/api/admin/explorer-dna/questions/${id}`, {
+    const res = await adminFetch<AdminDnaQuestion>(`/api/admin/dna-questions/${id}`, {
       method: "PUT",
-      body: JSON.stringify({ enabled: !question.enabled }),
+      body: JSON.stringify({ enabled: !(question.enabled ?? false) }),
     });
     if (res.success && res.data) {
       setQuestions((prev) => prev.map((q) => (q.id === id ? res.data! : q)));
@@ -128,7 +177,7 @@ export default function AdminExplorerDnaPage() {
     [next[idx], next[swap]] = [next[swap], next[idx]];
     const orderedIds = next.map((q) => q.id);
 
-    const res = await adminFetch<IDNAQuestion[]>("/api/admin/explorer-dna/questions/reorder", {
+    const res = await adminFetch<AdminDnaQuestion[]>("/api/admin/dna-questions/reorder", {
       method: "POST",
       body: JSON.stringify({ orderedIds }),
     });
@@ -136,24 +185,28 @@ export default function AdminExplorerDnaPage() {
     if (res.success && res.data) {
       setQuestions(res.data);
     } else {
-      setQuestions(next.map((q, i) => ({ ...q, order: i + 1 })));
+      setError(res.error ?? "Failed to reorder questions");
     }
   }
 
   return (
     <AdminPageShell
-      title="Explorer DNA"
-      subtitle="Create unlimited DNA questions — the platform continuously learns about each explorer"
+      title="DNA Questions"
+      subtitle="Manage Explorer DNA questions stored in the database"
       stats={[
         { label: "Total Questions", value: questions.length, icon: "🧬" },
         { label: "Enabled", value: questions.filter((q) => q.enabled).length, icon: "✅" },
         { label: "Disabled", value: questions.filter((q) => !q.enabled).length, icon: "⏸" },
-        { label: "Categories", value: new Set(questions.map((q) => q.category)).size, icon: "📂" },
+        {
+          label: "Categories",
+          value: new Set(questions.map((q) => q.moduleId || q.category || "continuous")).size,
+          icon: "📂",
+        },
       ]}
     >
       {loading && <p className="text-purple-400/60 text-sm mb-4">Loading DNA questions…</p>}
       {message && <p className="text-emerald-400 text-sm mb-4">{message}</p>}
-      {error && <p className="text-amber-300 text-sm mb-4">{error}</p>}
+      {error && <p className="text-red-400 text-sm mb-4">{error}</p>}
 
       <div className="grid xl:grid-cols-[1fr_400px] gap-6">
         <GlassCard className="p-6">
@@ -164,17 +217,23 @@ export default function AdminExplorerDnaPage() {
             </PortalButton>
           </div>
 
+          {!loading && questions.length === 0 && !error && (
+            <p className="text-purple-400/60 text-sm text-center py-10">No DNA questions available yet.</p>
+          )}
+
           <div className="space-y-3 max-h-[600px] overflow-y-auto">
             {questions.map((q) => (
               <div key={q.id} className="rounded-xl border border-purple-500/15 bg-black/30 p-4">
                 <div className="flex flex-wrap items-start justify-between gap-2 mb-2">
                   <div>
-                    <p className="font-semibold text-white">{q.prompt}</p>
+                    <p className="font-semibold text-white">{questionTitle(q)}</p>
                     <p className="text-[10px] text-purple-400/50 mt-1">
-                      {DNA_CATEGORY_LABELS[q.category]} · {DNA_QUESTION_TYPE_LABELS[q.answerType]} · +{q.xpReward} XP
+                      {questionCategory(q)} · {questionTypeLabel(q)} · +{q.xpReward ?? 0} XP
                     </p>
                   </div>
-                  <span className={`text-[10px] uppercase font-bold ${q.enabled ? "text-emerald-400" : "text-red-400"}`}>
+                  <span
+                    className={`text-[10px] uppercase font-bold ${q.enabled ? "text-emerald-400" : "text-red-400"}`}
+                  >
                     {q.enabled ? "Enabled" : "Disabled"}
                   </span>
                 </div>
@@ -202,22 +261,36 @@ export default function AdminExplorerDnaPage() {
 
         {editing && (
           <GlassCard glow="gold" className="p-6 h-fit sticky top-6">
-            <h2 className="font-bold text-white mb-4">{questions.some((q) => q.id === editing.id) ? "Edit" : "Create"} DNA Question</h2>
+            <h2 className="font-bold text-white mb-4">
+              {editing.id && questions.some((q) => q.id === editing.id) ? "Edit" : "Create"} DNA Question
+            </h2>
             <div className="space-y-3">
               <div>
-                <Label>Question prompt</Label>
+                <Label>Question title</Label>
                 <Input
                   className="mt-1"
-                  value={editing.prompt}
-                  onChange={(e) => setEditing({ ...editing, prompt: e.target.value })}
+                  value={editing.title ?? editing.prompt ?? ""}
+                  onChange={(e) =>
+                    setEditing({
+                      ...editing,
+                      title: e.target.value,
+                      prompt: e.target.value,
+                    })
+                  }
                 />
               </div>
               <div>
                 <Label>Category</Label>
                 <select
                   className="auth-input mt-1 w-full"
-                  value={editing.category}
-                  onChange={(e) => setEditing({ ...editing, category: e.target.value as IDNAQuestion["category"] })}
+                  value={editing.category ?? editing.moduleId ?? "continuous"}
+                  onChange={(e) =>
+                    setEditing({
+                      ...editing,
+                      category: e.target.value,
+                      moduleId: e.target.value,
+                    })
+                  }
                 >
                   {Object.entries(DNA_CATEGORY_LABELS).map(([k, v]) => (
                     <option key={k} value={k}>
@@ -230,12 +303,18 @@ export default function AdminExplorerDnaPage() {
                 <Label>Answer type</Label>
                 <select
                   className="auth-input mt-1 w-full"
-                  value={editing.answerType}
-                  onChange={(e) => setEditing({ ...editing, answerType: e.target.value as DNAQuestionType })}
+                  value={editing.questionType ?? editing.answerType ?? "text"}
+                  onChange={(e) =>
+                    setEditing({
+                      ...editing,
+                      questionType: e.target.value,
+                      answerType: e.target.value,
+                    })
+                  }
                 >
                   {ANSWER_TYPES.map((t) => (
                     <option key={t} value={t}>
-                      {DNA_QUESTION_TYPE_LABELS[t]}
+                      {DNA_QUESTION_TYPE_LABELS[t] ?? t}
                     </option>
                   ))}
                 </select>
@@ -245,7 +324,7 @@ export default function AdminExplorerDnaPage() {
                 <Input
                   type="number"
                   className="mt-1"
-                  value={editing.xpReward}
+                  value={editing.xpReward ?? 50}
                   onChange={(e) => setEditing({ ...editing, xpReward: Number(e.target.value) })}
                 />
               </div>

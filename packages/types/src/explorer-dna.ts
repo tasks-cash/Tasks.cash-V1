@@ -1,12 +1,18 @@
 /** Explorer DNA — core platform intelligence system */
 
 export type DNAQuestionType =
+  | "text"
+  | "country"
+  | "number"
+  | "time"
+  | "textarea"
   | "short_text"
   | "paragraph"
   | "single_choice"
   | "multiple_choice"
   | "checkbox"
   | "dropdown"
+  | "image_upload"
   | "slider"
   | "rating"
   | "date"
@@ -43,6 +49,7 @@ export interface IDNAModule {
 export interface IDNAQuestion {
   id: string;
   prompt: string;
+  title?: string;
   category: DNAModuleId | "continuous";
   answerType: DNAQuestionType;
   options?: string[];

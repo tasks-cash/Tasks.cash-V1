@@ -3,13 +3,12 @@ import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { isDbConnected } from "../config/database";
 import { User, IUserDocument } from "../models/User";
-import { Referral } from "../models/Referral";
 import { Transaction } from "../models/Transaction";
 import { authMiddleware, signToken, AuthRequest } from "../middleware/auth";
 import { generateReferralCode } from "@tasks-cash/utils";
 import { getOrCreateUserSettings } from "../services/notificationService";
 import { createReferralOnRegister } from "../services/referralService";
-import { memoryStore } from "../lib/memoryStore";
+import { requireDbConnection } from "../lib/requireDb";
 
 const router = Router();
 
@@ -30,27 +29,7 @@ router.post("/register", async (req, res: Response) => {
   try {
     const data = registerSchema.parse(req.body);
 
-    if (!isDbConnected()) {
-      const result = memoryStore.createUser({
-        username: data.username,
-        email: data.email,
-        password: data.password,
-        referralCode: data.referralCode,
-      });
-
-      if ("error" in result) {
-        const status = result.error === "User already exists" ? 409 : 400;
-        res.status(status).json({ success: false, error: result.error });
-        return;
-      }
-
-      const token = signToken(result.user._id, result.user.role);
-      res.status(201).json({
-        success: true,
-        data: { accessToken: token, user: result.user },
-      });
-      return;
-    }
+    if (!requireDbConnection(res)) return;
 
     const existing = await User.findOne({
       $or: [{ email: data.email }, { username: data.username }],
@@ -104,7 +83,7 @@ router.post("/register", async (req, res: Response) => {
     }
 
     await getOrCreateUserSettings(user._id.toString());
-    const token = signToken(user._id.toString(), user.role);
+    const token = signToken(user._id.toString(), user.role, user.email);
 
     res.status(201).json({
       success: true,
@@ -131,16 +110,7 @@ router.post("/login", async (req, res: Response) => {
   try {
     const data = loginSchema.parse(req.body);
 
-    if (!isDbConnected()) {
-      const user = memoryStore.verifyLogin(data.email, data.password);
-      if (!user) {
-        res.status(401).json({ success: false, error: "Invalid credentials" });
-        return;
-      }
-      const token = signToken(user._id, user.role);
-      res.json({ success: true, data: { accessToken: token, user } });
-      return;
-    }
+    if (!requireDbConnection(res)) return;
 
     const user = await User.findOne({ email: data.email });
     if (!user) {
@@ -154,7 +124,7 @@ router.post("/login", async (req, res: Response) => {
       return;
     }
 
-    const token = signToken(user._id.toString(), user.role);
+    const token = signToken(user._id.toString(), user.role, user.email);
     res.json({
       success: true,
       data: { accessToken: token, user: sanitizeUser(user) },
@@ -171,6 +141,11 @@ router.post("/login", async (req, res: Response) => {
 /** GET /api/auth/me */
 router.get("/me", authMiddleware, async (req: AuthRequest, res: Response) => {
   res.json({ success: true, data: sanitizeUser(req.user!) });
+});
+
+/** POST /api/auth/logout — stateless JWT logout acknowledgement */
+router.post("/logout", async (_req, res: Response) => {
+  res.json({ success: true, message: "Logged out" });
 });
 
 function sanitizeUser(user: IUserDocument) {

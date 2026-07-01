@@ -1,19 +1,45 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { GameHubLayout } from "@/components/hub/GameHubLayout";
 import { GlassCard, GameButton } from "@tasks-cash/ui";
-import {
-  DUEL_TYPES,
-  PENDING_DUELS,
-  ACTIVE_DUELS,
-  DUEL_HISTORY,
-  DUEL_CHAMPIONS,
-} from "@/data/duel-arena-data";
+import { DUEL_TYPES } from "@/data/duel-arena-data";
+import { apiFetch } from "@/lib/api";
 import { cn } from "@/lib/utils";
+
+type DuelMatchApi = {
+  id: string;
+  title: string;
+  challenger?: string;
+  opponent?: string;
+  stakePreview?: string;
+  status?: string;
+  rewardPreview?: string;
+};
 
 export function DuelArenaPage() {
   const [duelType, setDuelType] = useState(DUEL_TYPES[0]);
+  const [matches, setMatches] = useState<DuelMatchApi[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    async function load() {
+      setLoading(true);
+      setError("");
+      const res = await apiFetch<DuelMatchApi[]>("/api/duels");
+      if (res.success && res.data) {
+        setMatches(res.data);
+      } else {
+        setError(res.error ?? "Failed to load duels");
+      }
+      setLoading(false);
+    }
+    load();
+  }, []);
+
+  const active = matches.filter((m) => m.status === "active");
+  const pending = matches.filter((m) => m.status === "pending");
 
   return (
     <GameHubLayout
@@ -53,86 +79,50 @@ export function DuelArenaPage() {
         <GameButton variant="gold">Send Duel Invite</GameButton>
       </GlassCard>
 
+      {loading && <p className="text-purple-400/50 text-sm mb-6">Loading duels…</p>}
+      {error && !loading && <p className="text-amber-400 text-sm mb-6">{error}</p>}
+
       <section className="mb-10">
         <h3 className="text-lg font-black text-white mb-4">Active Duels</h3>
-        <div className="grid md:grid-cols-2 gap-4">
-          {ACTIVE_DUELS.map((d) => (
-            <GlassCard key={d.id} glow="gold" className="p-5 border-amber-400/25">
-              <div className="flex items-center justify-center gap-3 mb-4">
-                <div className="text-center">
-                  <span className="text-2xl block">{d.avatarA}</span>
-                  <p className="font-bold text-white text-sm">{d.playerA}</p>
-                  <p className="text-amber-400 font-black">{d.scoreA}</p>
+        {active.length === 0 ? (
+          <GlassCard className="p-6 text-center text-purple-400/60">No active duels.</GlassCard>
+        ) : (
+          <div className="grid md:grid-cols-2 gap-4">
+            {active.map((d) => (
+              <GlassCard key={d.id} glow="gold" className="p-5 border-amber-400/25">
+                <h4 className="font-bold text-white mb-2">{d.title}</h4>
+                <p className="text-sm text-purple-300/70">{d.challenger ?? "—"} vs {d.opponent ?? "—"}</p>
+                <div className="flex flex-wrap gap-2 text-xs mt-3">
+                  {d.stakePreview && <span className="rounded-md border border-purple-500/20 bg-purple-950/30 px-2 py-1 text-purple-300">{d.stakePreview}</span>}
+                  {d.rewardPreview && <span className="rounded-md border border-emerald-400/20 bg-emerald-950/30 px-2 py-1 text-emerald-300">{d.rewardPreview}</span>}
                 </div>
-                <span className="text-purple-400/50 font-black text-lg">VS</span>
-                <div className="text-center">
-                  <span className="text-2xl block">{d.avatarB}</span>
-                  <p className="font-bold text-white text-sm">{d.playerB}</p>
-                  <p className="text-amber-400 font-black">{d.scoreB}</p>
-                </div>
-              </div>
-              <div className="flex flex-wrap gap-2 text-xs justify-center">
-                <span className="rounded-md border border-purple-500/20 bg-purple-950/30 px-2 py-1 text-purple-300">{d.missionType}</span>
-                <span className="rounded-md border border-amber-400/20 bg-amber-950/30 px-2 py-1 text-amber-300">{d.timeLeft} left</span>
-                <span className="rounded-md border border-emerald-400/20 bg-emerald-950/30 px-2 py-1 text-emerald-300">{d.reward}</span>
-              </div>
-            </GlassCard>
-          ))}
-        </div>
+              </GlassCard>
+            ))}
+          </div>
+        )}
       </section>
 
       <section className="mb-10">
         <h3 className="text-lg font-black text-white mb-4">Pending Duels</h3>
-        <div className="space-y-3">
-          {PENDING_DUELS.map((d) => (
-            <GlassCard key={d.id} glow="violet" className="p-5 flex flex-wrap items-center gap-4 justify-between">
-              <div>
-                <p className="font-bold text-white">{d.playerA} vs {d.playerB}</p>
-                <p className="text-xs text-purple-400/50 mt-1">{d.missionType} · {d.reward} · {d.timeLeft}</p>
-              </div>
-              <div className="flex gap-2">
-                <GameButton variant="gold" size="sm">Accept</GameButton>
-                <GameButton variant="secondary" size="sm">Decline</GameButton>
-              </div>
-            </GlassCard>
-          ))}
-        </div>
-      </section>
-
-      <div className="grid lg:grid-cols-2 gap-8 mb-10">
-        <section>
-          <h3 className="text-lg font-black text-white mb-4">Duel History</h3>
-          <div className="space-y-2">
-            {DUEL_HISTORY.map((h) => (
-              <GlassCard key={h.id} glow="purple" className="p-4">
-                <p className="text-sm text-white"><strong className="text-amber-400">{h.winner}</strong> defeated {h.loser}</p>
-                <p className="text-xs text-purple-400/50 mt-1">{h.missionType} · {h.reward} · {h.date}</p>
-              </GlassCard>
-            ))}
-          </div>
-        </section>
-
-        <section>
-          <h3 className="text-lg font-black text-white mb-4">Top Duel Champions</h3>
-          <div className="space-y-2">
-            {DUEL_CHAMPIONS.map((w) => (
-              <GlassCard
-                key={w.rank}
-                glow={w.rank === 1 ? "gold" : "purple"}
-                className={cn("p-3 flex items-center gap-3", w.rank <= 3 && "border-amber-400/20")}
-              >
-                <span className={cn("w-7 font-black text-sm", w.rank <= 3 ? "text-amber-400" : "text-purple-400")}>#{w.rank}</span>
-                <span className="text-xl">{w.avatar}</span>
-                <div className="flex-1 min-w-0">
-                  <p className="font-bold text-white text-sm truncate">{w.username}</p>
-                  <p className="text-[10px] text-purple-400/50">{w.title}</p>
+        {pending.length === 0 ? (
+          <GlassCard className="p-6 text-center text-purple-400/60">No pending duels.</GlassCard>
+        ) : (
+          <div className="space-y-3">
+            {pending.map((d) => (
+              <GlassCard key={d.id} glow="violet" className="p-5 flex flex-wrap items-center gap-4 justify-between">
+                <div>
+                  <p className="font-bold text-white">{d.challenger ?? "—"} vs {d.opponent ?? "—"}</p>
+                  <p className="text-xs text-purple-400/50 mt-1">{d.title} · {d.rewardPreview ?? d.stakePreview ?? "—"}</p>
                 </div>
-                <span className="text-xs font-bold text-amber-400">{w.wins}W</span>
+                <div className="flex gap-2">
+                  <GameButton variant="gold" size="sm">Accept</GameButton>
+                  <GameButton variant="secondary" size="sm">Decline</GameButton>
+                </div>
               </GlassCard>
             ))}
           </div>
-        </section>
-      </div>
+        )}
+      </section>
     </GameHubLayout>
   );
 }

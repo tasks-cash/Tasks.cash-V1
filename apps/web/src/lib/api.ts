@@ -26,6 +26,16 @@ export function clearToken(): void {
   localStorage.removeItem("tc_user");
 }
 
+/** Clear client session and httpOnly cookie */
+export async function logoutSession(): Promise<void> {
+  clearToken();
+  try {
+    await fetch(`${getApiBase()}/api/auth/logout`, { method: "POST", credentials: "include" });
+  } catch {
+    /* cookie clear is best-effort when offline */
+  }
+}
+
 export async function apiFetch<T>(
   path: string,
   options: RequestInit = {}
@@ -38,7 +48,7 @@ export async function apiFetch<T>(
   if (token) headers["Authorization"] = `Bearer ${token}`;
 
   try {
-    const res = await fetch(`${getApiBase()}${path}`, { ...options, headers });
+    const res = await fetch(`${getApiBase()}${path}`, { ...options, headers, credentials: "include" });
     const data = await res.json().catch(() => ({ success: false, error: "Invalid response" }));
     return data as ApiResult<T>;
   } catch {

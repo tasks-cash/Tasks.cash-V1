@@ -15,6 +15,25 @@ export interface IDNAQuestionDocument extends Document {
   updatedAt: Date;
 }
 
+const ANSWER_TYPE_ENUM: DNAQuestionType[] = [
+  "text",
+  "country",
+  "number",
+  "time",
+  "textarea",
+  "short_text",
+  "paragraph",
+  "single_choice",
+  "multiple_choice",
+  "checkbox",
+  "dropdown",
+  "image_upload",
+  "slider",
+  "rating",
+  "date",
+  "file_upload",
+];
+
 const dnaQuestionSchema = new Schema<IDNAQuestionDocument>(
   {
     prompt: { type: String, required: true, trim: true },
@@ -25,18 +44,7 @@ const dnaQuestionSchema = new Schema<IDNAQuestionDocument>(
     },
     answerType: {
       type: String,
-      enum: [
-        "short_text",
-        "paragraph",
-        "single_choice",
-        "multiple_choice",
-        "checkbox",
-        "dropdown",
-        "slider",
-        "rating",
-        "date",
-        "file_upload",
-      ],
+      enum: ANSWER_TYPE_ENUM,
       required: true,
     },
     options: [{ type: String }],

@@ -1,8 +1,7 @@
 import type { IReferralMeResponse, IReferralRecord, ReferralStatus } from "@tasks-cash/types";
-import { isDbConnected } from "../config/database";
 import { Referral, IReferralDocument } from "../models/Referral";
 import { User } from "../models/User";
-import { buildReferralLink, memoryStore } from "../lib/memoryStore";
+import { buildReferralLink } from "../lib/referralLink";
 
 function mapReferralDoc(doc: IReferralDocument): IReferralRecord {
   const referred = doc.referredUserId as unknown as {
@@ -40,18 +39,6 @@ function mapReferralDoc(doc: IReferralDocument): IReferralRecord {
 }
 
 export async function getReferralMe(userId: string, referralCode: string): Promise<IReferralMeResponse> {
-  if (!isDbConnected()) {
-    return memoryStore.getReferralMe(userId) ?? {
-      referralCode,
-      referralLink: buildReferralLink(referralCode),
-      totalInvites: 0,
-      activeReferrals: 0,
-      pendingRewards: 0,
-      earnedRewards: 0,
-      history: [],
-    };
-  }
-
   const referrals = await Referral.find({ referrerId: userId })
     .populate("referredUserId", "username createdAt")
     .sort({ createdAt: -1 });
@@ -82,10 +69,6 @@ export async function getReferralHistory(userId: string) {
 }
 
 export async function validateReferralCode(code: string, selfReferralCode?: string) {
-  if (!isDbConnected()) {
-    return memoryStore.validateReferralCode(code, selfReferralCode);
-  }
-
   const normalized = code.trim().toUpperCase();
   if (!normalized) return { valid: false, error: "Referral code is required" };
   if (selfReferralCode && normalized === selfReferralCode.toUpperCase()) {
@@ -98,8 +81,6 @@ export async function validateReferralCode(code: string, selfReferralCode?: stri
 }
 
 export async function listAdminReferrals() {
-  if (!isDbConnected()) return memoryStore.listAdminReferrals();
-
   const referrals = await Referral.find()
     .populate("referrerId", "username referralCode")
     .populate("referredUserId", "username createdAt")
@@ -109,8 +90,6 @@ export async function listAdminReferrals() {
 }
 
 export async function updateReferralStatus(id: string, status: ReferralStatus, adminNote?: string) {
-  if (!isDbConnected()) return memoryStore.updateReferralStatus(id, status, adminNote);
-
   const update: Partial<IReferralDocument> = { status, adminNote };
   if (status === "active") update.activatedAt = new Date();
   if (status === "rewarded") update.rewardedAt = new Date();
@@ -128,8 +107,6 @@ export async function createReferralOnRegister(
   referralCode: string,
   bonusCoins: number
 ) {
-  if (!isDbConnected()) return null;
-
   return Referral.create({
     referrerId,
     referredUserId,

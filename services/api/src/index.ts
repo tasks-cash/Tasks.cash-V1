@@ -31,6 +31,10 @@ import counterRoutes from "./routes/counters";
 import adminCounterRoutes from "./routes/adminCounters";
 import explorerDnaRoutes from "./routes/explorerDna";
 import adminExplorerDnaRoutes from "./routes/adminExplorerDna";
+import adminDnaQuestionsRoutes from "./routes/adminDnaQuestions";
+import raidRoutes from "./routes/raids";
+import duelRoutes from "./routes/duels";
+import vaultRoutes from "./routes/vault";
 
 // Load .env from monorepo root
 dotenv.config({ path: path.resolve(__dirname, "../../../.env") });
@@ -80,6 +84,10 @@ app.use("/api/counters", counterRoutes);
 app.use("/api/admin/counters", adminCounterRoutes);
 app.use("/api/explorer-dna", explorerDnaRoutes);
 app.use("/api/admin/explorer-dna", adminExplorerDnaRoutes);
+app.use("/api/admin/dna-questions", adminDnaQuestionsRoutes);
+app.use("/api/raids", raidRoutes);
+app.use("/api/duels", duelRoutes);
+app.use("/api/vault", vaultRoutes);
 
 // 404 handler
 app.use((_req, res) => {
@@ -90,7 +98,7 @@ async function bootstrap() {
   try {
     await connectDatabase();
   } catch (err) {
-    console.warn("[DB] MongoDB unavailable — using in-memory fallback store");
+    console.warn("[DB] MongoDB unavailable — API will return 503 for database routes");
   }
 
   try {
