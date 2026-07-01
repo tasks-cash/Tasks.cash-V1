@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { GAME_MODES } from "@/data/mock-data";
 import { SectionShell } from "@/components/ui/GlowCard";
 import { GlowCard } from "@/components/ui/GlowCard";
@@ -36,16 +37,15 @@ export function GameModeCardsSection() {
                 <p className="text-purple-200/60 text-sm md:text-base lg:text-lg leading-relaxed flex-1 mb-8">
                   {mode.description}
                 </p>
-                <ArenaButton
-                  variant={mode.id === "referral-arena" ? "gold" : "purple"}
-                  size="lg"
-                  className="w-full sm:w-auto"
-                  onClick={() => {
-                    document.getElementById(mode.id)?.scrollIntoView({ behavior: "smooth" });
-                  }}
-                >
-                  {mode.cta}
-                </ArenaButton>
+                <Link href={`/${mode.id}`}>
+                  <ArenaButton
+                    variant={mode.id === "referral-arena" ? "gold" : "purple"}
+                    size="lg"
+                    className="w-full sm:w-auto"
+                  >
+                    {mode.cta}
+                  </ArenaButton>
+                </Link>
               </div>
             </GlowCard>
           </motion.div>
