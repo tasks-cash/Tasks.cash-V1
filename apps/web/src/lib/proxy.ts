@@ -13,7 +13,7 @@ function resolveAuthorization(request: Request): string {
   const cookie = request.headers.get("Cookie");
   if (!cookie) return "";
 
-  const match = cookie.match(/(?:^|;\s*)tc_session=([^;]+)/);
+  const match = cookie.match(/(?:^|;\s*)tasks_cash_token=([^;]+)/);
   if (!match) return "";
 
   return `Bearer ${decodeURIComponent(match[1])}`;

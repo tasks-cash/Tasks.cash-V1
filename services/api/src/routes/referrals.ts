@@ -3,6 +3,7 @@ import { z } from "zod";
 import { authMiddleware, AuthRequest } from "../middleware/auth";
 import {
   getReferralHistory,
+  getReferralLeaderboards,
   getReferralMe,
   validateReferralCode,
 } from "../services/referralService";
@@ -20,15 +21,40 @@ router.get("/", authMiddleware, async (req: AuthRequest, res: Response) => {
 /** GET /api/referrals/me */
 router.get("/me", authMiddleware, async (req: AuthRequest, res: Response) => {
   if (!requireDbConnection(res)) return;
-  const data = await getReferralMe(req.user!._id.toString(), req.user!.referralCode);
-  res.json({ success: true, data });
+  try {
+    const data = await getReferralMe(req.user!._id.toString(), req.user!.referralCode);
+    res.json({ success: true, data });
+  } catch (err) {
+    console.error("[referrals/me]", err);
+    res.status(500).json({ success: false, error: "Failed to load referral profile" });
+  }
 });
 
 /** GET /api/referrals/history */
 router.get("/history", authMiddleware, async (req: AuthRequest, res: Response) => {
   if (!requireDbConnection(res)) return;
-  const history = await getReferralHistory(req.user!._id.toString());
-  res.json({ success: true, data: history });
+  try {
+    const history = await getReferralHistory(req.user!._id.toString());
+    res.json({ success: true, data: history });
+  } catch (err) {
+    console.error("[referrals/history]", err);
+    res.status(500).json({ success: false, error: "Failed to load referral history" });
+  }
+});
+
+/** GET /api/referrals/leaderboards */
+router.get("/leaderboards", authMiddleware, async (_req: AuthRequest, res: Response) => {
+  if (!requireDbConnection(res)) return;
+  try {
+    const data = await getReferralLeaderboards();
+    res.json({ success: true, data });
+  } catch (err) {
+    console.error("[referrals/leaderboards]", err);
+    res.json({
+      success: true,
+      data: { daily: [], weekly: [], monthly: [] },
+    });
+  }
 });
 
 /** POST /api/referrals/validate-code */

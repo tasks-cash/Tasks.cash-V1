@@ -78,15 +78,6 @@ function RegisterForm() {
       clearStoredReferralCode();
       setToken(res.data.accessToken);
       if (res.data.user) localStorage.setItem("tc_user", JSON.stringify(res.data.user));
-      await fetch("/api/auth/sync", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${res.data.accessToken}`,
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({ token: res.data.accessToken }),
-      });
       router.push("/dashboard");
       return;
     }

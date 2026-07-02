@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { motion } from "framer-motion";
 import { BrandLogo, GlassCard, MotionReveal, ParticleField } from "@tasks-cash/ui";
 
@@ -35,7 +34,7 @@ export function AuthLayout({ title, subtitle, children }: { title: string; subti
       <div className="flex-1 flex items-center justify-center px-4 py-12 relative z-10">
         <MotionReveal className="w-full max-w-md">
           <div className="text-center mb-8 lg:hidden">
-            <Link href="/"><BrandLogo size="md" showTagline /></Link>
+            <BrandLogo size="md" href="/" showTagline />
           </div>
           <GlassCard glow="violet" className="p-8 md:p-10">
             <div className="hidden lg:flex justify-center mb-6">

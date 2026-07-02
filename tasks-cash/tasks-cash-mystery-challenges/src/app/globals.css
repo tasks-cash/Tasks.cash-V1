@@ -85,6 +85,11 @@
     @apply inline-flex items-center gap-1.5 rounded-full border border-purple-400/30 bg-purple-950/40 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-purple-400/70;
   }
 
+  .vh-field {
+    @apply w-full rounded-xl border border-purple-500/25 bg-black/50 px-4 py-3 text-sm text-purple-100 placeholder:text-purple-400/35 outline-none transition-colors;
+    @apply focus:border-amber-400/45 focus:ring-1 focus:ring-amber-400/20;
+  }
+
   .portal-ring {
     @apply rounded-full border border-purple-500/30;
     background: conic-gradient(from 0deg, rgba(124,58,237,0.35), rgba(212,175,55,0.25), rgba(168,85,247,0.3), rgba(124,58,237,0.35));

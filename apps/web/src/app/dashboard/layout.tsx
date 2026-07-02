@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { EXPLORER_DNA_URL } from "@/lib/constants";
 import { Navbar, CoinBadge, Badge, PageTransition, DashboardSidebar } from "@tasks-cash/ui";
 import { MysteryChallengesButton } from "@/components/mystery/MysteryChallengesButton";
-import { clearToken, getToken, apiFetch } from "@/lib/api";
+import { apiFetch, clearToken, logoutSession } from "@/lib/api";
 
 const NAV_LINKS = [
   { href: "/dashboard", label: "Overview", icon: "◈" },
@@ -16,7 +16,7 @@ const NAV_LINKS = [
   { href: "/dashboard/wallet", label: "Wallet", icon: "💰" },
   { href: "/dashboard/withdrawals", label: "Withdrawals", icon: "◈" },
   { href: "/dashboard/referrals", label: "Referrals", icon: "🔗" },
-  { href: EXPLORER_DNA_URL, label: "Explorer DNA", icon: "🧬", badgeKey: "dna" as const, external: true },
+  { href: EXPLORER_DNA_URL, label: "Explorer DNA", icon: "🧬", badgeKey: "dna" as const },
   { href: "/dashboard/level", label: "Level", icon: "⚡" },
   { href: "/dashboard/leaderboard", label: "Rank", icon: "🏆" },
   { href: "/dashboard/notifications", label: "Alerts", icon: "🔔" },
@@ -32,25 +32,29 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [username, setUsername] = useState("");
   const [unreadCount, setUnreadCount] = useState(0);
   const [dnaPending, setDnaPending] = useState(0);
+  const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(() => {
-    if (!getToken()) { router.push("/login"); return; }
-    try {
-      const user = localStorage.getItem("tc_user");
-      if (user) {
-        const p = JSON.parse(user);
-        setCoins(p.coins ?? 0);
-        setUsername(p.username ?? "");
+    async function init() {
+      const me = await apiFetch<{ username?: string; coins?: number }>("/api/auth/me");
+      if (!me.success || !me.data) {
+        router.replace("/login");
+        return;
       }
-    } catch {
-      /* ignore invalid stored user */
+
+      setCoins(me.data.coins ?? 0);
+      setUsername(me.data.username ?? "");
+      localStorage.setItem("tc_user", JSON.stringify(me.data));
+      setAuthChecked(true);
+
+      apiFetch<{ count: number }>("/api/notifications/unread-count").then((res) => {
+        if (res.success && res.data) setUnreadCount(res.data.count);
+      });
+      apiFetch<{ profile: { pendingQuestions: number } }>("/api/explorer-dna/me").then((res) => {
+        if (res.success && res.data?.profile) setDnaPending(res.data.profile.pendingQuestions);
+      });
     }
-    apiFetch<{ count: number }>("/api/notifications/unread-count").then((res) => {
-      if (res.success && res.data) setUnreadCount(res.data.count);
-    });
-    apiFetch<{ profile: { pendingQuestions: number } }>("/api/explorer-dna/me").then((res) => {
-      if (res.success && res.data?.profile) setDnaPending(res.data.profile.pendingQuestions);
-    });
+    void init();
   }, [router, pathname]);
 
   const sidebarItems = NAV_LINKS.map((item) => ({
@@ -60,13 +64,25 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     badge: "badgeKey" in item && item.badgeKey === "dna" ? dnaPending : undefined,
   }));
 
+  if (!authChecked) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-black text-purple-400/60 text-sm">
+        Verifying session…
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex w-full bg-black">
       <DashboardSidebar
         items={sidebarItems}
         pathname={pathname}
         subtitle="Explorer Command Center"
-        onLogout={() => { clearToken(); router.push("/"); }}
+        onLogout={() => {
+          void logoutSession();
+          clearToken();
+          router.replace("/login");
+        }}
       />
       <div className="flex-1 min-w-0">
         <Navbar

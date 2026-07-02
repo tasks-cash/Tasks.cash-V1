@@ -32,16 +32,6 @@ function LoginForm() {
       setToken(res.data.accessToken);
       if (res.data.user) localStorage.setItem("tc_user", JSON.stringify(res.data.user));
 
-      await fetch("/api/auth/sync", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${res.data.accessToken}`,
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({ token: res.data.accessToken }),
-      });
-
       const next = buildPostLoginRedirect(rawRedirect, res.data.accessToken);
       if (next.startsWith("http")) {
         window.location.href = next;

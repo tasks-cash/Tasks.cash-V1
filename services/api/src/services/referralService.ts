@@ -68,6 +68,59 @@ export async function getReferralHistory(userId: string) {
   return me.history;
 }
 
+export interface ReferralLeaderboardChampion {
+  rank: number;
+  userId: string;
+  username: string;
+  referrals: number;
+  rewardCoins: number;
+}
+
+export interface ReferralLeaderboardsResponse {
+  daily: ReferralLeaderboardChampion[];
+  weekly: ReferralLeaderboardChampion[];
+  monthly: ReferralLeaderboardChampion[];
+}
+
+async function buildReferralLeaderboardSince(since: Date): Promise<ReferralLeaderboardChampion[]> {
+  const rows = await Referral.aggregate<{ _id: import("mongoose").Types.ObjectId; referrals: number; rewardCoins: number }>([
+    { $match: { createdAt: { $gte: since } } },
+    {
+      $group: {
+        _id: "$referrerId",
+        referrals: { $sum: 1 },
+        rewardCoins: { $sum: "$rewardCoins" },
+      },
+    },
+    { $sort: { referrals: -1 } },
+    { $limit: 10 },
+  ]);
+
+  if (rows.length === 0) return [];
+
+  const users = await User.find({ _id: { $in: rows.map((r) => r._id) } }).select("username");
+  const names = new Map(users.map((u) => [u._id.toString(), u.username]));
+
+  return rows.map((row, index) => ({
+    rank: index + 1,
+    userId: row._id.toString(),
+    username: names.get(row._id.toString()) ?? "Explorer",
+    referrals: row.referrals,
+    rewardCoins: row.rewardCoins,
+  }));
+}
+
+export async function getReferralLeaderboards(): Promise<ReferralLeaderboardsResponse> {
+  const now = Date.now();
+  const dayMs = 24 * 60 * 60 * 1000;
+  const [daily, weekly, monthly] = await Promise.all([
+    buildReferralLeaderboardSince(new Date(now - dayMs)),
+    buildReferralLeaderboardSince(new Date(now - 7 * dayMs)),
+    buildReferralLeaderboardSince(new Date(now - 30 * dayMs)),
+  ]);
+  return { daily, weekly, monthly };
+}
+
 export async function validateReferralCode(code: string, selfReferralCode?: string) {
   const normalized = code.trim().toUpperCase();
   if (!normalized) return { valid: false, error: "Referral code is required" };

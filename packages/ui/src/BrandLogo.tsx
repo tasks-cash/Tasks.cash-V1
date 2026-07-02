@@ -9,6 +9,7 @@ interface BrandLogoProps {
   className?: string;
   imageClassName?: string;
   size?: "xs" | "sm" | "md" | "lg" | "xl" | "hero";
+  /** When set, wraps logo in a plain <a>. Omit when parent is Next.js <Link> to avoid nested anchors. */
   href?: string | null;
   animated?: boolean;
   showTagline?: boolean;
@@ -29,7 +30,7 @@ export function BrandLogo({
   className,
   imageClassName,
   size = "md",
-  href = "/",
+  href,
   animated = true,
   showTagline = false,
 }: BrandLogoProps) {

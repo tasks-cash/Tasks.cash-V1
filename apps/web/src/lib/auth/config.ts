@@ -1,6 +1,6 @@
 /** Central auth route configuration — main Tasks.cash web app */
 
-export const SESSION_COOKIE = "tc_session";
+export const SESSION_COOKIE = "tasks_cash_token";
 
 export const AUTH_PAGES = [
   "/login",

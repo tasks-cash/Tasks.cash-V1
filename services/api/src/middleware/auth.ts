@@ -52,7 +52,7 @@ function extractBearerToken(req: AuthRequest): string | null {
   const cookieHeader = req.headers.cookie;
   if (!cookieHeader) return null;
 
-  const match = cookieHeader.match(/(?:^|;\s*)tc_session=([^;]+)/);
+  const match = cookieHeader.match(/(?:^|;\s*)tasks_cash_token=([^;]+)/);
   return match ? decodeURIComponent(match[1]) : null;
 }
 
