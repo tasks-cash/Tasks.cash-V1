@@ -2,11 +2,17 @@ import mongoose, { Document, Schema } from "mongoose";
 import type { DNAModuleId, DNAQuestionType } from "@tasks-cash/types";
 
 export interface IDNAQuestionDocument extends Document {
+  title: string;
   prompt: string;
   category: DNAModuleId | "continuous";
   answerType: DNAQuestionType;
-  options?: string[];
+  options: string[];
+  required: boolean;
+  difficulty: string;
   xpReward: number;
+  bronzeCoinsReward: number;
+  silverCoinsReward: number;
+  goldCoinsReward: number;
   coinReward: number;
   enabled: boolean;
   order: number;
@@ -36,6 +42,7 @@ const ANSWER_TYPE_ENUM: DNAQuestionType[] = [
 
 const dnaQuestionSchema = new Schema<IDNAQuestionDocument>(
   {
+    title: { type: String, trim: true, default: "" },
     prompt: { type: String, required: true, trim: true },
     category: {
       type: String,
@@ -47,8 +54,13 @@ const dnaQuestionSchema = new Schema<IDNAQuestionDocument>(
       enum: ANSWER_TYPE_ENUM,
       required: true,
     },
-    options: [{ type: String }],
-    xpReward: { type: Number, default: 50 },
+    options: { type: [String], default: [] },
+    required: { type: Boolean, default: false },
+    difficulty: { type: String, default: "simple" },
+    xpReward: { type: Number, default: 5 },
+    bronzeCoinsReward: { type: Number, default: 1 },
+    silverCoinsReward: { type: Number, default: 0 },
+    goldCoinsReward: { type: Number, default: 0 },
     coinReward: { type: Number, default: 0 },
     enabled: { type: Boolean, default: true },
     order: { type: Number, default: 0, index: true },
