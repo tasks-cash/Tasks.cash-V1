@@ -5,6 +5,7 @@ export interface IVideoSubmissionDoc extends Document {
   userId: string;
   videoUrl: string;
   platform: VideoPlatform;
+  visibleViewsRaw: string;
   visibleViews: number;
   ideaTitle: string;
   description: string;
@@ -26,7 +27,8 @@ const videoSubmissionSchema = new Schema<IVideoSubmissionDoc>(
       enum: ["TikTok", "Instagram", "YouTube", "Facebook", "Snapchat", "X / Twitter", "Unknown"],
       default: "Unknown",
     },
-    visibleViews: { type: Number, default: 0, min: 0 },
+    visibleViewsRaw: { type: String, required: true, trim: true },
+    visibleViews: { type: Number, required: true, min: 1 },
     ideaTitle: { type: String, required: true, trim: true },
     description: { type: String, required: true, trim: true, maxlength: 2000 },
     status: {

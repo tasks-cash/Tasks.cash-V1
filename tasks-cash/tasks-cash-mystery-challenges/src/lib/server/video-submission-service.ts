@@ -10,6 +10,7 @@ function mapDoc(doc: IVideoSubmissionDoc): VideoSubmission {
     userId: doc.userId,
     videoUrl: doc.videoUrl,
     platform: doc.platform,
+    visibleViewsRaw: doc.visibleViewsRaw,
     visibleViews: doc.visibleViews,
     ideaTitle: doc.ideaTitle,
     description: doc.description,
@@ -46,6 +47,7 @@ async function seedDefaultSubmissions(userId: string): Promise<void> {
       userId,
       videoUrl: "https://www.youtube.com/watch?v=vh-approved-demo",
       platform: "YouTube",
+      visibleViewsRaw: "24500",
       visibleViews: 24500,
       ideaTitle: "Portal Boss Rush Highlights",
       description: "Gaming montage with strong retention in the first 3 seconds — ideal for Video Hunter rewards.",
@@ -61,6 +63,7 @@ async function seedDefaultSubmissions(userId: string): Promise<void> {
       userId,
       videoUrl: "https://www.tiktok.com/@explorer/video/pending-demo",
       platform: "TikTok",
+      visibleViewsRaw: "11.8k",
       visibleViews: 11800,
       ideaTitle: "Rewards Showdown Reel",
       description: "Debate-style hook comparing two mystery reward systems for our audience.",
@@ -76,6 +79,7 @@ async function seedDefaultSubmissions(userId: string): Promise<void> {
       userId,
       videoUrl: "https://www.youtube.com/watch?v=vh-rejected-demo",
       platform: "YouTube",
+      visibleViewsRaw: "9200",
       visibleViews: 9200,
       ideaTitle: "Low View Test Clip",
       description: "Submitted before hitting the 10K view threshold.",
@@ -106,6 +110,7 @@ export async function createVideoSubmission(
   userId: string,
   input: {
     videoUrl: string;
+    visibleViewsRaw: string;
     visibleViews: number;
     ideaTitle: string;
     description: string;
@@ -120,6 +125,7 @@ export async function createVideoSubmission(
     userId,
     videoUrl: input.videoUrl,
     platform,
+    visibleViewsRaw: input.visibleViewsRaw,
     visibleViews: input.visibleViews,
     ideaTitle: input.ideaTitle,
     description: input.description,

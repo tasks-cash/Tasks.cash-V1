@@ -145,6 +145,11 @@ export function VideoHunterPage() {
 
   const detected = url.trim() ? detectPlatformFromUrl(url) : null;
   const platform = detected ?? (manualPlatform || null);
+  const parsedViews = useMemo(() => (views.trim() ? parseViewsInput(views) : null), [views]);
+  const viewsError =
+    views.trim().length > 0 && parsedViews === null
+      ? "Invalid views — use a number or shorthand like 55K, 1.2k, or 2M"
+      : "";
 
   const load = useCallback(async () => {
     setLoadState("loading");
@@ -175,6 +180,13 @@ export function VideoHunterPage() {
     e.preventDefault();
     if (!platform || submitting) return;
 
+    const rawViews = views.trim();
+    const parsed = parseViewsInput(rawViews);
+    if (!rawViews || parsed === null) {
+      setSubmitError("Enter valid visible views (e.g. 55000, 55K, 1.2k, 2M)");
+      return;
+    }
+
     setSubmitting(true);
     setSubmitError("");
 
@@ -183,7 +195,7 @@ export function VideoHunterPage() {
       body: JSON.stringify({
         videoUrl: url.trim(),
         platform,
-        visibleViews: parseViewsInput(views),
+        visibleViewsRaw: rawViews,
         ideaTitle: ideaTitle.trim(),
         description: description.trim(),
       }),
@@ -313,13 +325,18 @@ export function VideoHunterPage() {
                   <Field label="Visible Views">
                     <input
                       type="text"
-                      inputMode="numeric"
                       value={views}
                       onChange={(e) => setViews(e.target.value)}
-                      placeholder="e.g. 15,000"
-                      className="vh-field"
+                      placeholder="Example: 55000 or 55K"
+                      className={cn("vh-field", viewsError && "border-red-400/50")}
                       required
                     />
+                    {parsedViews !== null && (
+                      <p className="mt-2 text-xs text-emerald-300/90">
+                        Parsed views: {formatViews(parsedViews)}
+                      </p>
+                    )}
+                    {viewsError && <p className="mt-2 text-xs text-red-400">{viewsError}</p>}
                   </Field>
 
                   <Field label="Idea Title">
@@ -349,7 +366,7 @@ export function VideoHunterPage() {
                     variant="gold"
                     size="lg"
                     className="w-full sm:w-auto"
-                    disabled={!platform || submitting}
+                    disabled={!platform || submitting || !views.trim() || parsedViews === null}
                   >
                     {submitting ? "Submitting…" : "Submit Video"}
                   </ArenaButton>

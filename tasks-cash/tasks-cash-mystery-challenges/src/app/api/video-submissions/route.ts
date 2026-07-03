@@ -33,7 +33,7 @@ export async function POST(request: Request) {
   try {
     const body = (await request.json()) as {
       videoUrl?: string;
-      visibleViews?: string | number;
+      visibleViewsRaw?: string;
       ideaTitle?: string;
       description?: string;
       platform?: string;
@@ -42,16 +42,22 @@ export async function POST(request: Request) {
     const videoUrl = String(body.videoUrl ?? "").trim();
     const ideaTitle = String(body.ideaTitle ?? "").trim();
     const description = String(body.description ?? "").trim();
-    const visibleViews = parseViewsInput(String(body.visibleViews ?? "0"));
+    const visibleViewsRaw = String(body.visibleViewsRaw ?? "").trim();
     const platform = body.platform?.trim() || detectPlatformFromUrl(videoUrl) || "Unknown";
 
     if (!videoUrl) return fail("videoUrl is required");
     if (!ideaTitle) return fail("ideaTitle is required");
     if (!description) return fail("description is required");
-    if (visibleViews <= 0) return fail("visibleViews must be greater than 0");
+    if (!visibleViewsRaw) return fail("visibleViews is required");
+
+    const visibleViews = parseViewsInput(visibleViewsRaw);
+    if (visibleViews === null) {
+      return fail("Invalid visible views — use a number or shorthand like 55K, 1.2k, or 2M");
+    }
 
     const submission = await createVideoSubmission(session.userId, {
       videoUrl,
+      visibleViewsRaw,
       visibleViews,
       ideaTitle,
       description,

@@ -14,6 +14,7 @@ export interface VideoSubmission {
   userId: string;
   videoUrl: string;
   platform: VideoPlatform;
+  visibleViewsRaw: string;
   visibleViews: number;
   ideaTitle: string;
   description: string;

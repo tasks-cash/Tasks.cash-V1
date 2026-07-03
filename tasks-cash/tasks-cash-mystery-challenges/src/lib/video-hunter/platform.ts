@@ -33,7 +33,4 @@ export function formatViews(views: number): string {
   return views.toLocaleString();
 }
 
-export function parseViewsInput(raw: string): number {
-  const n = Number(String(raw).replace(/,/g, "").trim());
-  return Number.isFinite(n) && n >= 0 ? Math.floor(n) : 0;
-}
+export { parseViewsInput } from "./parse-views-input";
