@@ -7,9 +7,12 @@ export interface ApiResult<T> {
 export async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<ApiResult<T>> {
   try {
     const headers: Record<string, string> = {
-      "Content-Type": "application/json",
       ...(options.headers as Record<string, string>),
     };
+
+    if (!(options.body instanceof FormData)) {
+      headers["Content-Type"] = "application/json";
+    }
 
     const res = await fetch(path, { ...options, headers, credentials: "include" });
     const json = (await res.json().catch(() => ({}))) as ApiResult<T> & { message?: string };
@@ -22,4 +25,8 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}): Prom
   } catch {
     return { success: false, error: "Network error" };
   }
+}
+
+export async function apiFormFetch<T>(path: string, formData: FormData): Promise<ApiResult<T>> {
+  return apiFetch<T>(path, { method: "POST", body: formData });
 }
