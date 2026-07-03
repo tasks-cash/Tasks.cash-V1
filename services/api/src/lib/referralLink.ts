@@ -1,7 +1,5 @@
-function appBaseUrl() {
-  return process.env.APP_URL ?? "http://localhost:3000";
-}
+import { APP_URL } from "../config/env";
 
 export function buildReferralLink(code: string) {
-  return `${appBaseUrl()}/register?ref=${encodeURIComponent(code)}`;
+  return `${APP_URL}/register?ref=${encodeURIComponent(code)}`;
 }

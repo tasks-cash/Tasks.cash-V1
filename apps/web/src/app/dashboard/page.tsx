@@ -17,6 +17,7 @@ import { useGame } from "@/components/game/GameProvider";
 import { apiFetch } from "@/lib/api";
 import { buildRPGProgress } from "@tasks-cash/utils";
 import type { DashboardStats, RPGStatType, ICurrencies } from "@tasks-cash/types";
+import { ROUTES } from "@/config/routes";
 import type { ExplorerEntry } from "@tasks-cash/ui";
 import type { ActivityEntry } from "@tasks-cash/ui";
 
@@ -149,12 +150,12 @@ export default function DashboardOverviewPage() {
 
       {/* Mystery Mode — full-width premium entry */}
       <section className="mb-10">
-        <MysteryModePortalCard href="/mystery-challenges" secretCount={5} />
+        <MysteryModePortalCard href={ROUTES.challenge.hub} secretCount={5} />
       </section>
 
       {/* Challenge portal */}
       <div className="grid md:grid-cols-2 gap-6 mb-10">
-        <ChallengePortalCard href="/mystery-challenges" activeCount={activeChallenges} />
+        <ChallengePortalCard href={ROUTES.challenge.hub} activeCount={activeChallenges} />
       </div>
 
       {/* Currency cards */}

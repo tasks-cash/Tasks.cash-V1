@@ -1,15 +1,8 @@
-export const DEFAULT_REDIRECT = "/dashboard";
+import { MAIN_APP_URL, ROUTES, trustedExternalOrigins } from "@/config/routes";
 
-const TRUSTED_EXTERNAL_ORIGINS = ["http://localhost:3001", "https://challenge.tasks.cash"] as const;
-
-const MAIN_APP_URL = process.env.NEXT_PUBLIC_MAIN_APP_URL ?? "http://localhost:3000";
-const CHALLENGE_APP_URL = process.env.NEXT_PUBLIC_CHALLENGE_APP_URL ?? "http://localhost:3001";
+export const DEFAULT_REDIRECT = ROUTES.main.dashboard;
 
 const AUTH_PATHS = ["/login", "/register", "/forgot-password"];
-
-function trustedExternalOrigins(): Set<string> {
-  return new Set<string>([...TRUSTED_EXTERNAL_ORIGINS, new URL(CHALLENGE_APP_URL).origin]);
-}
 
 function isAuthPath(pathname: string): boolean {
   return AUTH_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));

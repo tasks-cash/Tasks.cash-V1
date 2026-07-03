@@ -1,10 +1,9 @@
 import type { ReferralStatus } from "@/types/referrals";
-
-const MAIN_APP_URL = process.env.NEXT_PUBLIC_MAIN_APP_URL ?? "http://localhost:3000";
+import { ROUTES } from "@/config/routes";
 
 export function buildReferralLink(code: string): string {
   if (!code) return "";
-  return `${MAIN_APP_URL}/register?ref=${encodeURIComponent(code)}`;
+  return `${ROUTES.main.register}?ref=${encodeURIComponent(code)}`;
 }
 
 export const REFERRAL_STATUS_LABELS: Record<ReferralStatus, { label: string; className: string }> = {

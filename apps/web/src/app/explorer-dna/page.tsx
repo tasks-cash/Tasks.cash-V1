@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
-import { EXPLORER_DNA_URL } from "@/lib/constants";
+import { ROUTES } from "@/config/routes";
 
 export default function ExplorerDnaRedirectPage() {
-  redirect(EXPLORER_DNA_URL);
+  redirect(ROUTES.challenge.explorerDna);
 }

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { MAIN_APP_URL } from "@/config/env";
 import { Cinzel, Inter, Orbitron, Rajdhani } from "next/font/google";
 import { LoadingProvider } from "@/components/providers/LoadingProvider";
 import { GameProvider } from "@/components/game/GameProvider";
@@ -28,7 +29,7 @@ const rajdhani = Rajdhani({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"),
+  metadataBase: new URL(MAIN_APP_URL),
   title: "Tasks.cash — Enter the Portal",
   description: "Complete missions. Earn coins. Level up. Conquer the leaderboard.",
   keywords: ["tasks", "gamification", "missions", "rewards", "leaderboard"],

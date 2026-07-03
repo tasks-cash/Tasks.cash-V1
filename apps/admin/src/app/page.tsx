@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { BrandLogo, PortalButton, GlassCard, ParticleField } from "@tasks-cash/ui";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+import { API_URL } from "@/config/env";
 
 export default function AdminLoginPage() {
   const router = useRouter();

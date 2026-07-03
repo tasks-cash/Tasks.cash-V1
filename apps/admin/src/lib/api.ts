@@ -1,4 +1,4 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+import { API_URL } from "@/config/env";
 
 export function getToken(): string | null {
   if (typeof window === "undefined") return null;

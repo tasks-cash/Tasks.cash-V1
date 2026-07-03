@@ -1,14 +1,13 @@
 "use client";
 
-import Link from "next/link";
 import { motion } from "framer-motion";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/config/routes";
 
 /** Global authenticated header entry — Mystery Mode & Challenges */
 export function MysteryChallengesButton() {
   return (
-    <Link
-      href={ROUTES.mysteryChallenges}
+    <a
+      href={ROUTES.challenge.hub}
       className="hover-sound-ready shrink-0"
       data-sound="mystery-challenges"
     >
@@ -50,6 +49,6 @@ export function MysteryChallengesButton() {
           <span className="sm:hidden">Mystery</span>
         </span>
       </motion.div>
-    </Link>
+    </a>
   );
 }

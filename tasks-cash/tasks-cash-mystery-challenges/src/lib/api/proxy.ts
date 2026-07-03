@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { getTokenFromRequest } from "@/lib/auth/session-user";
-
-const MAIN_API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+import { API_URL } from "@/config/env";
 
 /** Proxy authenticated requests to the main Tasks.cash API */
 export async function proxyToMainApi(
@@ -28,7 +27,7 @@ export async function proxyToMainApi(
     }
 
     const url = new URL(request.url);
-    const res = await fetch(`${MAIN_API}${apiPath}${url.search}`, { method, headers, body });
+    const res = await fetch(`${API_URL}${apiPath}${url.search}`, { method, headers, body });
     const data = await res.json().catch(() => ({ success: false, error: "Invalid API response" }));
     return NextResponse.json(data, { status: res.status });
   } catch {

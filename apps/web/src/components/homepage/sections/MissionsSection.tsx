@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { ROUTES } from "@/config/routes";
 import { GameButton } from "@tasks-cash/ui";
 import { CinematicSection } from "../shared/CinematicSection";
 import { SectionTitle } from "../components/SectionTitle";
@@ -55,11 +56,11 @@ export function MissionsSection() {
             Start First Mission
           </GameButton>
         </Link>
-        <Link href="/challenges">
+        <a href={ROUTES.challenge.hub}>
           <GameButton variant="purple" size="lg" className="font-[family-name:var(--font-rajdhani)] uppercase tracking-widest">
             View Challenges
           </GameButton>
-        </Link>
+        </a>
       </div>
     </CinematicSection>
   );

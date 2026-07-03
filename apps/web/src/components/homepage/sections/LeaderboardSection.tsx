@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { ROUTES } from "@/config/routes";
 import { GameButton } from "@tasks-cash/ui";
 import { CinematicSection } from "../shared/CinematicSection";
 import { SectionTitle } from "../components/SectionTitle";
@@ -51,11 +52,11 @@ export function LeaderboardSection() {
         ))}
       </div>
       <div className="mt-10 flex justify-center">
-        <Link href="/leaderboards">
+        <a href={ROUTES.challenge.leaderboards}>
           <GameButton variant="purple" size="lg" className="font-[family-name:var(--font-rajdhani)] uppercase tracking-widest px-12">
             View Leaderboards
           </GameButton>
-        </Link>
+        </a>
       </div>
     </CinematicSection>
   );

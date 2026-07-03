@@ -1,5 +1,6 @@
-import { MysteryVaultPage } from "@/components/pages/MysteryVaultPage";
+import { redirect } from "next/navigation";
+import { ROUTES } from "@/config/routes";
 
-export default function Page() {
-  return <MysteryVaultPage />;
+export default function MysteryVaultRedirectPage() {
+  redirect(ROUTES.challenge.mysteryVault);
 }

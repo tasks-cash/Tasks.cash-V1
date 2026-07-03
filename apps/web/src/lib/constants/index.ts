@@ -1,19 +1,37 @@
 /** App-wide constants */
+import {
+  ADMIN_APP_URL,
+  CHALLENGE_APP_URL,
+  EXPLORER_DNA_URL,
+  MAIN_APP_DASHBOARD_URL,
+  MAIN_APP_URL,
+  ROUTES as CROSS_APP_ROUTES,
+} from "@/config/routes";
+
+export {
+  ADMIN_APP_URL,
+  CHALLENGE_APP_URL,
+  EXPLORER_DNA_URL,
+  MAIN_APP_DASHBOARD_URL,
+  MAIN_APP_URL,
+};
+
 export const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME ?? "Tasks.cash";
 
 export const BRAND_LOGO = "/image/main_logo.png";
 
+/** Same-app relative paths (main web app only) */
 export const ROUTES = {
   public: {
     home: "/",
     about: "/about",
     worlds: "/worlds",
-    challenges: "/challenges",
+    challenges: CROSS_APP_ROUTES.challenge.hub,
     missions: "/missions",
     mysteryMissions: "/mystery-missions",
     treasure: "/treasure",
-    rewards: "/rewards",
-    leaderboards: "/leaderboards",
+    rewards: CROSS_APP_ROUTES.challenge.rewards,
+    leaderboards: CROSS_APP_ROUTES.challenge.leaderboards,
     community: "/community",
     marketplace: "/marketplace",
     store: "/marketplace",
@@ -33,11 +51,11 @@ export const ROUTES = {
     resetPassword: "/reset-password",
     verifyEmail: "/verify-email",
   },
-  mysteryMode: "/mystery-mode",
-  mysteryChallenges: "/mystery-challenges",
+  mysteryMode: CROSS_APP_ROUTES.challenge.hub,
+  mysteryChallenges: CROSS_APP_ROUTES.challenge.hub,
   dashboard: {
     overview: "/dashboard",
-    mysteryChallenges: "/mystery-challenges",
+    mysteryChallenges: CROSS_APP_ROUTES.challenge.hub,
     missions: "/dashboard/missions",
     submitProof: "/dashboard/missions/submit",
     rewards: "/dashboard/rewards",
@@ -51,13 +69,9 @@ export const ROUTES = {
     security: "/dashboard/security",
     support: "/dashboard/support",
   },
+  challenge: CROSS_APP_ROUTES.challenge,
+  admin: CROSS_APP_ROUTES.admin,
 } as const;
-
-export const MAIN_APP_DASHBOARD_URL = ROUTES.dashboard.overview;
-
-/** Explorer DNA user page lives on the admin app port (:3001) */
-export const EXPLORER_DNA_URL =
-  process.env.NEXT_PUBLIC_EXPLORER_DNA_URL ?? "http://localhost:3001/explorer-dna";
 
 export const GAME = {
   xpPerLevel: Number(process.env.XP_PER_LEVEL ?? 1000),

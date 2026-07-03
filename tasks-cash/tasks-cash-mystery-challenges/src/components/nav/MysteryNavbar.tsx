@@ -19,7 +19,7 @@ const NAV_LINKS = [
   { href: "/explorer-dna", label: "Explorer DNA" },
 ] as const;
 
-const MAIN_APP_URL = process.env.NEXT_PUBLIC_MAIN_APP_URL ?? "http://localhost:3000";
+import { ROUTES } from "@/config/routes";
 
 function isActive(pathname: string, href: string) {
   if (href === "/") return pathname === "/";
@@ -60,7 +60,7 @@ export function MysteryNavbar() {
 
         <div className="flex items-center gap-2 shrink-0">
           <a
-            href={MAIN_APP_URL}
+            href={ROUTES.main.dashboard}
             className="hidden sm:inline text-[10px] uppercase tracking-wider text-purple-400/50 hover:text-purple-200"
           >
             Dashboard
@@ -91,7 +91,7 @@ export function MysteryNavbar() {
               {link.label}
             </Link>
           ))}
-          <a href={MAIN_APP_URL} className="mt-2 text-center text-[10px] text-purple-400/50 py-2">
+          <a href={ROUTES.main.dashboard} className="mt-2 text-center text-[10px] text-purple-400/50 py-2">
             ← Main Dashboard
           </a>
         </nav>

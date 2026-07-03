@@ -13,8 +13,8 @@ export const AUTH_PAGES = [
 /** Always public — never run protected-route redirects for these */
 export const PUBLIC_LEGAL_PAGES = ["/privacy", "/terms", "/refund", "/cookies", "/help", "/faq"] as const;
 
-/** Explicit protected routes only — everything else stays public for now */
-export const PROTECTED_PREFIXES = ["/dashboard", "/admin", "/video-hunter", "/explorer-dna"];
+/** Explicit protected routes only — challenge pages live on the challenge app */
+export const PROTECTED_PREFIXES = ["/dashboard", "/admin"];
 
 export type AppRole =
   | "guest"

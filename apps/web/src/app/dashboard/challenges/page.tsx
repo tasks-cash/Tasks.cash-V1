@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
+import { ROUTES } from "@/config/routes";
 
 export default function DashboardChallengesRedirect() {
-  redirect("/mystery-challenges");
+  redirect(ROUTES.challenge.hub);
 }

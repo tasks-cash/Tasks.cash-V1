@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { SESSION_COOKIE_NAME } from "@/lib/auth/session";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+import { API_URL } from "@/config/env";
 
 /** GET /api/auth/me — current session user from JWT cookie or Authorization header */
 export async function GET(request: Request) {
@@ -16,12 +16,22 @@ export async function GET(request: Request) {
   }
 
   try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
+
     const res = await fetch(`${API_URL}/api/auth/me`, {
       headers: { Authorization: `Bearer ${token}` },
+      signal: controller.signal,
     });
+    clearTimeout(timeout);
+
     const data = await res.json().catch(() => ({ success: false, error: "Invalid API response" }));
     return NextResponse.json(data, { status: res.status });
-  } catch {
-    return NextResponse.json({ success: false, error: "API unavailable" }, { status: 503 });
+  } catch (err) {
+    const message =
+      err instanceof DOMException && err.name === "AbortError"
+        ? "API request timed out"
+        : "API unavailable";
+    return NextResponse.json({ success: false, error: message }, { status: 503 });
   }
 }

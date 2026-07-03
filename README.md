@@ -30,7 +30,7 @@ Tasks.cash/
 │   │       ├── lib/            # db, auth, validations, constants
 │   │       ├── services/
 │   │       └── types/
-│   └── admin/                  # Admin panel Next.js app (port 3001)
+│   └── admin/                  # Admin panel Next.js app (port 3002)
 ├── services/
 │   ├── api/                    # REST API (port 4000)
 │   ├── worker/                 # Background job processor
@@ -83,7 +83,7 @@ pnpm dev          # Web + Admin + API in parallel
 | Service | URL |
 |---------|-----|
 | Web App | http://localhost:3000 |
-| Admin Panel | http://localhost:3001 |
+| Admin Panel | http://localhost:3002 |
 | API | http://localhost:4000 |
 | Nginx (Docker) | http://localhost:80 |
 

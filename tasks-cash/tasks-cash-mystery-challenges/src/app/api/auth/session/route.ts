@@ -2,8 +2,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { SESSION_COOKIE_NAME } from "@/lib/auth/cookie";
 import { verifySessionToken } from "@/lib/auth/jwt";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+import { API_URL } from "@/config/env";
 
 /** GET /api/auth/session — verify cookie and return current user */
 export async function GET() {

@@ -1,5 +1,6 @@
-import { RaidArenaPage } from "@/components/pages/RaidArenaPage";
+import { redirect } from "next/navigation";
+import { ROUTES } from "@/config/routes";
 
-export default function Page() {
-  return <RaidArenaPage />;
+export default function RaidArenaRedirectPage() {
+  redirect(ROUTES.challenge.raidArena);
 }

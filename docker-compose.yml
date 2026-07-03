@@ -88,7 +88,7 @@ services:
     container_name: tasks-cash-admin
     restart: unless-stopped
     ports:
-      - "3001:3001"
+      - "3002:3002"
     env_file:
       - .env
     environment:

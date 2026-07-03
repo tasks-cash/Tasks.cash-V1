@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { SESSION_COOKIE_NAME, getSessionCookieOptions } from "@/lib/auth/session";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+import { API_URL } from "@/config/env";
 
 function attachSessionCookie(response: NextResponse, accessToken?: string) {
   if (accessToken) {

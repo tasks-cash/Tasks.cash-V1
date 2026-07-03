@@ -1,8 +1,9 @@
 import type { IReferralMeResponse } from "@tasks-cash/types";
+import { ROUTES } from "@/config/routes";
 
 export const DEV_MOCK_REFERRAL_ME: IReferralMeResponse = {
   referralCode: "VOID-7X9K",
-  referralLink: "http://localhost:3000/register?ref=VOID-7X9K",
+  referralLink: `${ROUTES.main.register}?ref=VOID-7X9K`,
   totalInvites: 2,
   activeReferrals: 1,
   pendingRewards: 500,

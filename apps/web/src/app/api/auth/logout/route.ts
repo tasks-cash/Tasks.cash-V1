@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { SESSION_COOKIE_NAME, getSessionClearCookieOptions } from "@/lib/auth/session";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+import { API_URL } from "@/config/env";
 
 /** POST /api/auth/logout — clear session cookie */
 export async function POST(request: Request) {

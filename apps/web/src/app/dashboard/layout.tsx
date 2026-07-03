@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { EXPLORER_DNA_URL } from "@/lib/constants";
-import { Navbar, CoinBadge, Badge, PageTransition, DashboardSidebar } from "@tasks-cash/ui";
+import { useCallback, useEffect, useState } from "react";
+import { EXPLORER_DNA_URL } from "@/config/routes";
+import { Navbar, CoinBadge, Badge, PageTransition, DashboardSidebar, GameButton } from "@tasks-cash/ui";
 import { MysteryChallengesButton } from "@/components/mystery/MysteryChallengesButton";
 import { apiFetch, clearToken, logoutSession } from "@/lib/api";
+import { verifySession } from "@/lib/auth/verify-session";
 
 const NAV_LINKS = [
   { href: "/dashboard", label: "Overview", icon: "◈" },
@@ -25,6 +26,8 @@ const NAV_LINKS = [
   { href: "/dashboard/support", label: "Support", icon: "💬" },
 ];
 
+type SessionState = "loading" | "authenticated" | "error";
+
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -32,30 +35,43 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [username, setUsername] = useState("");
   const [unreadCount, setUnreadCount] = useState(0);
   const [dnaPending, setDnaPending] = useState(0);
-  const [authChecked, setAuthChecked] = useState(false);
+  const [sessionState, setSessionState] = useState<SessionState>("loading");
+  const [sessionError, setSessionError] = useState("");
+
+  const loadSession = useCallback(async () => {
+    setSessionState("loading");
+    setSessionError("");
+
+    const result = await verifySession();
+
+    if (result.status === "unauthorized") {
+      clearToken();
+      router.replace("/login");
+      return;
+    }
+
+    if (result.status === "error") {
+      setSessionError(result.error);
+      setSessionState("error");
+      return;
+    }
+
+    setCoins(result.user.coins ?? 0);
+    setUsername(result.user.username ?? "");
+    localStorage.setItem("tc_user", JSON.stringify(result.user));
+    setSessionState("authenticated");
+
+    apiFetch<{ count: number }>("/api/notifications/unread-count").then((res) => {
+      if (res.success && res.data) setUnreadCount(res.data.count);
+    });
+    apiFetch<{ profile: { pendingQuestions: number } }>("/api/explorer-dna/me").then((res) => {
+      if (res.success && res.data?.profile) setDnaPending(res.data.profile.pendingQuestions);
+    });
+  }, [router]);
 
   useEffect(() => {
-    async function init() {
-      const me = await apiFetch<{ username?: string; coins?: number }>("/api/auth/me");
-      if (!me.success || !me.data) {
-        router.replace("/login");
-        return;
-      }
-
-      setCoins(me.data.coins ?? 0);
-      setUsername(me.data.username ?? "");
-      localStorage.setItem("tc_user", JSON.stringify(me.data));
-      setAuthChecked(true);
-
-      apiFetch<{ count: number }>("/api/notifications/unread-count").then((res) => {
-        if (res.success && res.data) setUnreadCount(res.data.count);
-      });
-      apiFetch<{ profile: { pendingQuestions: number } }>("/api/explorer-dna/me").then((res) => {
-        if (res.success && res.data?.profile) setDnaPending(res.data.profile.pendingQuestions);
-      });
-    }
-    void init();
-  }, [router, pathname]);
+    void loadSession();
+  }, [loadSession]);
 
   const sidebarItems = NAV_LINKS.map((item) => ({
     href: item.href,
@@ -64,10 +80,34 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     badge: "badgeKey" in item && item.badgeKey === "dna" ? dnaPending : undefined,
   }));
 
-  if (!authChecked) {
+  if (sessionState === "loading") {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-black text-purple-400/60 text-sm">
-        Verifying session…
+      <div className="min-h-screen flex flex-col items-center justify-center bg-black text-purple-400/60 text-sm gap-4">
+        <div className="h-10 w-10 animate-spin rounded-full border-2 border-purple-500 border-t-amber-400" />
+        <p>Verifying session…</p>
+      </div>
+    );
+  }
+
+  if (sessionState === "error") {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-black px-4 text-center gap-4">
+        <p className="text-lg font-semibold text-white">Unable to verify session</p>
+        <p className="text-sm text-purple-400/60 max-w-md">{sessionError}</p>
+        <div className="flex flex-wrap gap-3 justify-center pt-2">
+          <GameButton variant="gold" onClick={() => void loadSession()}>
+            Retry
+          </GameButton>
+          <GameButton
+            variant="secondary"
+            onClick={() => {
+              void logoutSession();
+              router.replace("/login");
+            }}
+          >
+            Go to Login
+          </GameButton>
+        </div>
       </div>
     );
   }

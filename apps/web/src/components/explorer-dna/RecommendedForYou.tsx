@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { ROUTES } from "@/config/routes";
 import { motion } from "framer-motion";
 import { GlassCard, PortalButton } from "@tasks-cash/ui";
 import type { IDNARecommendation } from "@tasks-cash/types";
@@ -37,11 +37,11 @@ export function RecommendedForYou({ recommendations }: RecommendedForYouProps) {
               <p className="text-xs text-purple-400/50 uppercase tracking-wider mb-2">{rec.difficulty} · DNA Match</p>
               <p className="text-sm text-purple-300/70 mb-3">{rec.reason}</p>
               <p className="text-sm font-semibold text-amber-400 mb-4">🎁 {rec.rewardPreview}</p>
-              <Link href="/video-hunter">
+              <a href={ROUTES.challenge.videoHunter}>
                 <PortalButton variant="gold" size="sm">
                   View Mission
                 </PortalButton>
-              </Link>
+              </a>
             </GlassCard>
           </motion.div>
         ))}

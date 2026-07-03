@@ -43,6 +43,21 @@ export function defaultRPGStats(): IRPGStats {
   };
 }
 
+/** Merge partial/missing RPG stats with defaults — safe for legacy users */
+export function getSafeRPGStats(stats?: Partial<IRPGStats> | null): IRPGStats {
+  const defaults = defaultRPGStats();
+  if (!stats) return defaults;
+
+  const safe = {} as IRPGStats;
+  (Object.keys(defaults) as RPGStatType[]).forEach((key) => {
+    safe[key] = {
+      level: stats[key]?.level ?? defaults[key].level,
+      xp: stats[key]?.xp ?? defaults[key].xp,
+    };
+  });
+  return safe;
+}
+
 export const CURRENCY_META: Record<
   CurrencyType,
   { label: string; icon: string; color: string; exchangeRate: number }
@@ -110,10 +125,11 @@ export function statProgress(stat: IRPGStat, base = 200): IRPGStatProgress {
   return { level, xp: stat.xp, xpToNextLevel, progress };
 }
 
-export function buildRPGProgress(stats: IRPGStats): Record<RPGStatType, IRPGStatProgress> {
+export function buildRPGProgress(stats?: Partial<IRPGStats> | null): Record<RPGStatType, IRPGStatProgress> {
+  const safe = getSafeRPGStats(stats);
   const result = {} as Record<RPGStatType, IRPGStatProgress>;
-  (Object.keys(stats) as RPGStatType[]).forEach((key) => {
-    result[key] = statProgress(stats[key]);
+  (Object.keys(safe) as RPGStatType[]).forEach((key) => {
+    result[key] = statProgress(safe[key]);
   });
   return result;
 }
@@ -131,11 +147,11 @@ export function addCurrency(
 }
 
 export function addStatXp(
-  stats: IRPGStats,
+  stats: IRPGStats | Partial<IRPGStats> | null | undefined,
   stat: RPGStatType,
   xpGain: number
 ): { stats: IRPGStats; leveledUp: boolean; newLevel: number } {
-  const next = JSON.parse(JSON.stringify(stats)) as IRPGStats;
+  const next = JSON.parse(JSON.stringify(getSafeRPGStats(stats))) as IRPGStats;
   const before = statProgress(next[stat]).level;
   next[stat].xp += xpGain;
   if (stat === "global") {

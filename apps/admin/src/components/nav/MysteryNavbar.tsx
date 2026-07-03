@@ -5,30 +5,24 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { BrandLogo } from "@tasks-cash/ui";
-import { EXPLORER_DNA_PATH, MAIN_APP_DASHBOARD_URL, WEB_APP_URL } from "@/lib/constants";
+import { MAIN_APP_DASHBOARD_URL } from "@/lib/constants";
+import { ROUTES } from "@/config/routes";
 import { getUserToken, userApiFetch } from "@/lib/userApi";
 import { cn } from "@/lib/utils";
 
 const BASE_MYSTERY_NAV_LINKS = [
-  { href: EXPLORER_DNA_PATH, label: "Explorer DNA", local: true, badgeKey: "dna" as const },
-  { href: `${WEB_APP_URL}/challenges-arena`, label: "Hub", badge: 0 },
-  { href: `${WEB_APP_URL}/video-hunter`, label: "Video Hunter", badge: 2 },
-  { href: `${WEB_APP_URL}/raid-arena`, label: "Raid Arena", badge: 1 },
-  { href: `${WEB_APP_URL}/duel-arena`, label: "Duel Arena", badge: 0 },
-  { href: `${WEB_APP_URL}/mystery-vault`, label: "Mystery Vault", badge: 1 },
-  { href: `${WEB_APP_URL}/leaderboards`, label: "Leaderboards", badge: 0 },
-  { href: `${WEB_APP_URL}/rewards`, label: "Rewards", badge: 3 },
-  { href: `${WEB_APP_URL}/progression`, label: "Progression", badge: 0 },
+  { href: ROUTES.challenge.explorerDna, label: "Explorer DNA", external: true, badgeKey: "dna" as const },
+  { href: ROUTES.challenge.hub, label: "Hub", external: true, badge: 0 },
+  { href: ROUTES.challenge.videoHunter, label: "Video Hunter", external: true, badge: 2 },
+  { href: ROUTES.challenge.raidArena, label: "Raid Arena", external: true, badge: 1 },
+  { href: ROUTES.challenge.duelArena, label: "Duel Arena", external: true, badge: 0 },
+  { href: ROUTES.challenge.mysteryVault, label: "Mystery Vault", external: true, badge: 1 },
+  { href: ROUTES.challenge.leaderboards, label: "Leaderboards", external: true, badge: 0 },
+  { href: ROUTES.challenge.rewards, label: "Rewards", external: true, badge: 3 },
+  { href: ROUTES.challenge.progression, label: "Progression", external: true, badge: 0 },
 ] as const;
 
-const ARENA_HREF = `${WEB_APP_URL}/challenges-arena`;
-
-function isLinkActive(pathname: string, href: string, local?: boolean) {
-  if (local || href.startsWith(EXPLORER_DNA_PATH)) {
-    return pathname === EXPLORER_DNA_PATH || pathname.startsWith(`${EXPLORER_DNA_PATH}/`);
-  }
-  return false;
-}
+const ARENA_HREF = ROUTES.challenge.hub;
 
 interface MysteryNavbarProps {
   subNav?: React.ReactNode;
@@ -128,9 +122,9 @@ export function MysteryNavbar({ subNav, className }: MysteryNavbarProps) {
   const navLinks = BASE_MYSTERY_NAV_LINKS.map((link) => ({
     href: link.href,
     label: link.label,
-    external: !("local" in link),
+    external: true,
     badge: "badgeKey" in link && link.badgeKey === "dna" ? dnaPending : ("badge" in link ? link.badge : 0),
-    active: "local" in link ? isLinkActive(pathname, link.href, true) : false,
+    active: false,
   }));
 
   return (

@@ -1,10 +1,12 @@
 import { ChallengeShell } from "@/components/layout/ChallengeShell";
 import { SectionShell, GlowCard } from "@/components/ui/GlowCard";
 import { ArenaButton } from "@/components/ui/ArenaButton";
-
-const MAIN_APP_URL = process.env.NEXT_PUBLIC_MAIN_APP_URL ?? "http://localhost:3000";
+import { ROUTES } from "@/config/routes";
+import { buildMainLoginUrl } from "@/lib/auth/redirect";
 
 export default function ExplorerDnaPage() {
+  const loginUrl = buildMainLoginUrl(ROUTES.challenge.explorerDna);
+
   return (
     <ChallengeShell>
       <SectionShell
@@ -18,7 +20,7 @@ export default function ExplorerDnaPage() {
           <p className="text-purple-300/60 text-sm mb-8">
             Explorer DNA lives on your main Tasks.cash account. Log in to answer DNA questions and improve mission recommendations.
           </p>
-          <a href={`${MAIN_APP_URL}/explorer-dna`}>
+          <a href={loginUrl}>
             <ArenaButton variant="gold" size="lg">
               Open Explorer DNA
             </ArenaButton>

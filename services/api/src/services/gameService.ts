@@ -9,7 +9,9 @@ import {
   addCurrency,
   addStatXp,
   buildRPGProgress,
+  defaultCurrencies,
   getExplorerRank,
+  getSafeRPGStats,
   rollLiveReward,
   rollChestLoot,
   getChestById,
@@ -29,10 +31,20 @@ import { createNotification } from "./notificationService";
 
 const LIVE_REWARD_COOLDOWN_MS = 45_000;
 
+function ensureUserGameFields(user: IUserDocument): void {
+  user.rpgStats = getSafeRPGStats(user.rpgStats);
+  if (!user.currencies) user.currencies = defaultCurrencies();
+  if (!user.achievements) user.achievements = [];
+  if (!user.collectedBadges) user.collectedBadges = [];
+  if (!user.completedMissions) user.completedMissions = [];
+}
+
 function syncLegacyCoins(user: IUserDocument): void {
+  ensureUserGameFields(user);
   user.coins = user.currencies?.bronze ?? user.coins;
-  const globalProgress = statProgress(user.rpgStats?.global ?? { level: 1, xp: user.xp });
-  user.xp = user.rpgStats?.global?.xp ?? user.xp;
+  const safeRpgStats = user.rpgStats;
+  const globalProgress = statProgress(safeRpgStats.global);
+  user.xp = safeRpgStats.global.xp ?? user.xp;
   user.level = globalProgress.level;
   user.explorerRank = getExplorerRank(globalProgress.level);
   user.playerTitle = getLevelTitle(globalProgress.level);
@@ -42,7 +54,8 @@ export async function buildPlayerProfile(user: IUserDocument): Promise<IPlayerPr
   syncLegacyCoins(user);
   const referralCount = await Referral.countDocuments({ referrerId: user._id });
   const rank = (await User.countDocuments({ xp: { $gt: user.xp } })) + 1;
-  const rpgStats = buildRPGProgress(user.rpgStats);
+  const safeRpgStats = user.rpgStats;
+  const rpgStats = buildRPGProgress(safeRpgStats);
   const dailyRewardAvailable = !user.lastDailyClaim ||
     Date.now() - new Date(user.lastDailyClaim).getTime() > 86400000;
 
@@ -54,7 +67,7 @@ export async function buildPlayerProfile(user: IUserDocument): Promise<IPlayerPr
     playerTitle: user.playerTitle,
     explorerRank: user.explorerRank,
     globalLevel: rpgStats.global.level,
-    globalXp: user.rpgStats.global.xp,
+    globalXp: safeRpgStats.global.xp,
     currencies: user.currencies,
     rpgStats,
     achievements: user.achievements.map((a) => ({ id: a.id, unlockedAt: a.unlockedAt.toISOString() })),
@@ -159,6 +172,7 @@ export async function claimDailyReward(user: IUserDocument): Promise<IPlayerProf
 }
 
 export async function openTreasureChest(user: IUserDocument, chestId: string): Promise<{ loot: Record<string, unknown>; profile: IPlayerProfile }> {
+  ensureUserGameFields(user);
   const chest = getChestById(chestId);
   if (!chest) throw new Error("Chest not found");
   const globalLevel = statProgress(user.rpgStats.global).level;
@@ -276,6 +290,7 @@ export async function grantAchievement(user: IUserDocument, achievementId: strin
 }
 
 export async function checkAchievements(user: IUserDocument): Promise<void> {
+  ensureUserGameFields(user);
   const referralCount = await Referral.countDocuments({ referrerId: user._id });
   const globalLevel = statProgress(user.rpgStats.global).level;
 

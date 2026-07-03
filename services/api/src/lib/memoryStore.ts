@@ -8,6 +8,7 @@ import type {
 } from "@tasks-cash/types";
 import { generateReferralCode, defaultCurrencies, defaultRPGStats } from "@tasks-cash/utils";
 import type { IUserDocument } from "../models/User";
+import { APP_URL } from "../config/env";
 
 type MemoryUser = {
   id: string;
@@ -83,12 +84,8 @@ function seedMemoryStore() {
 
 seedMemoryStore();
 
-function appBaseUrl() {
-  return process.env.APP_URL ?? "http://localhost:3000";
-}
-
 export function buildReferralLink(code: string) {
-  return `${appBaseUrl()}/register?ref=${encodeURIComponent(code)}`;
+  return `${APP_URL}/register?ref=${encodeURIComponent(code)}`;
 }
 
 function serializeUser(user: MemoryUser) {

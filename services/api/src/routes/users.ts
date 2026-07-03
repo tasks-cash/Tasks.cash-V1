@@ -2,7 +2,7 @@ import { Router, Response } from "express";
 import { authMiddleware, AuthRequest } from "../middleware/auth";
 import { Referral } from "../models/Referral";
 import { User } from "../models/User";
-import { getLevelTitle, xpProgress } from "@tasks-cash/utils";
+import { getLevelTitle, xpProgress, getSafeRPGStats, defaultCurrencies } from "@tasks-cash/utils";
 import { buildPlayerProfile } from "../services/gameService";
 import { requireDbConnection } from "../lib/requireDb";
 
@@ -39,8 +39,8 @@ router.get("/dashboard", authMiddleware, async (req: AuthRequest, res: Response)
       referralCount,
       referralCode: user.referralCode,
       badges: user.badges,
-      currencies: user.currencies,
-      rpgStats: user.rpgStats,
+      currencies: user.currencies ?? defaultCurrencies(),
+      rpgStats: getSafeRPGStats(user.rpgStats),
       explorerRank: user.explorerRank,
       playerTitle: user.playerTitle,
       achievements: user.achievements,

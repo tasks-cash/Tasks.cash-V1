@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { CHALLENGE_APP_URL } from "@/config/env";
 import { Cinzel, Inter } from "next/font/google";
 import "./globals.css";
 
@@ -8,7 +9,7 @@ const cinzel = Cinzel({ subsets: ["latin"], variable: "--font-cinzel", weight: [
 export const metadata: Metadata = {
   title: "Tasks.cash Mystery Challenges — Enter The Arena",
   description: "Join timed raids. Submit viral videos. Invite friends. Complete secret missions. Climb the rankings.",
-  metadataBase: new URL("https://challenge.tasks.cash"),
+  metadataBase: new URL(CHALLENGE_APP_URL),
   icons: { icon: "/image/main_logo.png", apple: "/image/main_logo.png" },
 };
 

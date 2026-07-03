@@ -14,13 +14,45 @@ import {
   onFirstLogin,
 } from "../services/gameService";
 import type { CurrencyType } from "@tasks-cash/types";
+import { defaultCurrencies, getSafeRPGStats } from "@tasks-cash/utils";
 
 const router = Router();
 
 /** GET /api/game/dashboard — full RPG dashboard */
 router.get("/dashboard", authMiddleware, async (req: AuthRequest, res: Response) => {
-  const data = await getGameDashboard(req.user!);
-  res.json({ success: true, data });
+  try {
+    const data = await getGameDashboard(req.user!);
+    res.json({ success: true, data });
+  } catch (err) {
+    console.error("[game/dashboard]", err);
+    res.status(200).json({
+      success: true,
+      data: {
+        userId: req.user!._id.toString(),
+        username: req.user!.username,
+        globalLevel: 1,
+        globalXp: req.user!.xp ?? 0,
+        currencies: req.user!.currencies ?? defaultCurrencies(),
+        rpgStats: getSafeRPGStats(req.user!.rpgStats),
+        achievements: [],
+        badges: [],
+        statistics: {
+          missionsCompleted: 0,
+          treasuresOpened: 0,
+          achievementsUnlocked: 0,
+          badgesCollected: 0,
+          totalXpEarned: 0,
+          playTimeMinutes: 0,
+          globalRank: 1,
+        },
+        streakDays: 0,
+        dailyRewardAvailable: false,
+        activeEvents: [],
+        availableChests: [],
+        recentRewards: [],
+      },
+    });
+  }
 });
 
 /** GET /api/game/profile */

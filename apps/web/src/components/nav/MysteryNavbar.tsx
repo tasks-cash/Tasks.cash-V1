@@ -5,31 +5,31 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { BrandLogo } from "@tasks-cash/ui";
-import { MAIN_APP_DASHBOARD_URL, EXPLORER_DNA_URL } from "@/lib/constants";
+import { MAIN_APP_DASHBOARD_URL } from "@/lib/constants";
+import { ROUTES } from "@/config/routes";
 import { apiFetch, getToken } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 const BASE_MYSTERY_NAV_LINKS = [
-  { href: EXPLORER_DNA_URL, label: "Explorer DNA", external: true, badgeKey: "dna" as const },
-  { href: "/challenges-arena", label: "Hub", badge: 0 },
-  { href: "/video-hunter", label: "Video Hunter", badge: 2 },
-  { href: "/raid-arena", label: "Raid Arena", badge: 1 },
-  { href: "/duel-arena", label: "Duel Arena", badge: 0 },
-  { href: "/mystery-vault", label: "Mystery Vault", badge: 1 },
-  { href: "/leaderboards", label: "Leaderboards", badge: 0 },
-  { href: "/rewards", label: "Rewards", badge: 3 },
-  { href: "/progression", label: "Progression", badge: 0 },
+  { href: ROUTES.challenge.explorerDna, label: "Explorer DNA", external: true, badgeKey: "dna" as const },
+  { href: ROUTES.challenge.hub, label: "Hub", external: true, badge: 0 },
+  { href: ROUTES.challenge.videoHunter, label: "Video Hunter", external: true, badge: 2 },
+  { href: ROUTES.challenge.raidArena, label: "Raid Arena", external: true, badge: 1 },
+  { href: ROUTES.challenge.duelArena, label: "Duel Arena", external: true, badge: 0 },
+  { href: ROUTES.challenge.mysteryVault, label: "Mystery Vault", external: true, badge: 1 },
+  { href: ROUTES.challenge.leaderboards, label: "Leaderboards", external: true, badge: 0 },
+  { href: ROUTES.challenge.rewards, label: "Rewards", external: true, badge: 3 },
+  { href: ROUTES.challenge.progression, label: "Progression", external: true, badge: 0 },
 ] as const;
 
-const ARENA_HREF = "/challenges-arena";
+const ARENA_HREF = ROUTES.challenge.hub;
 
-function isLinkActive(pathname: string, href: string) {
-  if (href === "/challenges-arena") return pathname === href || pathname.startsWith(`${href}/`);
-  return pathname === href || pathname.startsWith(`${href}/`);
+function isLinkActive(_pathname: string, _href: string) {
+  return false;
 }
 
-function isArenaActive(pathname: string) {
-  return pathname === ARENA_HREF || pathname === "/mystery-challenges" || pathname.startsWith(`${ARENA_HREF}/`);
+function isArenaActive(_pathname: string) {
+  return false;
 }
 
 interface MysteryNavbarProps {
@@ -131,7 +131,7 @@ export function MysteryNavbar({ subNav, className }: MysteryNavbarProps) {
   const navLinks = BASE_MYSTERY_NAV_LINKS.map((link) => ({
     href: link.href,
     label: link.label,
-    external: "external" in link && link.external,
+    external: true,
     badge: "badgeKey" in link && link.badgeKey === "dna" ? dnaPending : ("badge" in link ? link.badge : 0),
   }));
 
@@ -183,7 +183,7 @@ export function MysteryNavbar({ subNav, className }: MysteryNavbarProps) {
               Dashboard
             </a>
 
-            <Link href={ARENA_HREF} className="hidden md:inline-flex">
+            <a href={ARENA_HREF} className="hidden md:inline-flex">
               <motion.span
                 className={cn(
                   "relative inline-flex items-center justify-center overflow-hidden rounded-xl px-4 py-2.5",
@@ -204,7 +204,7 @@ export function MysteryNavbar({ subNav, className }: MysteryNavbarProps) {
                   aria-hidden
                 />
               </motion.span>
-            </Link>
+            </a>
 
             <button
               type="button"
@@ -264,10 +264,10 @@ export function MysteryNavbar({ subNav, className }: MysteryNavbarProps) {
                   />
                 ))}
 
-                <Link
+                <a
                   href={ARENA_HREF}
                   onClick={() => setMobileOpen(false)}
-                  className="mt-3"
+                  className="mt-3 block"
                 >
                   <motion.span
                     className={cn(
@@ -280,7 +280,7 @@ export function MysteryNavbar({ subNav, className }: MysteryNavbarProps) {
                   >
                     Enter Arena
                   </motion.span>
-                </Link>
+                </a>
 
                 <a
                   href={MAIN_APP_DASHBOARD_URL}

@@ -1,4 +1,4 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+import { API_URL } from "@/config/env";
 
 /** Browser calls same-origin Next.js routes; server calls Express API directly. */
 export function getApiBase(): string {

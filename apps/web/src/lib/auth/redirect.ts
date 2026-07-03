@@ -1,24 +1,7 @@
 import { AUTH_PAGES, isAuthPage } from "./config";
+import { MAIN_APP_URL, ROUTES, trustedExternalOrigins } from "@/config/routes";
 
 export const DEFAULT_REDIRECT = "/dashboard";
-
-const TRUSTED_EXTERNAL_ORIGINS = ["http://localhost:3001", "https://challenge.tasks.cash"] as const;
-
-const MAIN_APP_URL = process.env.NEXT_PUBLIC_MAIN_APP_URL ?? "http://localhost:3000";
-const CHALLENGE_APP_URL = process.env.NEXT_PUBLIC_CHALLENGE_APP_URL ?? "http://localhost:3001";
-const MYSTERY_CHALLENGES_URL = process.env.NEXT_PUBLIC_MYSTERY_CHALLENGES_URL ?? CHALLENGE_APP_URL;
-
-function trustedExternalOrigins(): Set<string> {
-  const origins = new Set<string>(TRUSTED_EXTERNAL_ORIGINS);
-  for (const candidate of [CHALLENGE_APP_URL, MYSTERY_CHALLENGES_URL]) {
-    try {
-      origins.add(new URL(candidate).origin);
-    } catch {
-      /* ignore invalid env URL */
-    }
-  }
-  return origins;
-}
 
 /** Decode redirect query param safely (supports single or double encoding). */
 export function decodeRedirectParam(raw: string | null | undefined): string | null {

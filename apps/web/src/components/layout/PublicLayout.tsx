@@ -4,15 +4,16 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Navbar, PortalButton, BrandLogo, ParticleField } from "@tasks-cash/ui";
 import { motion } from "framer-motion";
+import { ROUTES } from "@/config/routes";
 
 const PUBLIC_LINKS = [
   { href: "/worlds", label: "Worlds" },
   { href: "/missions", label: "Missions" },
   { href: "/mystery-missions", label: "Mystery" },
-  { href: "/challenges", label: "Challenges" },
+  { href: ROUTES.challenge.hub, label: "Challenges", external: true },
   { href: "/treasure", label: "Treasure" },
-  { href: "/rewards", label: "Rewards" },
-  { href: "/leaderboards", label: "Leaderboards" },
+  { href: ROUTES.challenge.rewards, label: "Rewards", external: true },
+  { href: ROUTES.challenge.leaderboards, label: "Leaderboards", external: true },
   { href: "/marketplace", label: "Marketplace" },
   { href: "/community", label: "Community" },
 ];
@@ -24,10 +25,10 @@ const FOOTER_SECTIONS = [
       { href: "/worlds", label: "Worlds" },
       { href: "/missions", label: "Missions" },
       { href: "/mystery-missions", label: "Mystery Missions" },
-      { href: "/challenges", label: "Challenges" },
+      { href: ROUTES.challenge.hub, label: "Challenges", external: true },
       { href: "/treasure", label: "Treasure" },
-      { href: "/rewards", label: "Rewards" },
-      { href: "/leaderboards", label: "Leaderboards" },
+      { href: ROUTES.challenge.rewards, label: "Rewards", external: true },
+      { href: ROUTES.challenge.leaderboards, label: "Leaderboards", external: true },
     ],
   },
   {
@@ -90,9 +91,15 @@ export function PublicLayout({ children }: { children: React.ReactNode }) {
                 <ul className="space-y-2">
                   {section.links.map((l) => (
                     <li key={l.href}>
-                      <Link href={l.href} className="text-sm text-purple-300/60 hover:text-amber-300 transition-colors">
-                        {l.label}
-                      </Link>
+                      {"external" in l && l.external ? (
+                        <a href={l.href} className="text-sm text-purple-300/60 hover:text-amber-300 transition-colors">
+                          {l.label}
+                        </a>
+                      ) : (
+                        <Link href={l.href} className="text-sm text-purple-300/60 hover:text-amber-300 transition-colors">
+                          {l.label}
+                        </Link>
+                      )}
                     </li>
                   ))}
                 </ul>

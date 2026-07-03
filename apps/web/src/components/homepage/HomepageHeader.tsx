@@ -3,13 +3,14 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { ROUTES } from "@/config/routes";
 import { BrandLogo, GameButton } from "@tasks-cash/ui";
 
 const NAV = [
   { href: "/worlds", label: "Worlds" },
   { href: "/missions", label: "Missions" },
   { href: "/treasure", label: "Treasure" },
-  { href: "/leaderboards", label: "Rankings" },
+  { href: ROUTES.challenge.leaderboards, label: "Rankings", external: true },
   { href: "/community", label: "Community" },
 ];
 

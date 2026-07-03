@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { AdminPageShell } from "@/components/AdminPageShell";
 import { GlassCard, PortalButton, Input, Label } from "@tasks-cash/ui";
 import { adminFetch } from "@/lib/api";
+import { API_URL } from "@/config/env";
 import { DNA_QUESTION_TYPE_LABELS } from "@/data/explorer-dna-data";
 
 type AdminDNAModule = {
@@ -536,7 +537,7 @@ export default function AdminExplorerDnaPage() {
               Export JSON
             </PortalButton>
             <a
-              href={`${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000"}/api/admin/explorer-dna/questions/export?format=csv`}
+              href={`${API_URL}/api/admin/explorer-dna/questions/export?format=csv`}
               className="text-sm text-purple-300 underline"
               target="_blank"
               rel="noreferrer"

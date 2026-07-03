@@ -5,7 +5,7 @@ import { isDbConnected } from "../config/database";
 import { User, IUserDocument } from "../models/User";
 import { Transaction } from "../models/Transaction";
 import { authMiddleware, signToken, AuthRequest } from "../middleware/auth";
-import { generateReferralCode } from "@tasks-cash/utils";
+import { generateReferralCode, defaultCurrencies, getSafeRPGStats } from "@tasks-cash/utils";
 import { getOrCreateUserSettings } from "../services/notificationService";
 import { createReferralOnRegister } from "../services/referralService";
 import { requireDbConnection } from "../lib/requireDb";
@@ -159,16 +159,16 @@ function sanitizeUser(user: IUserDocument) {
     level: user.level,
     referralCode: user.referralCode,
     avatar: user.avatar,
-    badges: user.badges,
-    completedMissions: user.completedMissions,
-    currencies: user.currencies,
-    rpgStats: user.rpgStats,
-    achievements: user.achievements,
-    collectedBadges: user.collectedBadges,
+    badges: user.badges ?? [],
+    completedMissions: user.completedMissions ?? [],
+    currencies: user.currencies ?? defaultCurrencies(),
+    rpgStats: getSafeRPGStats(user.rpgStats),
+    achievements: user.achievements ?? [],
+    collectedBadges: user.collectedBadges ?? [],
     playerTitle: user.playerTitle,
     avatarFrame: user.avatarFrame,
     explorerRank: user.explorerRank,
-    streakDays: user.streakDays,
+    streakDays: user.streakDays ?? 0,
     createdAt: user.createdAt,
   };
 }

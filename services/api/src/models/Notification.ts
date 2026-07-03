@@ -16,7 +16,15 @@ const notificationSchema = new Schema<INotificationDocument>(
     userId: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
     type: {
       type: String,
-      enum: ["mission_complete", "level_up", "referral_bonus", "reward_claimed", "admin_message", "system"],
+      enum: [
+        "mission_complete",
+        "level_up",
+        "referral_bonus",
+        "reward_claimed",
+        "admin_message",
+        "system",
+        "achievement_unlocked",
+      ],
       required: true,
     },
     title: { type: String, required: true },

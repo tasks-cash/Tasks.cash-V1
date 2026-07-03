@@ -1,3 +1,5 @@
+import { ROUTES } from "@/config/routes";
+
 const REFERRAL_STORAGE_KEY = "tc_referral_code";
 
 export function saveReferralCode(code: string): void {
@@ -16,6 +18,5 @@ export function clearStoredReferralCode(): void {
 }
 
 export function buildReferralLink(code: string): string {
-  const origin = typeof window !== "undefined" ? window.location.origin : "http://localhost:3000";
-  return `${origin}/register?ref=${encodeURIComponent(code)}`;
+  return `${ROUTES.main.register}?ref=${encodeURIComponent(code)}`;
 }

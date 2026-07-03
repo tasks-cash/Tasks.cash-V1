@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import { SESSION_COOKIE_NAME, getSessionCookieOptions } from "@/lib/auth/session";
 import { verifyAccessToken } from "@/lib/auth/jwt";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+import { API_URL } from "@/config/env";
 
 /** POST /api/auth/sync — set httpOnly session cookie from Bearer token (localStorage recovery) */
 export async function POST(request: Request) {

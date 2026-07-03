@@ -1,13 +1,12 @@
 "use client";
 
 import { useEffect } from "react";
+import { ADMIN_APP_URL } from "@/config/routes";
 
-const ADMIN_URL = process.env.NEXT_PUBLIC_ADMIN_URL ?? "http://localhost:3001";
-
-/** Redirect to the admin app (runs on port 3001 by default). */
+/** Redirect to the admin app (runs on port 3002 by default). */
 export default function AdminRedirectPage() {
   useEffect(() => {
-    window.location.href = ADMIN_URL;
+    window.location.href = ADMIN_APP_URL;
   }, []);
 
   return (

@@ -7,6 +7,7 @@ import path from "path";
 
 import { connectDatabase } from "./config/database";
 import { connectRedis } from "./config/redis";
+import { APP_URL, ADMIN_URL, CHALLENGE_APP_URL } from "./config/env";
 import authRoutes from "./routes/auth";
 import userRoutes from "./routes/users";
 import missionRoutes from "./routes/missions";
@@ -45,10 +46,7 @@ const PORT = process.env.API_PORT ?? 4000;
 
 app.use(helmet());
 app.use(cors({
-  origin: [
-    process.env.APP_URL ?? "http://localhost:3000",
-    process.env.ADMIN_URL ?? "http://localhost:3001",
-  ],
+  origin: [APP_URL, ADMIN_URL, CHALLENGE_APP_URL],
   credentials: true,
 }));
 app.use(morgan("dev"));
