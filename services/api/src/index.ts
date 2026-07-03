@@ -36,6 +36,8 @@ import adminDnaQuestionsRoutes from "./routes/adminDnaQuestions";
 import raidRoutes from "./routes/raids";
 import duelRoutes from "./routes/duels";
 import vaultRoutes from "./routes/vault";
+import contentRoutes from "./routes/content";
+import adminContentRoutes from "./routes/adminContent";
 
 // Load .env from monorepo root
 dotenv.config({ path: path.resolve(__dirname, "../../../.env") });
@@ -86,6 +88,8 @@ app.use("/api/admin/dna-questions", adminDnaQuestionsRoutes);
 app.use("/api/raids", raidRoutes);
 app.use("/api/duels", duelRoutes);
 app.use("/api/vault", vaultRoutes);
+app.use("/api/content", contentRoutes);
+app.use("/api/admin/content", adminContentRoutes);
 
 // 404 handler
 app.use((_req, res) => {

@@ -1,0 +1,66 @@
+{
+  "common": {
+    "loading": "Chargement...",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "submit": "Envoyer",
+    "copy": "Copier",
+    "language": "Langue"
+  },
+  "nav": {
+    "dashboard": "Tableau de bord",
+    "missions": "Missions",
+    "rewards": "Récompenses",
+    "wallet": "Portefeuille",
+    "referrals": "Parrainages",
+    "explorerDna": "ADN Explorateur",
+    "videoHunter": "Chasseur Vidéo",
+    "logout": "Déconnexion"
+  },
+  "dashboard": {
+    "title": "Centre de Commande Explorateur",
+    "subtitle": "Votre hub de progression RPG — devises, niveaux, défis et secrets.",
+    "badge": "Tableau de bord joueur",
+    "currencyVault": "Coffre des devises",
+    "playerLevels": "Niveaux du joueur",
+    "dailyReward": "Récompense mystère quotidienne prête",
+    "claimDailyReward": "Réclamer la récompense quotidienne",
+    "syncing": "Synchronisation du centre de commande..."
+  },
+  "referrals": {
+    "title": "Parrainages",
+    "subtitle": "Invitez des alliés, partagez votre QR code et gagnez des récompenses",
+    "yourCode": "Votre code de parrainage",
+    "history": "Historique des parrainages",
+    "copyLink": "Copier le lien de parrainage",
+    "noReferrals": "Aucun parrainage — partagez votre lien d'invitation pour commencer."
+  },
+  "videoHunter": {
+    "breadcrumb": "Hub · Chasseur Vidéo",
+    "eyebrow": "Soumettre · Suivre · Gagner",
+    "title": "CHASSEUR VIDÉO",
+    "subtitle": "Soumettez des liens vidéo publics, suivez le statut de révision et gagnez des pièces et de l'XP après approbation.",
+    "submitTitle": "Soumettre un nouveau lien vidéo",
+    "submitButton": "Soumettre le lien vidéo",
+    "submissionsTitle": "Vos soumissions",
+    "noSubmissions": "Aucune soumission pour le moment."
+  },
+  "mysteryMissions": {
+    "title": "Missions Spéciales",
+    "subtitle": "Défis d'identité, objectifs secrets et opérations classifiées du portail.",
+    "eyebrow": "Opérations mystère"
+  },
+  "explorerDna": {
+    "breadcrumb": "Système central · ADN Explorateur",
+    "eyebrow": "Apprentissage intelligent de la plateforme",
+    "title": "ADN Explorateur",
+    "subtitle": "Construisez votre ADN Explorateur. Plus nous comprenons vos compétences, intérêts, expérience et objectifs, mieux nous pouvons recommander des missions et récompenses conçues pour vous."
+  },
+  "auth": {
+    "loginTitle": "Retour au Portail",
+    "loginSubtitle": "Authentifiez-vous pour accéder à votre centre de commande",
+    "registerTitle": "Rejoindre le Portail",
+    "enterPortal": "Entrer dans le Portail",
+    "openingPortal": "Ouverture du portail..."
+  }
+}

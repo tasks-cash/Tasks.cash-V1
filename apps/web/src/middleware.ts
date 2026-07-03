@@ -8,6 +8,8 @@ import {
 } from "@/lib/auth/config";
 import { buildPostLoginRedirect, DEFAULT_REDIRECT, getLoginUrl } from "@/lib/auth/redirect";
 import { verifyAccessToken } from "@/lib/auth/jwt";
+import { LOCALE_COOKIE, defaultLocale, isLocale } from "@/i18n/config";
+import { resolvePreferredLocale, stripLocalePrefix, withLocalePrefix } from "@/i18n/locale-path";
 
 function readToken(request: NextRequest): string | null {
   return (
@@ -17,43 +19,78 @@ function readToken(request: NextRequest): string | null {
   );
 }
 
+function shouldSkipLocale(pathname: string): boolean {
+  const { pathname: bare } = stripLocalePrefix(pathname);
+  return (
+    pathname.startsWith("/api/") ||
+    pathname.startsWith("/_next/") ||
+    pathname.startsWith("/uploads/") ||
+    pathname === "/favicon.ico" ||
+    isPublicLegalPage(bare) ||
+    /\.(?:png|jpg|jpeg|gif|webp|svg|ico|mp3|webm|wav|ogg|mp4)$/.test(pathname)
+  );
+}
+
 export async function middleware(request: NextRequest) {
   try {
     const { pathname } = request.nextUrl;
 
-    if (pathname.startsWith("/api/") || isPublicLegalPage(pathname)) {
+    if (shouldSkipLocale(pathname)) {
       return NextResponse.next();
+    }
+
+    const { locale, pathname: barePath } = stripLocalePrefix(pathname);
+
+    if (!locale) {
+      const preferred = resolvePreferredLocale(
+        request.cookies.get(LOCALE_COOKIE)?.value ?? request.cookies.get("tc_locale")?.value
+      );
+      const url = request.nextUrl.clone();
+      url.pathname = withLocalePrefix(pathname, preferred);
+      const redirect = NextResponse.redirect(url);
+      redirect.cookies.set(LOCALE_COOKIE, preferred, { path: "/", sameSite: "lax" });
+      return redirect;
     }
 
     const token = readToken(request);
     const payload = token ? await verifyAccessToken(token) : null;
     const authenticated = Boolean(payload);
 
-    if (isAuthPage(pathname)) {
+    if (isAuthPage(barePath)) {
       if (authenticated && token) {
         const rawRedirect = request.nextUrl.searchParams.get("redirect");
         const next = buildPostLoginRedirect(rawRedirect, token);
         const pathOnly = next.startsWith("http") ? new URL(next).pathname : next.split("?")[0];
+        const bareRedirect = stripLocalePrefix(pathOnly).pathname;
 
-        if (isAuthPage(pathOnly)) {
-          return NextResponse.redirect(new URL(DEFAULT_REDIRECT, request.url));
+        if (isAuthPage(bareRedirect)) {
+          return NextResponse.redirect(new URL(withLocalePrefix(DEFAULT_REDIRECT, locale), request.url));
         }
 
         if (next.startsWith("http")) {
           return NextResponse.redirect(next);
         }
 
-        return NextResponse.redirect(new URL(next, request.url));
+        return NextResponse.redirect(new URL(withLocalePrefix(next, locale), request.url));
       }
-      return NextResponse.next();
+
+      const url = request.nextUrl.clone();
+      url.pathname = barePath;
+      const response = NextResponse.rewrite(url);
+      response.cookies.set(LOCALE_COOKIE, locale, { path: "/", sameSite: "lax" });
+      return response;
     }
 
-    if (isProtectedPath(pathname) && !authenticated) {
-      const returnPath = `${pathname}${request.nextUrl.search}`;
+    if (isProtectedPath(barePath) && !authenticated) {
+      const returnPath = withLocalePrefix(`${barePath}${request.nextUrl.search}`, locale);
       return NextResponse.redirect(getLoginUrl(request.url, returnPath));
     }
 
-    return NextResponse.next();
+    const url = request.nextUrl.clone();
+    url.pathname = barePath;
+    const response = NextResponse.rewrite(url);
+    response.cookies.set(LOCALE_COOKIE, locale, { path: "/", sameSite: "lax" });
+    return response;
   } catch (error) {
     console.error("[middleware]", error);
     return NextResponse.next();

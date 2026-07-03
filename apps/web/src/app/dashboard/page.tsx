@@ -18,8 +18,9 @@ import { apiFetch } from "@/lib/api";
 import { buildRPGProgress } from "@tasks-cash/utils";
 import type { DashboardStats, RPGStatType, ICurrencies } from "@tasks-cash/types";
 import { ROUTES } from "@/config/routes";
-import type { ExplorerEntry } from "@tasks-cash/ui";
-import type { ActivityEntry } from "@tasks-cash/ui";
+import { usePageContent } from "@/hooks/usePageContent";
+import { useT } from "@/i18n/I18nProvider";
+import type { ActivityEntry, ExplorerEntry } from "@tasks-cash/ui";
 
 const DASHBOARD_LEVEL_STATS: RPGStatType[] = [
   "global",
@@ -43,6 +44,8 @@ const DEFAULT_CURRENCIES: ICurrencies = {
 
 export default function DashboardOverviewPage() {
   const { profile, loading: gameLoading, claimDailyReward } = useGame();
+  const t = useT();
+  const { get: content } = usePageContent("dashboard");
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [statsError, setStatsError] = useState("");
   const [topExplorers, setTopExplorers] = useState<ExplorerEntry[]>([]);
@@ -80,7 +83,7 @@ export default function DashboardOverviewPage() {
     return (
       <div className="flex flex-col items-center justify-center h-64 gap-6">
         <div className="h-14 w-14 animate-spin rounded-full border-4 border-purple-500 border-t-amber-400" />
-        <p className="text-purple-400/50 text-xs uppercase tracking-[0.3em]">Syncing Command Center...</p>
+        <p className="text-purple-400/50 text-xs uppercase tracking-[0.3em]">{t("dashboard.syncing")}</p>
       </div>
     );
   }
@@ -123,9 +126,9 @@ export default function DashboardOverviewPage() {
   return (
     <div>
       <PageHeader
-        title="Explorer Command Center"
-        subtitle="Your RPG progression hub — currencies, levels, challenges, and secrets."
-        badge="Player Dashboard"
+        title={content("title", t("dashboard.title"))}
+        subtitle={content("subtitle", t("dashboard.subtitle"))}
+        badge={content("badge", t("dashboard.badge"))}
       />
 
       {statsError && (
@@ -140,10 +143,10 @@ export default function DashboardOverviewPage() {
             <span className="inline-flex rounded-full border border-amber-400/40 bg-amber-950/30 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-amber-300 mb-2">
               Daily Reward
             </span>
-            <h3 className="text-lg font-bold text-amber-300">Daily Mystery Reward Ready</h3>
+            <h3 className="text-lg font-bold text-amber-300">{t("dashboard.dailyReward")}</h3>
           </div>
           <GameButton variant="gold" pulse onClick={claimDailyReward} data-sound="daily-reward">
-            Claim Daily Reward
+            {t("dashboard.claimDailyReward")}
           </GameButton>
         </GlassCard>
       )}
@@ -160,13 +163,13 @@ export default function DashboardOverviewPage() {
 
       {/* Currency cards */}
       <section className="mb-10">
-        <h2 className="text-xl font-black text-white mb-4 font-[family-name:var(--font-cinzel)]">Currency Vault</h2>
+        <h2 className="text-xl font-black text-white mb-4 font-[family-name:var(--font-cinzel)]">{t("dashboard.currencyVault")}</h2>
         <CurrencyCardGrid currencies={currencies} historyMap={{}} />
       </section>
 
       {/* RPG level cards */}
       <section className="mb-10">
-        <h2 className="text-xl font-black text-white mb-4 font-[family-name:var(--font-cinzel)]">Player Levels</h2>
+        <h2 className="text-xl font-black text-white mb-4 font-[family-name:var(--font-cinzel)]">{t("dashboard.playerLevels")}</h2>
         <LevelCardGrid stats={rpgProgress} statKeys={DASHBOARD_LEVEL_STATS} />
       </section>
 

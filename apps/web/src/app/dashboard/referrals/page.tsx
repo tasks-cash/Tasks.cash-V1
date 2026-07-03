@@ -7,6 +7,8 @@ import { DashboardPageShell } from "@/components/dashboard/DashboardPageShell";
 import { ReferralQrCode } from "@/components/referrals/ReferralQrCode";
 import { apiFetch } from "@/lib/api";
 import { buildReferralLink } from "@/lib/referral-storage";
+import { usePageContent } from "@/hooks/usePageContent";
+import { useT } from "@/i18n/I18nProvider";
 import { REFERRAL_STATUS_LABELS } from "@/lib/referral-utils";
 const EMPTY_REFERRAL: IReferralMeResponse = {
   referralCode: "",
@@ -19,6 +21,8 @@ const EMPTY_REFERRAL: IReferralMeResponse = {
 };
 
 export default function ReferralsPage() {
+  const t = useT();
+  const { get: content } = usePageContent("referrals");
   const [data, setData] = useState<IReferralMeResponse>(EMPTY_REFERRAL);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -40,7 +44,10 @@ export default function ReferralsPage() {
   }, []);
 
   return (
-    <DashboardPageShell title="Referrals" subtitle="Invite allies, share your QR code, and earn referral rewards">
+    <DashboardPageShell
+      title={content("title", t("referrals.title"))}
+      subtitle={content("subtitle", t("referrals.subtitle"))}
+    >
       <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-4 mb-8">
         <StatWidget label="Total Invited" value={data.totalInvites} icon="🔗" />
         <StatWidget label="Active Referrals" value={data.activeReferrals} icon="⚡" glow="purple" />
@@ -50,7 +57,7 @@ export default function ReferralsPage() {
 
       <GlassCard glow="gold" className="p-6 md:p-8 mb-8">
         <div className="text-center mb-6">
-          <p className="text-xs uppercase tracking-widest text-purple-400/60 mb-2">Your Referral Code</p>
+          <p className="text-xs uppercase tracking-widest text-purple-400/60 mb-2">{content("yourCodeLabel", t("referrals.yourCode"))}</p>
           <p className="text-3xl md:text-4xl font-black text-amber-400 tracking-widest">{data.referralCode}</p>
         </div>
 
@@ -62,7 +69,7 @@ export default function ReferralsPage() {
 
       <GlassCard className="p-6">
         <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
-          <h2 className="font-bold text-white">Referral History</h2>
+          <h2 className="font-bold text-white">{content("historyTitle", t("referrals.history"))}</h2>
           {loading && <span className="text-xs text-purple-400/50">Syncing...</span>}
         </div>
 
@@ -81,7 +88,7 @@ export default function ReferralsPage() {
               {data.history.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="py-8 text-center text-purple-400/50">
-                    No referrals yet — share your invite link to begin.
+                    {content("noReferrals", t("referrals.noReferrals"))}
                   </td>
                 </tr>
               ) : (
@@ -113,7 +120,7 @@ export default function ReferralsPage() {
             size="sm"
             onClick={() => navigator.clipboard?.writeText(data.referralLink || buildReferralLink(data.referralCode))}
           >
-            Copy Referral Link
+            {content("copyLink", t("referrals.copyLink"))}
           </PortalButton>
         </div>
       </GlassCard>

@@ -1,0 +1,66 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "submit": "Submit",
+    "copy": "Copy",
+    "language": "Language"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "missions": "Missions",
+    "rewards": "Rewards",
+    "wallet": "Wallet",
+    "referrals": "Referrals",
+    "explorerDna": "Explorer DNA",
+    "videoHunter": "Video Hunter",
+    "logout": "Logout"
+  },
+  "dashboard": {
+    "title": "Explorer Command Center",
+    "subtitle": "Your RPG progression hub — currencies, levels, challenges, and secrets.",
+    "badge": "Player Dashboard",
+    "currencyVault": "Currency Vault",
+    "playerLevels": "Player Levels",
+    "dailyReward": "Daily Mystery Reward Ready",
+    "claimDailyReward": "Claim Daily Reward",
+    "syncing": "Syncing Command Center..."
+  },
+  "referrals": {
+    "title": "Referrals",
+    "subtitle": "Invite allies, share your QR code, and earn referral rewards",
+    "yourCode": "Your Referral Code",
+    "history": "Referral History",
+    "copyLink": "Copy Referral Link",
+    "noReferrals": "No referrals yet — share your invite link to begin."
+  },
+  "videoHunter": {
+    "breadcrumb": "Hub · Video Hunter",
+    "eyebrow": "Submit · Track · Earn",
+    "title": "VIDEO HUNTER",
+    "subtitle": "Submit public video links, track review status, and earn coins and XP after approval.",
+    "submitTitle": "Submit New Video Link",
+    "submitButton": "Submit Video Link",
+    "submissionsTitle": "Your Submissions",
+    "noSubmissions": "No submissions yet."
+  },
+  "mysteryMissions": {
+    "title": "Special Missions",
+    "subtitle": "Identity challenges, secret objectives, and classified portal operations.",
+    "eyebrow": "Mystery Operations"
+  },
+  "explorerDna": {
+    "breadcrumb": "Core System · Explorer DNA",
+    "eyebrow": "Intelligent Platform Learning",
+    "title": "Explorer DNA",
+    "subtitle": "Build your Explorer DNA. The more we understand your skills, interests, experience, and goals, the better we can recommend missions and rewards designed specifically for you."
+  },
+  "auth": {
+    "loginTitle": "Return to Portal",
+    "loginSubtitle": "Authenticate to enter your command center",
+    "registerTitle": "Join the Portal",
+    "enterPortal": "Enter The Portal",
+    "openingPortal": "Opening Portal..."
+  }
+}

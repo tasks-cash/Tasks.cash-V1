@@ -6,31 +6,36 @@ import { useCallback, useEffect, useState } from "react";
 import { EXPLORER_DNA_URL } from "@/config/routes";
 import { Navbar, CoinBadge, Badge, PageTransition, DashboardSidebar, GameButton } from "@tasks-cash/ui";
 import { MysteryChallengesButton } from "@/components/mystery/MysteryChallengesButton";
+import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
+import { useT, useLocale } from "@/i18n/I18nProvider";
+import { withLocalePrefix } from "@/i18n/locale-path";
 import { apiFetch, clearToken, logoutSession } from "@/lib/api";
 import { verifySession } from "@/lib/auth/verify-session";
 
 const NAV_LINKS = [
-  { href: "/dashboard", label: "Overview", icon: "◈" },
+  { href: "/dashboard", labelKey: "nav.dashboard", icon: "◈" },
   { href: "/dashboard/missions", label: "Missions", icon: "📜" },
   { href: "/dashboard/missions/submit", label: "Submit Proof", icon: "📋" },
-  { href: "/dashboard/rewards", label: "Rewards", icon: "🎁" },
-  { href: "/dashboard/wallet", label: "Wallet", icon: "💰" },
+  { href: "/dashboard/rewards", labelKey: "nav.rewards", icon: "🎁" },
+  { href: "/dashboard/wallet", labelKey: "nav.wallet", icon: "💰" },
   { href: "/dashboard/withdrawals", label: "Withdrawals", icon: "◈" },
-  { href: "/dashboard/referrals", label: "Referrals", icon: "🔗" },
-  { href: EXPLORER_DNA_URL, label: "Explorer DNA", icon: "🧬", badgeKey: "dna" as const },
+  { href: "/dashboard/referrals", labelKey: "nav.referrals", icon: "🔗" },
+  { href: EXPLORER_DNA_URL, labelKey: "nav.explorerDna", icon: "🧬", badgeKey: "dna" as const },
   { href: "/dashboard/level", label: "Level", icon: "⚡" },
   { href: "/dashboard/leaderboard", label: "Rank", icon: "🏆" },
   { href: "/dashboard/notifications", label: "Alerts", icon: "🔔" },
   { href: "/dashboard/profile", label: "Profile", icon: "👤" },
   { href: "/dashboard/security", label: "Security", icon: "🛡️" },
   { href: "/dashboard/support", label: "Support", icon: "💬" },
-];
+] as const;
 
 type SessionState = "loading" | "authenticated" | "error";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
+  const locale = useLocale();
+  const t = useT();
   const [coins, setCoins] = useState(0);
   const [username, setUsername] = useState("");
   const [unreadCount, setUnreadCount] = useState(0);
@@ -46,7 +51,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
     if (result.status === "unauthorized") {
       clearToken();
-      router.replace("/login");
+      router.replace(withLocalePrefix("/login", locale));
       return;
     }
 
@@ -67,15 +72,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     apiFetch<{ profile: { pendingQuestions: number } }>("/api/explorer-dna/me").then((res) => {
       if (res.success && res.data?.profile) setDnaPending(res.data.profile.pendingQuestions);
     });
-  }, [router]);
+  }, [router, locale]);
 
   useEffect(() => {
     void loadSession();
   }, [loadSession]);
 
   const sidebarItems = NAV_LINKS.map((item) => ({
-    href: item.href,
-    label: item.label,
+    href: item.href.startsWith("http") ? item.href : withLocalePrefix(item.href, locale),
+    label: "labelKey" in item ? t(item.labelKey) : ("label" in item ? item.label : ""),
     icon: item.icon,
     badge: "badgeKey" in item && item.badgeKey === "dna" ? dnaPending : undefined,
   }));
@@ -102,7 +107,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             variant="secondary"
             onClick={() => {
               void logoutSession();
-              router.replace("/login");
+              router.replace(withLocalePrefix("/login", locale));
             }}
           >
             Go to Login
@@ -129,8 +134,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           links={[]}
           rightSlot={
             <div className="flex items-center gap-2 md:gap-3">
+              <LanguageSwitcher className="hidden sm:flex" />
               <MysteryChallengesButton />
-              <Link href="/dashboard/notifications" className="relative hover-sound-ready" data-sound="notification">
+              <Link href={withLocalePrefix("/dashboard/notifications", locale)} className="relative hover-sound-ready" data-sound="notification">
                 🔔
                 {unreadCount > 0 && <Badge variant="gold" className="absolute -top-2 -right-3">{unreadCount}</Badge>}
               </Link>

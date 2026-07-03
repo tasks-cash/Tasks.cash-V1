@@ -3,6 +3,8 @@ import { MAIN_APP_URL } from "@/config/env";
 import { Cinzel, Inter, Orbitron, Rajdhani } from "next/font/google";
 import { LoadingProvider } from "@/components/providers/LoadingProvider";
 import { GameProvider } from "@/components/game/GameProvider";
+import { I18nProvider } from "@/i18n/I18nProvider";
+import { LocaleHtmlAttributes } from "@/i18n/LocaleHtmlAttributes";
 import { PortalBackground } from "@tasks-cash/ui";
 import "./globals.css";
 import "../styles/game.css";
@@ -52,9 +54,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         className={`${inter.variable} ${cinzel.variable} ${orbitron.variable} ${rajdhani.variable} min-h-screen w-full overflow-x-hidden bg-black font-sans text-white antialiased`}
       >
         <PortalBackground intensity="medium" />
-        <GameProvider>
-          <LoadingProvider>{children}</LoadingProvider>
-        </GameProvider>
+        <I18nProvider>
+          <LocaleHtmlAttributes />
+          <GameProvider>
+            <LoadingProvider>{children}</LoadingProvider>
+          </GameProvider>
+        </I18nProvider>
       </body>
     </html>
   );

@@ -5,9 +5,13 @@ import type { IVideoSubmission } from "@tasks-cash/types";
 import { GlassCard, PortalButton, Input, Label } from "@tasks-cash/ui";
 import { GameHubLayout } from "@/components/hub/GameHubLayout";
 import { apiFetch } from "@/lib/api";
+import { usePageContent } from "@/hooks/usePageContent";
+import { useT } from "@/i18n/I18nProvider";
 import { detectVideoPlatform, platformLabel, STATUS_LABELS } from "@/lib/referral-utils";
 
 export function VideoHunterPage() {
+  const t = useT();
+  const { get: content } = usePageContent("video-hunter");
   const [submissions, setSubmissions] = useState<IVideoSubmission[]>([]);
   const [videoUrl, setVideoUrl] = useState("");
   const [description, setDescription] = useState("");
@@ -60,14 +64,14 @@ export function VideoHunterPage() {
 
   return (
     <GameHubLayout
-      breadcrumb="Hub · Video Hunter"
-      eyebrow="Submit · Track · Earn"
-      title="VIDEO HUNTER"
-      subtitle="Submit public video links, track review status, and earn coins and XP after approval."
+      breadcrumb={content("breadcrumb", t("videoHunter.breadcrumb"))}
+      eyebrow={content("eyebrow", t("videoHunter.eyebrow"))}
+      title={content("title", t("videoHunter.title"))}
+      subtitle={content("subtitle", t("videoHunter.subtitle"))}
     >
       <div className="grid xl:grid-cols-[420px_1fr] gap-6 pb-12">
         <GlassCard glow="gold" className="p-6 h-fit">
-          <h2 className="text-lg font-black text-white mb-4">Submit New Video Link</h2>
+          <h2 className="text-lg font-black text-white mb-4">{content("submitTitle", t("videoHunter.submitTitle"))}</h2>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <Label htmlFor="videoUrl">Video URL</Label>
@@ -108,20 +112,20 @@ export function VideoHunterPage() {
             {error && <p className="text-red-400 text-sm">{error}</p>}
             {success && <p className="text-emerald-400 text-sm">{success}</p>}
             <PortalButton variant="gold" className="w-full" disabled={submitting}>
-              {submitting ? "Submitting..." : "Submit Video Link"}
+              {submitting ? t("common.loading") : content("submitButton", t("videoHunter.submitButton"))}
             </PortalButton>
           </form>
         </GlassCard>
 
         <GlassCard className="p-6">
           <div className="flex items-center justify-between mb-4 gap-3">
-            <h2 className="text-lg font-black text-white">Your Submissions</h2>
-            {loading && <span className="text-xs text-purple-400/50">Loading...</span>}
+            <h2 className="text-lg font-black text-white">{content("submissionsTitle", t("videoHunter.submissionsTitle"))}</h2>
+            {loading && <span className="text-xs text-purple-400/50">{t("common.loading")}</span>}
           </div>
 
           <div className="space-y-4">
             {submissions.length === 0 ? (
-              <p className="text-purple-400/50 text-sm">No submissions yet.</p>
+              <p className="text-purple-400/50 text-sm">{content("noSubmissions", t("videoHunter.noSubmissions"))}</p>
             ) : (
               submissions.map((item) => {
                 const status = STATUS_LABELS[item.status] ?? STATUS_LABELS.pending;
