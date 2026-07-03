@@ -16,7 +16,7 @@ export const ROUTES = {
     dashboard: abs(MAIN_APP_URL, "/dashboard"),
   },
   challenge: {
-    hub: abs(CHALLENGE_APP_URL, "/challenges-arena"),
+    hub: abs(CHALLENGE_APP_URL, "/"),
     videoHunter: abs(CHALLENGE_APP_URL, "/video-hunter"),
     referralArena: abs(CHALLENGE_APP_URL, "/referral-arena"),
     identityChallenge: abs(CHALLENGE_APP_URL, "/identity-challenge"),
@@ -28,7 +28,7 @@ export const ROUTES = {
     rewards: abs(CHALLENGE_APP_URL, "/rewards"),
     explorerDna: abs(CHALLENGE_APP_URL, "/explorer-dna"),
     progression: abs(CHALLENGE_APP_URL, "/progression"),
-    mysteryChallenges: abs(CHALLENGE_APP_URL, "/challenges-arena"),
+    mysteryChallenges: abs(CHALLENGE_APP_URL, "/"),
   },
   admin: {
     home: abs(ADMIN_APP_URL, "/"),
