@@ -37,5 +37,10 @@ export const ROUTES = {
 } as const;
 
 export function trustedExternalOrigins(): Set<string> {
-  return new Set([new URL(MAIN_APP_URL).origin, "https://tasks.cash"]);
+  return new Set([
+    new URL(MAIN_APP_URL).origin,
+    new URL(CHALLENGE_APP_URL).origin,
+    "https://tasks.cash",
+    "https://challenge.tasks.cash",
+  ]);
 }

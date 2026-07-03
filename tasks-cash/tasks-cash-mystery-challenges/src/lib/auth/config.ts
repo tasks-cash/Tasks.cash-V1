@@ -7,6 +7,7 @@ export const PROTECTED_PREFIXES = [
   "/profile",
   "/settings",
   "/identity-challenge",
+  "/referral-arena",
 ];
 
 export function isProtectedPath(pathname: string): boolean {

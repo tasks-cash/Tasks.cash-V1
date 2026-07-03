@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { AnimatedFog } from "@/components/ui/PortalBackground";
 import { ArenaButton } from "@/components/ui/ArenaButton";
 import { motion } from "framer-motion";
@@ -50,12 +51,16 @@ export function FinalCTASection() {
         </p>
 
         <div className="flex flex-col sm:flex-row flex-wrap gap-4 justify-center">
-          <ArenaButton variant="gold" size="xl" className="animate-pulse-gold">
-            Enter The Arena
-          </ArenaButton>
-          <ArenaButton variant="purple" size="xl">
-            View Leaderboards
-          </ArenaButton>
+          <Link href="#game-modes">
+            <ArenaButton variant="gold" size="xl" className="animate-pulse-gold">
+              Enter The Arena
+            </ArenaButton>
+          </Link>
+          <Link href="/leaderboards">
+            <ArenaButton variant="purple" size="xl">
+              View Leaderboards
+            </ArenaButton>
+          </Link>
         </div>
 
         <p className="mt-16 text-purple-400/30 text-xs uppercase tracking-[0.4em]">

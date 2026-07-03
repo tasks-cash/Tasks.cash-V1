@@ -7,7 +7,7 @@ import { ArenaButton } from "@/components/ui/ArenaButton";
 import { ReferralQrPanel } from "@/components/referral-arena/ReferralQrPanel";
 import { apiFetch } from "@/lib/api/client";
 import { buildReferralLink, formatRewardCoins, REFERRAL_STATUS_LABELS } from "@/lib/referrals";
-import { buildMainLoginUrl } from "@/lib/auth/redirect";
+import { getChallengeLoginUrl, hasAuthSession } from "@/lib/auth/client-session";
 import type {
   ReferralLeaderboardChampion,
   ReferralLeaderboardsResponse,
@@ -64,6 +64,7 @@ export function ReferralArenaSection() {
   const [leaderboards, setLeaderboards] = useState<ReferralLeaderboardsResponse | null>(null);
   const [period, setPeriod] = useState<Period>("daily");
   const [loading, setLoading] = useState(true);
+  const [needsAuth, setNeedsAuth] = useState(false);
   const [error, setError] = useState("");
   const [toast, setToast] = useState("");
 
@@ -71,6 +72,14 @@ export function ReferralArenaSection() {
     async function load() {
       setLoading(true);
       setError("");
+      setNeedsAuth(false);
+
+      const authed = await hasAuthSession();
+      if (!authed) {
+        setNeedsAuth(true);
+        setLoading(false);
+        return;
+      }
 
       const [meRes, historyRes, boardsRes] = await Promise.all([
         apiFetch<ReferralMeResponse>("/api/referrals/me"),
@@ -138,10 +147,33 @@ export function ReferralArenaSection() {
     );
   }
 
+  if (needsAuth) {
+    const loginUrl = getChallengeLoginUrl();
+    return (
+      <SectionShell
+        id="referral-arena"
+        eyebrow="Referral War"
+        title="Referral Arena"
+        subtitle="Sign in to access your referral command center."
+        minHeight={false}
+        className="!min-h-0 py-16 md:py-24"
+      >
+        <GlowCard glow="gold" hover={false} className="p-8 md:p-10 text-center max-w-2xl">
+          <p className="text-purple-300/70 text-sm mb-6">
+            Your referral code, invite history, and leaderboards are available after you sign in.
+          </p>
+          <ArenaButton variant="gold" size="lg" type="button" onClick={() => { window.location.href = loginUrl; }}>
+            Sign In to Continue
+          </ArenaButton>
+        </GlowCard>
+      </SectionShell>
+    );
+  }
+
   if (error) {
     const isAuthError =
       error.toLowerCase().includes("unauthorized") || error.toLowerCase().includes("invalid token");
-    const loginUrl = buildMainLoginUrl(typeof window !== "undefined" ? window.location.href : "/referral-arena");
+    const loginUrl = getChallengeLoginUrl();
     return (
       <SectionShell
         id="referral-arena"

@@ -1,6 +1,6 @@
-import { MAIN_APP_URL, ROUTES, trustedExternalOrigins } from "@/config/routes";
+import { CHALLENGE_APP_URL, MAIN_APP_URL, ROUTES, trustedExternalOrigins } from "@/config/routes";
 
-export const DEFAULT_REDIRECT = ROUTES.main.dashboard;
+export const DEFAULT_REDIRECT = ROUTES.challenge.hub;
 
 const AUTH_PATHS = ["/login", "/register", "/forgot-password"];
 
@@ -57,8 +57,13 @@ export function getSafeRedirectUrl(redirect: string | null | undefined): string 
 export function buildMainLoginUrl(returnUrl: string): string {
   const login = new URL("/login", MAIN_APP_URL);
   const safe = getSafeRedirectUrl(returnUrl);
-  if (safe !== DEFAULT_REDIRECT) {
-    login.searchParams.set("redirect", safe);
-  }
+  login.searchParams.set("redirect", safe);
+  return login.toString();
+}
+
+/** Login URL that returns users to the challenge app hub after auth. */
+export function buildChallengeAppLoginUrl(): string {
+  const login = new URL("/login", MAIN_APP_URL);
+  login.searchParams.set("redirect", CHALLENGE_APP_URL.replace(/\/$/, "") || CHALLENGE_APP_URL);
   return login.toString();
 }

@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { GlowCard } from "@/components/ui/GlowCard";
 import { ArenaButton } from "@/components/ui/ArenaButton";
 import { apiFetch } from "@/lib/api/client";
-import { buildMainLoginUrl } from "@/lib/auth/redirect";
+import { getChallengeLoginUrl, hasAuthSession, redirectToLoginOnce } from "@/lib/auth/client-session";
 import type {
   IdentityChallengePayload,
   IdentityChallengeProgress,
@@ -157,6 +157,15 @@ export function IdentityChallengeSection({ variant = "embedded" }: IdentityChall
       setErrorMessage("");
     }
 
+    const authed = await hasAuthSession();
+    if (!authed) {
+      setLoadState("unauthorized");
+      if (variant === "page") {
+        redirectToLoginOnce();
+      }
+      return false;
+    }
+
     try {
       const res = await fetch("/api/identity-challenge/questions", {
         credentials: "include",
@@ -170,8 +179,8 @@ export function IdentityChallengeSection({ variant = "embedded" }: IdentityChall
 
       if (res.status === 401) {
         setLoadState("unauthorized");
-        if (typeof window !== "undefined") {
-          window.location.href = buildMainLoginUrl(window.location.href);
+        if (variant === "page") {
+          redirectToLoginOnce();
         }
         return false;
       }
@@ -207,7 +216,7 @@ export function IdentityChallengeSection({ variant = "embedded" }: IdentityChall
       setErrorMessage("Unable to load identity questions.");
       return false;
     }
-  }, []);
+  }, [variant]);
 
   useEffect(() => {
     void loadQuestions();
@@ -270,7 +279,10 @@ export function IdentityChallengeSection({ variant = "embedded" }: IdentityChall
 
     if (!res.success || !res.data) {
       if (res.error?.toLowerCase().includes("unauthorized")) {
-        window.location.href = buildMainLoginUrl(window.location.href);
+        setLoadState("unauthorized");
+        if (variant === "page") {
+          redirectToLoginOnce();
+        }
         return;
       }
       setErrorMessage(res.error ?? "Unable to save your answer. Please try again.");
@@ -429,6 +441,19 @@ export function IdentityChallengeSection({ variant = "embedded" }: IdentityChall
                 <span className="ic-state-icon">🎭</span>
                 <p className="ic-state-title">Loading Identity Portal</p>
                 <p className="ic-state-text">Fetching your questions and progress…</p>
+              </div>
+            </motion.div>
+          )}
+
+          {loadState === "unauthorized" && (
+            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="ic-card ic-card-gold">
+              <div className="ic-card-body ic-state">
+                <span className="ic-state-icon">🔐</span>
+                <p className="ic-state-title">Sign in required</p>
+                <p className="ic-state-text mb-6">Redirecting you to Tasks.cash to sign in…</p>
+                <a href={getChallengeLoginUrl()} className="ic-btn-primary">
+                  Continue to Sign In
+                </a>
               </div>
             </motion.div>
           )}
@@ -633,6 +658,25 @@ export function IdentityChallengeSection({ variant = "embedded" }: IdentityChall
           {loadState === "loading" && (
             <GlowCard glow="purple" hover={false} className="w-full p-12 text-center text-purple-400/60">
               Loading identity questions…
+            </GlowCard>
+          )}
+
+          {loadState === "unauthorized" && (
+            <GlowCard glow="gold" hover={false} className="w-full p-10 md:p-12 text-center border border-amber-400/20">
+              <span className="text-5xl block mb-4">🔐</span>
+              <h2 className="text-xl md:text-2xl font-black text-white mb-3">Sign in required</h2>
+              <p className="text-purple-300/60 text-sm mb-6 max-w-lg mx-auto">
+                Identity questions are tied to your Tasks.cash account. Sign in to load your progress and claim rewards.
+              </p>
+              <ArenaButton
+                variant="gold"
+                size="md"
+                onClick={() => {
+                  window.location.href = getChallengeLoginUrl();
+                }}
+              >
+                Sign In to Continue
+              </ArenaButton>
             </GlowCard>
           )}
 

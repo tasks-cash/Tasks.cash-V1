@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { HERO_STATS } from "@/data/mock-data";
 import { AnimatedFog } from "@/components/ui/PortalBackground";
 import { ArenaButton } from "@/components/ui/ArenaButton";
@@ -44,9 +45,11 @@ export function HeroSection() {
           Join timed raids. Submit viral videos. Invite friends. Complete secret missions. Climb the rankings.
         </p>
 
-        <ArenaButton variant="gold" size="xl" className="animate-pulse-gold mb-16">
-          Enter The Arena
-        </ArenaButton>
+        <Link href="#game-modes" className="mb-16 inline-block">
+          <ArenaButton variant="gold" size="xl" className="animate-pulse-gold">
+            Enter The Arena
+          </ArenaButton>
+        </Link>
 
         <div className="grid w-full grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 lg:gap-6">
           {HERO_STATS.map((stat, i) => (

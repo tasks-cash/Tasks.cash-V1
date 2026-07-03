@@ -1,5 +1,6 @@
 import type { ResponseCookie } from "next/dist/compiled/@edge-runtime/cookies";
-import { buildMainLoginUrl as buildSafeMainLoginUrl } from "./redirect";
+import { CHALLENGE_APP_URL } from "@/config/env";
+import { buildChallengeAppLoginUrl, buildMainLoginUrl } from "./redirect";
 
 export const SESSION_COOKIE_NAME = "tc_session";
 
@@ -25,5 +26,14 @@ export function getSessionClearCookieOptions(): Partial<ResponseCookie> {
 }
 
 export function buildMainLoginRedirect(requestUrl: string): URL {
-  return new URL(buildSafeMainLoginUrl(requestUrl));
+  try {
+    const parsed = new URL(requestUrl);
+    const challengeOrigin = new URL(CHALLENGE_APP_URL).origin;
+    if (parsed.origin === challengeOrigin) {
+      return new URL(buildMainLoginUrl(parsed.toString()));
+    }
+  } catch {
+    /* fall through */
+  }
+  return new URL(buildChallengeAppLoginUrl());
 }
