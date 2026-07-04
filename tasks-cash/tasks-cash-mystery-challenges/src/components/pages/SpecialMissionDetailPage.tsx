@@ -6,6 +6,8 @@ import { motion } from "framer-motion";
 import { ArenaButton } from "@/components/ui/ArenaButton";
 import { apiFetch, apiFormFetch } from "@/lib/api/client";
 import { getChallengeLoginUrl, hasAuthSession } from "@/lib/auth/client-session";
+import { useLocale } from "@/i18n/I18nProvider";
+import { withLocalePrefix } from "@/i18n/locale-path";
 import type { SpecialMissionDetailPayload, SpecialMissionSubmission } from "@/types/special-mission";
 import { cn } from "@/lib/utils";
 
@@ -101,6 +103,7 @@ function RewardChip({ label, value }: { label: string; value: string }) {
 }
 
 export function SpecialMissionDetailPage({ missionId }: { missionId: string }) {
+  const locale = useLocale();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [payload, setPayload] = useState<SpecialMissionDetailPayload | null>(null);
@@ -177,7 +180,7 @@ export function SpecialMissionDetailPage({ missionId }: { missionId: string }) {
   return (
     <div className="special-missions-page special-mission-detail">
       <div className="mb-6">
-        <Link href="/special-missions" className="sm-back-link">
+        <Link href={withLocalePrefix("/special-missions", locale)} className="sm-back-link">
           ← Back to Special Missions
         </Link>
       </div>

@@ -66,7 +66,7 @@ export function MysteryNavbar() {
         </nav>
 
         <div className="flex items-center gap-2 shrink-0">
-          <LanguageSwitcher className="hidden md:flex" />
+          <LanguageSwitcher className="hidden" />
           <a
             href={main.dashboard}
             className="hidden sm:inline text-[10px] uppercase tracking-wider text-purple-400/50 hover:text-purple-200"

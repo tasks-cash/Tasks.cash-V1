@@ -87,17 +87,18 @@ function LoginForm() {
   );
 }
 
-export default function LoginPage() {
+function LoginFallback() {
   const t = useT();
-
   return (
-    <Suspense
-      fallback={
-        <AuthLayout title={t("auth.loginTitle")} subtitle={t("auth.loginSubtitle")}>
-          <p className="text-center text-purple-300/60">{t("common.loading")}</p>
-        </AuthLayout>
-      }
-    >
+    <AuthLayout title={t("auth.loginTitle")} subtitle={t("auth.loginSubtitle")}>
+      <p className="text-center text-purple-300/60">{t("common.loading")}</p>
+    </AuthLayout>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<LoginFallback />}>
       <LoginForm />
     </Suspense>
   );

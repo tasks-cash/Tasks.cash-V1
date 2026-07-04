@@ -6,6 +6,8 @@ import { GlowCard } from "@/components/ui/GlowCard";
 import { ArenaButton } from "@/components/ui/ArenaButton";
 import { apiFetch } from "@/lib/api/client";
 import { getChallengeLoginUrl, hasAuthSession, redirectToLoginOnce } from "@/lib/auth/client-session";
+import { useLocale } from "@/i18n/I18nProvider";
+import { withLocalePrefix } from "@/i18n/locale-path";
 import type {
   IdentityChallengePayload,
   IdentityChallengeProgress,
@@ -135,6 +137,9 @@ interface IdentityChallengeSectionProps {
 }
 
 export function IdentityChallengeSection({ variant = "embedded" }: IdentityChallengeSectionProps) {
+  const locale = useLocale();
+  const hubHref = withLocalePrefix("/", locale);
+  const explorerDnaHref = withLocalePrefix("/explorer-dna", locale);
   const [loadState, setLoadState] = useState<LoadState>("loading");
   const [errorMessage, setErrorMessage] = useState("");
   const [questions, setQuestions] = useState<NormalizedQuestion[]>([]);
@@ -468,7 +473,7 @@ export function IdentityChallengeSection({ variant = "embedded" }: IdentityChall
                   <button type="button" className="ic-btn-primary" onClick={() => void loadQuestions()}>
                     Retry
                   </button>
-                  <a href="/" className="ic-btn-secondary">
+                  <a href={hubHref} className="ic-btn-secondary">
                     Back to Arena
                   </a>
                 </div>
@@ -482,7 +487,7 @@ export function IdentityChallengeSection({ variant = "embedded" }: IdentityChall
                 <span className="ic-state-icon">🎭</span>
                 <p className="ic-state-title">No Questions Yet</p>
                 <p className="ic-state-text mb-6">Identity questions will appear here when the admin publishes them.</p>
-                <a href="/" className="ic-btn-secondary">
+                <a href={hubHref} className="ic-btn-secondary">
                   Back to Arena
                 </a>
               </div>
@@ -510,10 +515,10 @@ export function IdentityChallengeSection({ variant = "embedded" }: IdentityChall
                   profile.
                 </p>
                 <div className="ic-nav justify-center">
-                  <a href="/explorer-dna" className="ic-btn-primary">
+                  <a href={explorerDnaHref} className="ic-btn-primary">
                     View Explorer DNA
                   </a>
-                  <a href="/" className="ic-btn-secondary">
+                  <a href={hubHref} className="ic-btn-secondary">
                     Back to Arena
                   </a>
                 </div>
@@ -585,7 +590,7 @@ export function IdentityChallengeSection({ variant = "embedded" }: IdentityChall
                       >
                         {submitting ? "Saving…" : "Submit Answer"}
                       </button>
-                      <a href="/" className="ic-btn-secondary">
+                      <a href={hubHref} className="ic-btn-secondary">
                         Back to Arena
                       </a>
                     </div>

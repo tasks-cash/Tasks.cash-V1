@@ -1,9 +1,15 @@
+"use client";
+
 import { ChallengeShell } from "@/components/layout/ChallengeShell";
 import { SectionShell, GlowCard } from "@/components/ui/GlowCard";
 import { ArenaButton } from "@/components/ui/ArenaButton";
 import Link from "next/link";
+import { useLocale } from "@/i18n/I18nProvider";
+import { withLocalePrefix } from "@/i18n/locale-path";
 
 export default function RaidArenaPage() {
+  const locale = useLocale();
+
   return (
     <ChallengeShell>
       <SectionShell
@@ -26,7 +32,7 @@ export default function RaidArenaPage() {
             <p className="text-purple-300/60 text-sm mb-6">
               Track wins, contribution score, and alliance rank across the current season.
             </p>
-            <Link href="/leaderboards">
+            <Link href={withLocalePrefix("/leaderboards", locale)}>
               <ArenaButton variant="gold">View Rankings</ArenaButton>
             </Link>
           </GlowCard>

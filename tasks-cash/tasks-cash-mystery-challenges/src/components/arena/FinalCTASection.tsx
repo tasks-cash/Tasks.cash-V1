@@ -3,9 +3,12 @@
 import Link from "next/link";
 import { AnimatedFog } from "@/components/ui/PortalBackground";
 import { ArenaButton } from "@/components/ui/ArenaButton";
+import { useLocale } from "@/i18n/I18nProvider";
+import { withLocalePrefix } from "@/i18n/locale-path";
 import { motion } from "framer-motion";
 
 export function FinalCTASection() {
+  const locale = useLocale();
   return (
     <section className="arena-screen relative flex min-h-screen w-screen flex-col items-center justify-center overflow-hidden px-[clamp(1rem,4vw,3rem)] py-[clamp(3rem,8vw,6rem)]">
       <AnimatedFog />
@@ -56,7 +59,7 @@ export function FinalCTASection() {
               Enter The Arena
             </ArenaButton>
           </Link>
-          <Link href="/leaderboards">
+          <Link href={withLocalePrefix("/leaderboards", locale)}>
             <ArenaButton variant="purple" size="xl">
               View Leaderboards
             </ArenaButton>

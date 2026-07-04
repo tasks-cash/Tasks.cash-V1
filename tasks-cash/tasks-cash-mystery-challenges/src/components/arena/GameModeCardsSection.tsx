@@ -5,9 +5,12 @@ import { GAME_MODES } from "@/data/mock-data";
 import { SectionShell } from "@/components/ui/GlowCard";
 import { GlowCard } from "@/components/ui/GlowCard";
 import { ArenaButton } from "@/components/ui/ArenaButton";
+import { useLocale } from "@/i18n/I18nProvider";
+import { withLocalePrefix } from "@/i18n/locale-path";
 import { motion } from "framer-motion";
 
 export function GameModeCardsSection() {
+  const locale = useLocale();
   return (
     <SectionShell
       id="game-modes"
@@ -37,7 +40,7 @@ export function GameModeCardsSection() {
                 <p className="text-purple-200/60 text-sm md:text-base lg:text-lg leading-relaxed flex-1 mb-8">
                   {mode.description}
                 </p>
-                <Link href={`/${mode.id}`}>
+                <Link href={withLocalePrefix(`/${mode.id}`, locale)}>
                   <ArenaButton
                     variant={mode.id === "referral-arena" ? "gold" : "purple"}
                     size="lg"

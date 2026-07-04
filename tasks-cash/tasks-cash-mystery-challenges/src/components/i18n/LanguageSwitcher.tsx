@@ -33,18 +33,18 @@ export function LanguageSwitcher({ className = "" }: { className?: string }) {
     >
       {locales.map((locale) => (
         <button
-          key={locale}
-          type="button"
-          onClick={() => switchLocale(locale)}
-          className={`rounded-lg px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wider transition-all ${
-            active === locale
-              ? "bg-amber-950/50 text-amber-200 border border-amber-400/40"
-              : "text-purple-300/60 hover:text-purple-100 border border-transparent"
-          }`}
-          aria-current={active === locale ? "true" : undefined}
-        >
-          {localeLabels[locale]}
-        </button>
+        key={locale}
+        type="button"
+        onClick={() => switchLocale(locale)}
+        className={`rounded-lg px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wider transition-all ${
+          active === locale
+            ? "bg-amber-950/50 text-amber-200 border border-amber-400/40"
+            : "text-purple-300/60 hover:text-purple-100 border border-transparent"
+        }`}
+        aria-current={active === locale ? "true" : undefined}
+      >
+        {localeLabels[locale]}
+      </button>
       ))}
     </div>
   );

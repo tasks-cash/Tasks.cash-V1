@@ -6,6 +6,8 @@ import { motion } from "framer-motion";
 import { ArenaButton } from "@/components/ui/ArenaButton";
 import { apiFetch } from "@/lib/api/client";
 import type { SpecialMission, SpecialMissionsPayload } from "@/types/special-mission";
+import { useLocale } from "@/i18n/I18nProvider";
+import { withLocalePrefix } from "@/i18n/locale-path";
 import { cn } from "@/lib/utils";
 
 type PageState = "loading" | "ready" | "empty" | "error";
@@ -59,6 +61,7 @@ function StatCard({ icon, label, value }: { icon: string; label: string; value: 
 }
 
 function MissionListCard({ mission }: { mission: SpecialMission }) {
+  const locale = useLocale();
   const isLegendary = mission.difficulty === "Legendary";
 
   return (
@@ -99,7 +102,7 @@ function MissionListCard({ mission }: { mission: SpecialMission }) {
         Deadline: <span className="text-purple-200 font-semibold">{formatDeadline(mission.deadline)}</span>
       </p>
 
-      <Link href={`/special-missions/${mission.id}`} className="block mt-auto">
+      <Link href={withLocalePrefix(`/special-missions/${mission.id}`, locale)} className="block mt-auto">
         <ArenaButton variant="gold" size="md" className="w-full">
           View Mission
         </ArenaButton>

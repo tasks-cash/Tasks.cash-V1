@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Navbar, PortalButton, BrandLogo, ParticleField } from "@tasks-cash/ui";
 import { motion } from "framer-motion";
+import type { Locale } from "@/i18n/config";
 import { challengeRoutes } from "@/config/routes";
 import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
 import { useLocale } from "@/i18n/I18nProvider";
@@ -59,7 +60,7 @@ const FOOTER_SECTION_DEFS = [
 
 function resolveLink(
   link: { href?: string; route?: keyof ReturnType<typeof challengeRoutes>; label: string; external?: boolean },
-  locale: ReturnType<typeof useLocale>
+  locale: Locale
 ) {
   if ("route" in link && link.route) {
     return { href: challengeRoutes(locale)[link.route], label: link.label, external: true as const };

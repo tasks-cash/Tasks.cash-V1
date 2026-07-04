@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { motion } from "framer-motion";
 import { BrandLogo, GlassCard, MotionReveal, ParticleField } from "@tasks-cash/ui";
 import { useLocale } from "@/i18n/I18nProvider";
@@ -14,7 +13,6 @@ export function AuthLayout({ title, subtitle, children }: { title: string; subti
     <div className="relative min-h-screen w-full flex overflow-hidden bg-black">
       <ParticleField count={50} />
 
-      {/* Left cinematic portal artwork */}
       <div className="hidden lg:flex lg:w-1/2 relative items-center justify-center p-12 border-r border-purple-500/10">
         <div className="portal-ring absolute h-[500px] w-[500px] opacity-20 animate-portal-spin" />
         <motion.div
@@ -36,7 +34,6 @@ export function AuthLayout({ title, subtitle, children }: { title: string; subti
         </motion.div>
       </div>
 
-      {/* Right glass login card */}
       <div className="flex-1 flex items-center justify-center px-4 py-12 relative z-10">
         <MotionReveal className="w-full max-w-md">
           <div className="text-center mb-8 lg:hidden">
