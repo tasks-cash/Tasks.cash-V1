@@ -1,3 +1,7 @@
+import type { Locale } from "@/i18n/config";
+import { defaultLocale } from "@/i18n/config";
+import { mainUrl } from "@/i18n/locale-path";
+import { stripLocalePrefix } from "@/i18n/locale-path";
 import { CHALLENGE_APP_URL, MAIN_APP_URL, ROUTES, trustedExternalOrigins } from "@/config/routes";
 
 export const DEFAULT_REDIRECT = ROUTES.challenge.hub;
@@ -54,16 +58,19 @@ export function getSafeRedirectUrl(redirect: string | null | undefined): string 
   return DEFAULT_REDIRECT;
 }
 
-export function buildMainLoginUrl(returnUrl: string): string {
-  const login = new URL("/login", MAIN_APP_URL);
+export function buildMainLoginUrl(returnUrl: string, locale: Locale = defaultLocale): string {
+  const login = new URL(mainUrl("/login", locale));
   const safe = getSafeRedirectUrl(returnUrl);
   login.searchParams.set("redirect", safe);
   return login.toString();
 }
 
 /** Login URL that returns users to the challenge app hub after auth. */
-export function buildChallengeAppLoginUrl(): string {
-  const login = new URL("/login", MAIN_APP_URL);
-  login.searchParams.set("redirect", CHALLENGE_APP_URL.replace(/\/$/, "") || CHALLENGE_APP_URL);
+export function buildChallengeAppLoginUrl(locale: Locale = defaultLocale): string {
+  const login = new URL(mainUrl("/login", locale));
+  const hub = locale === defaultLocale
+    ? CHALLENGE_APP_URL.replace(/\/$/, "") || CHALLENGE_APP_URL
+    : `${CHALLENGE_APP_URL.replace(/\/$/, "")}/${locale}`;
+  login.searchParams.set("redirect", hub);
   return login.toString();
 }

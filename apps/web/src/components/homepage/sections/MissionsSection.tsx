@@ -2,13 +2,18 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ROUTES } from "@/config/routes";
+import { challengeRoutes } from "@/config/routes";
+import { useLocale } from "@/i18n/I18nProvider";
+import { withLocalePrefix } from "@/i18n/locale-path";
 import { GameButton } from "@tasks-cash/ui";
 import { CinematicSection } from "../shared/CinematicSection";
 import { SectionTitle } from "../components/SectionTitle";
 import { DAILY_MISSIONS } from "../data/homepage-data";
 
 export function MissionsSection() {
+  const locale = useLocale();
+  const challenge = challengeRoutes(locale);
+
   return (
     <CinematicSection id="missions" glow="gold">
       <SectionTitle
@@ -51,12 +56,12 @@ export function MissionsSection() {
         ))}
       </div>
       <div className="mt-10 flex justify-center gap-4 flex-wrap">
-        <Link href="/missions">
+        <Link href={withLocalePrefix("/missions", locale)}>
           <GameButton variant="gold" size="lg" pulse className="hp-btn-glow font-[family-name:var(--font-rajdhani)] uppercase tracking-widest">
             Start First Mission
           </GameButton>
         </Link>
-        <a href={ROUTES.challenge.hub}>
+        <a href={challenge.hub}>
           <GameButton variant="purple" size="lg" className="font-[family-name:var(--font-rajdhani)] uppercase tracking-widest">
             View Challenges
           </GameButton>

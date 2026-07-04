@@ -1,6 +1,7 @@
 "use client";
 
-import { ROUTES } from "@/config/routes";
+import { challengeRoutes } from "@/config/routes";
+import { useLocale } from "@/i18n/I18nProvider";
 import { motion } from "framer-motion";
 import { GlassCard, PortalButton } from "@tasks-cash/ui";
 import type { IDNARecommendation } from "@tasks-cash/types";
@@ -10,6 +11,9 @@ interface RecommendedForYouProps {
 }
 
 export function RecommendedForYou({ recommendations }: RecommendedForYouProps) {
+  const locale = useLocale();
+  const challenge = challengeRoutes(locale);
+
   return (
     <section className="mb-10">
       <div className="mb-6">
@@ -37,7 +41,7 @@ export function RecommendedForYou({ recommendations }: RecommendedForYouProps) {
               <p className="text-xs text-purple-400/50 uppercase tracking-wider mb-2">{rec.difficulty} · DNA Match</p>
               <p className="text-sm text-purple-300/70 mb-3">{rec.reason}</p>
               <p className="text-sm font-semibold text-amber-400 mb-4">🎁 {rec.rewardPreview}</p>
-              <a href={ROUTES.challenge.videoHunter}>
+              <a href={challenge.videoHunter}>
                 <PortalButton variant="gold" size="sm">
                   View Mission
                 </PortalButton>

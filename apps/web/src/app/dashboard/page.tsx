@@ -17,9 +17,9 @@ import { useGame } from "@/components/game/GameProvider";
 import { apiFetch } from "@/lib/api";
 import { buildRPGProgress } from "@tasks-cash/utils";
 import type { DashboardStats, RPGStatType, ICurrencies } from "@tasks-cash/types";
-import { ROUTES } from "@/config/routes";
+import { challengeRoutes } from "@/config/routes";
 import { usePageContent } from "@/hooks/usePageContent";
-import { useT } from "@/i18n/I18nProvider";
+import { useT, useLocale } from "@/i18n/I18nProvider";
 import type { ActivityEntry, ExplorerEntry } from "@tasks-cash/ui";
 
 const DASHBOARD_LEVEL_STATS: RPGStatType[] = [
@@ -45,6 +45,8 @@ const DEFAULT_CURRENCIES: ICurrencies = {
 export default function DashboardOverviewPage() {
   const { profile, loading: gameLoading, claimDailyReward } = useGame();
   const t = useT();
+  const locale = useLocale();
+  const challenge = challengeRoutes(locale);
   const { get: content } = usePageContent("dashboard");
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [statsError, setStatsError] = useState("");
@@ -153,12 +155,12 @@ export default function DashboardOverviewPage() {
 
       {/* Mystery Mode — full-width premium entry */}
       <section className="mb-10">
-        <MysteryModePortalCard href={ROUTES.challenge.hub} secretCount={5} />
+        <MysteryModePortalCard href={challenge.hub} secretCount={5} />
       </section>
 
       {/* Challenge portal */}
       <div className="grid md:grid-cols-2 gap-6 mb-10">
-        <ChallengePortalCard href={ROUTES.challenge.hub} activeCount={activeChallenges} />
+        <ChallengePortalCard href={challenge.hub} activeCount={activeChallenges} />
       </div>
 
       {/* Currency cards */}

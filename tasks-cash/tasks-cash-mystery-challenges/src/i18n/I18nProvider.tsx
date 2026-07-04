@@ -1,14 +1,8 @@
 "use client";
 
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useMemo,
-  type ReactNode,
-} from "react";
+import { createContext, useCallback, useContext, useMemo, type ReactNode } from "react";
 import { usePathname } from "next/navigation";
-import { defaultLocale, getDirection, type Locale } from "./config";
+import { getDirection, type Locale } from "./config";
 import { getLocaleFromPathname } from "./locale-path";
 import { translate } from "./translate";
 
@@ -24,22 +18,15 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname() ?? "/";
   const locale = getLocaleFromPathname(pathname);
   const dir = getDirection(locale);
-
   const t = useCallback((key: string) => translate(locale, key), [locale]);
-
   const value = useMemo(() => ({ locale, dir, t }), [locale, dir, t]);
-
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
 }
 
 export function useI18n(): I18nContextValue {
   const ctx = useContext(I18nContext);
   if (!ctx) {
-    return {
-      locale: defaultLocale,
-      dir: "ltr",
-      t: (key) => translate(defaultLocale, key),
-    };
+    return { locale: "en", dir: "ltr", t: (key) => translate("en", key) };
   }
   return ctx;
 }

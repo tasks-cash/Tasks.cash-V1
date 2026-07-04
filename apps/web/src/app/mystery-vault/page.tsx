@@ -1,6 +1,5 @@
-import { redirect } from "next/navigation";
-import { ROUTES } from "@/config/routes";
+import { redirectToChallenge } from "@/i18n/challenge-redirect";
 
-export default function MysteryVaultRedirectPage() {
-  redirect(ROUTES.challenge.mysteryVault);
+export default async function MysteryVaultRedirectPage() {
+  await redirectToChallenge("mysteryVault");
 }

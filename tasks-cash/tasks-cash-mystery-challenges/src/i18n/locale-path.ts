@@ -7,7 +7,6 @@ export function getLocaleFromPathname(pathname: string): Locale {
   return defaultLocale;
 }
 
-/** Strip leading /ar|/fr from pathname (English has no prefix) */
 export function stripLocalePrefix(pathname: string): { locale: Locale; pathname: string } {
   const segment = pathname.split("/").filter(Boolean)[0];
   if (segment && isLocale(segment) && segment !== defaultLocale) {
@@ -17,7 +16,6 @@ export function stripLocalePrefix(pathname: string): { locale: Locale; pathname:
   return { locale: defaultLocale, pathname: pathname || "/" };
 }
 
-/** Prefix bare path — English stays unprefixed: /dashboard, Arabic: /ar/dashboard */
 export function withLocalePrefix(pathname: string, locale: Locale): string {
   const { pathname: bare } = stripLocalePrefix(pathname);
   if (locale === defaultLocale) return bare === "" ? "/" : bare;
@@ -40,12 +38,10 @@ function absBase(base: string, path: string, locale: Locale): string {
   return `${root}/${locale}${bare}`;
 }
 
-/** Challenge app URL with locale: /ar/dashboard → http://localhost:3001/ar */
 export function challengeUrl(path: string, locale: Locale): string {
   return absBase(CHALLENGE_APP_URL, path, locale);
 }
 
-/** Main app URL with locale */
 export function mainUrl(path: string, locale: Locale): string {
   return absBase(MAIN_APP_URL, path, locale);
 }

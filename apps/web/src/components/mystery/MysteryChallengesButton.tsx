@@ -1,13 +1,17 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ROUTES } from "@/config/routes";
+import { challengeRoutes } from "@/config/routes";
+import { useLocale } from "@/i18n/I18nProvider";
 
 /** Global authenticated header entry — Mystery Mode & Challenges */
 export function MysteryChallengesButton() {
+  const locale = useLocale();
+  const challenge = challengeRoutes(locale);
+
   return (
     <a
-      href={ROUTES.challenge.hub}
+      href={challenge.hub}
       className="hover-sound-ready shrink-0"
       data-sound="mystery-challenges"
     >

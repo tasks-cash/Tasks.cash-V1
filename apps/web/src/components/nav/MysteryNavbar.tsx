@@ -5,24 +5,23 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { BrandLogo } from "@tasks-cash/ui";
-import { MAIN_APP_DASHBOARD_URL } from "@/lib/constants";
-import { ROUTES } from "@/config/routes";
+import { challengeRoutes, mainRoutes } from "@/config/routes";
+import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
+import { useLocale, useT } from "@/i18n/I18nProvider";
 import { apiFetch, getToken } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
-const BASE_MYSTERY_NAV_LINKS = [
-  { href: ROUTES.challenge.explorerDna, label: "Explorer DNA", external: true, badgeKey: "dna" as const },
-  { href: ROUTES.challenge.hub, label: "Hub", external: true, badge: 0 },
-  { href: ROUTES.challenge.videoHunter, label: "Video Hunter", external: true, badge: 2 },
-  { href: ROUTES.challenge.raidArena, label: "Raid Arena", external: true, badge: 1 },
-  { href: ROUTES.challenge.duelArena, label: "Duel Arena", external: true, badge: 0 },
-  { href: ROUTES.challenge.mysteryVault, label: "Mystery Vault", external: true, badge: 1 },
-  { href: ROUTES.challenge.leaderboards, label: "Leaderboards", external: true, badge: 0 },
-  { href: ROUTES.challenge.rewards, label: "Rewards", external: true, badge: 3 },
-  { href: ROUTES.challenge.progression, label: "Progression", external: true, badge: 0 },
+const BASE_MYSTERY_NAV_KEYS = [
+  { route: "explorerDna" as const, labelKey: "challengeNav.explorerDna", badgeKey: "dna" as const },
+  { route: "hub" as const, labelKey: "challengeNav.hub", badge: 0 },
+  { route: "videoHunter" as const, labelKey: "challengeNav.videoHunter", badge: 2 },
+  { route: "raidArena" as const, labelKey: "challengeNav.raidArena", badge: 1 },
+  { route: "duelArena" as const, labelKey: "challengeNav.duelArena", badge: 0 },
+  { route: "mysteryVault" as const, labelKey: "challengeNav.mysteryVault", badge: 1 },
+  { route: "leaderboards" as const, labelKey: "challengeNav.leaderboards", badge: 0 },
+  { route: "rewards" as const, labelKey: "challengeNav.rewards", badge: 3 },
+  { route: "progression" as const, labelKey: "challengeNav.progression", badge: 0 },
 ] as const;
-
-const ARENA_HREF = ROUTES.challenge.hub;
 
 function isLinkActive(_pathname: string, _href: string) {
   return false;
@@ -117,9 +116,14 @@ function NavLinkItem({
 
 export function MysteryNavbar({ subNav, className }: MysteryNavbarProps) {
   const pathname = usePathname();
+  const locale = useLocale();
+  const t = useT();
+  const challenge = challengeRoutes(locale);
+  const main = mainRoutes(locale);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [dnaPending, setDnaPending] = useState(3);
   const arenaActive = isArenaActive(pathname);
+  const arenaHref = challenge.hub;
 
   useEffect(() => {
     if (!getToken()) return;
@@ -128,9 +132,9 @@ export function MysteryNavbar({ subNav, className }: MysteryNavbarProps) {
     });
   }, [pathname]);
 
-  const navLinks = BASE_MYSTERY_NAV_LINKS.map((link) => ({
-    href: link.href,
-    label: link.label,
+  const navLinks = BASE_MYSTERY_NAV_KEYS.map((link) => ({
+    href: challenge[link.route],
+    label: t(link.labelKey),
     external: true,
     badge: "badgeKey" in link && link.badgeKey === "dna" ? dnaPending : ("badge" in link ? link.badge : 0),
   }));
@@ -153,9 +157,9 @@ export function MysteryNavbar({ subNav, className }: MysteryNavbarProps) {
 
         <div className="relative mx-auto flex w-full max-w-[100vw] items-center gap-3 px-4 py-3 md:px-6 lg:px-8 xl:px-10">
           <div className="flex shrink-0 items-center gap-3">
-            <BrandLogo size="sm" href="/" animated={false} />
+            <BrandLogo size="sm" href={main.home} animated={false} />
             <a
-              href={MAIN_APP_DASHBOARD_URL}
+              href={main.dashboard}
               className="hidden sm:inline-flex text-[9px] font-semibold uppercase tracking-[0.18em] text-purple-400/40 hover:text-purple-200/80 transition-colors"
             >
               ← Dashboard
@@ -176,14 +180,15 @@ export function MysteryNavbar({ subNav, className }: MysteryNavbarProps) {
           </nav>
 
           <div className="ml-auto flex items-center gap-2 sm:gap-3 shrink-0">
+            <LanguageSwitcher className="hidden md:flex" />
             <a
-              href={MAIN_APP_DASHBOARD_URL}
+              href={main.dashboard}
               className="sm:hidden text-[9px] font-semibold uppercase tracking-[0.15em] text-purple-400/45 hover:text-purple-200 transition-colors"
             >
               Dashboard
             </a>
 
-            <a href={ARENA_HREF} className="hidden md:inline-flex">
+            <a href={arenaHref} className="hidden md:inline-flex">
               <motion.span
                 className={cn(
                   "relative inline-flex items-center justify-center overflow-hidden rounded-xl px-4 py-2.5",
@@ -265,7 +270,7 @@ export function MysteryNavbar({ subNav, className }: MysteryNavbarProps) {
                 ))}
 
                 <a
-                  href={ARENA_HREF}
+                  href={arenaHref}
                   onClick={() => setMobileOpen(false)}
                   className="mt-3 block"
                 >
@@ -283,7 +288,7 @@ export function MysteryNavbar({ subNav, className }: MysteryNavbarProps) {
                 </a>
 
                 <a
-                  href={MAIN_APP_DASHBOARD_URL}
+                  href={main.dashboard}
                   className="mt-2 text-center text-[10px] font-semibold uppercase tracking-[0.18em] text-purple-400/50 hover:text-purple-200 py-2"
                 >
                   ← Back to Dashboard

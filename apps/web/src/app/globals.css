@@ -191,3 +191,28 @@
   background: linear-gradient(180deg, #7c3aed, #d4af37);
   border-radius: 3px;
 }
+
+/* RTL layout support */
+[dir="rtl"] {
+  text-align: right;
+}
+
+[dir="rtl"] .text-left {
+  text-align: right;
+}
+
+[dir="rtl"] .text-right {
+  text-align: left;
+}
+
+[dir="rtl"] input[type="search"],
+[dir="rtl"] .hp-search {
+  padding-left: 1rem;
+  padding-right: 2.5rem;
+}
+
+[dir="rtl"] .hp-search + div,
+[dir="rtl"] input[type="search"] ~ span {
+  left: auto;
+  right: 1rem;
+}

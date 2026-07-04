@@ -107,3 +107,15 @@
   background: linear-gradient(180deg, #7c3aed, #d4af37);
   border-radius: 3px;
 }
+
+[dir="rtl"] {
+  text-align: right;
+}
+
+[dir="rtl"] .text-left {
+  text-align: right;
+}
+
+[dir="rtl"] .text-right {
+  text-align: left;
+}

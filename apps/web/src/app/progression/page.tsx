@@ -1,6 +1,5 @@
-import { redirect } from "next/navigation";
-import { ROUTES } from "@/config/routes";
+import { redirectToChallenge } from "@/i18n/challenge-redirect";
 
-export default function ProgressionRedirectPage() {
-  redirect(ROUTES.challenge.progression);
+export default async function ProgressionRedirectPage() {
+  await redirectToChallenge("progression");
 }

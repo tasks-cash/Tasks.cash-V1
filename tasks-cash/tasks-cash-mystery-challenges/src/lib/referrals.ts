@@ -1,9 +1,11 @@
 import type { ReferralStatus } from "@/types/referrals";
-import { ROUTES } from "@/config/routes";
+import type { Locale } from "@/i18n/config";
+import { defaultLocale } from "@/i18n/config";
+import { mainUrl } from "@/i18n/locale-path";
 
-export function buildReferralLink(code: string): string {
+export function buildReferralLink(code: string, locale: Locale = defaultLocale): string {
   if (!code) return "";
-  return `${ROUTES.main.register}?ref=${encodeURIComponent(code)}`;
+  return `${mainUrl("/register", locale)}?ref=${encodeURIComponent(code)}`;
 }
 
 export const REFERRAL_STATUS_LABELS: Record<ReferralStatus, { label: string; className: string }> = {

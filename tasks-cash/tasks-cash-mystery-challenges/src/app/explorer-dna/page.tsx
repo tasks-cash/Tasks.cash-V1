@@ -1,11 +1,14 @@
 import { ChallengeShell } from "@/components/layout/ChallengeShell";
 import { SectionShell, GlowCard } from "@/components/ui/GlowCard";
 import { ArenaButton } from "@/components/ui/ArenaButton";
-import { ROUTES } from "@/config/routes";
+import { challengeRoutes } from "@/config/routes";
 import { buildMainLoginUrl } from "@/lib/auth/redirect";
+import { getServerLocale } from "@/i18n/server-locale";
 
-export default function ExplorerDnaPage() {
-  const loginUrl = buildMainLoginUrl(ROUTES.challenge.explorerDna);
+export default async function ExplorerDnaPage() {
+  const locale = await getServerLocale();
+  const explorerDnaUrl = challengeRoutes(locale).explorerDna;
+  const loginUrl = buildMainLoginUrl(explorerDnaUrl, locale);
 
   return (
     <ChallengeShell>

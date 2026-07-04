@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ROUTES } from "@/config/routes";
+import { challengeRoutes } from "@/config/routes";
+import { useLocale } from "@/i18n/I18nProvider";
+import { withLocalePrefix } from "@/i18n/locale-path";
 import { GameButton } from "@tasks-cash/ui";
 import { CinematicSection } from "../shared/CinematicSection";
 import { SectionTitle } from "../components/SectionTitle";
@@ -15,6 +17,9 @@ const RANK_STYLES: Record<number, string> = {
 };
 
 export function LeaderboardSection() {
+  const locale = useLocale();
+  const challenge = challengeRoutes(locale);
+
   return (
     <CinematicSection id="leaderboard" glow="purple">
       <SectionTitle
@@ -52,7 +57,7 @@ export function LeaderboardSection() {
         ))}
       </div>
       <div className="mt-10 flex justify-center">
-        <a href={ROUTES.challenge.leaderboards}>
+        <a href={challenge.leaderboards}>
           <GameButton variant="purple" size="lg" className="font-[family-name:var(--font-rajdhani)] uppercase tracking-widest px-12">
             View Leaderboards
           </GameButton>

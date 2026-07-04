@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import { EXPLORER_DNA_URL } from "@/config/routes";
+import { challengeRoutes } from "@/config/routes";
 import { Navbar, CoinBadge, Badge, PageTransition, DashboardSidebar, GameButton } from "@tasks-cash/ui";
 import { MysteryChallengesButton } from "@/components/mystery/MysteryChallengesButton";
 import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
@@ -20,7 +20,7 @@ const NAV_LINKS = [
   { href: "/dashboard/wallet", labelKey: "nav.wallet", icon: "💰" },
   { href: "/dashboard/withdrawals", label: "Withdrawals", icon: "◈" },
   { href: "/dashboard/referrals", labelKey: "nav.referrals", icon: "🔗" },
-  { href: EXPLORER_DNA_URL, labelKey: "nav.explorerDna", icon: "🧬", badgeKey: "dna" as const },
+  { href: "__explorer_dna__", labelKey: "nav.explorerDna", icon: "🧬", badgeKey: "dna" as const },
   { href: "/dashboard/level", label: "Level", icon: "⚡" },
   { href: "/dashboard/leaderboard", label: "Rank", icon: "🏆" },
   { href: "/dashboard/notifications", label: "Alerts", icon: "🔔" },
@@ -79,7 +79,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }, [loadSession]);
 
   const sidebarItems = NAV_LINKS.map((item) => ({
-    href: item.href.startsWith("http") ? item.href : withLocalePrefix(item.href, locale),
+    href:
+      item.href === "__explorer_dna__"
+        ? challengeRoutes(locale).explorerDna
+        : item.href.startsWith("http")
+          ? item.href
+          : withLocalePrefix(item.href, locale),
     label: "labelKey" in item ? t(item.labelKey) : ("label" in item ? item.label : ""),
     icon: item.icon,
     badge: "badgeKey" in item && item.badgeKey === "dna" ? dnaPending : undefined,
@@ -126,7 +131,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         onLogout={() => {
           void logoutSession();
           clearToken();
-          router.replace("/login");
+          router.replace(withLocalePrefix("/login", locale));
         }}
       />
       <div className="flex-1 min-w-0">

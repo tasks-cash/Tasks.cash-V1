@@ -8,7 +8,7 @@ import {
 } from "@/lib/auth/config";
 import { buildPostLoginRedirect, DEFAULT_REDIRECT, getLoginUrl } from "@/lib/auth/redirect";
 import { verifyAccessToken } from "@/lib/auth/jwt";
-import { LOCALE_COOKIE, defaultLocale, isLocale } from "@/i18n/config";
+import { LOCALE_COOKIE, defaultLocale } from "@/i18n/config";
 import { resolvePreferredLocale, stripLocalePrefix, withLocalePrefix } from "@/i18n/locale-path";
 
 function readToken(request: NextRequest): string | null {
@@ -39,16 +39,18 @@ export async function middleware(request: NextRequest) {
       return NextResponse.next();
     }
 
-    const { locale, pathname: barePath } = stripLocalePrefix(pathname);
+    const preferred = resolvePreferredLocale(
+      request.cookies.get(LOCALE_COOKIE)?.value ?? request.cookies.get("tc_locale")?.value
+    );
 
-    if (!locale) {
-      const preferred = resolvePreferredLocale(
-        request.cookies.get(LOCALE_COOKIE)?.value ?? request.cookies.get("tc_locale")?.value
-      );
+    let { locale, pathname: barePath } = stripLocalePrefix(pathname);
+
+    // Redirect bare paths to /ar or /fr when preferred (English stays unprefixed)
+    if (locale === defaultLocale && preferred !== defaultLocale && pathname === barePath) {
       const url = request.nextUrl.clone();
-      url.pathname = withLocalePrefix(pathname, preferred);
+      url.pathname = withLocalePrefix(barePath, preferred);
       const redirect = NextResponse.redirect(url);
-      redirect.cookies.set(LOCALE_COOKIE, preferred, { path: "/", sameSite: "lax" });
+      redirect.cookies.set(LOCALE_COOKIE, preferred, { path: "/", sameSite: "lax", maxAge: 60 * 60 * 24 * 365 });
       return redirect;
     }
 
@@ -77,7 +79,7 @@ export async function middleware(request: NextRequest) {
       const url = request.nextUrl.clone();
       url.pathname = barePath;
       const response = NextResponse.rewrite(url);
-      response.cookies.set(LOCALE_COOKIE, locale, { path: "/", sameSite: "lax" });
+      response.cookies.set(LOCALE_COOKIE, locale, { path: "/", sameSite: "lax", maxAge: 60 * 60 * 24 * 365 });
       return response;
     }
 
@@ -89,7 +91,7 @@ export async function middleware(request: NextRequest) {
     const url = request.nextUrl.clone();
     url.pathname = barePath;
     const response = NextResponse.rewrite(url);
-    response.cookies.set(LOCALE_COOKIE, locale, { path: "/", sameSite: "lax" });
+    response.cookies.set(LOCALE_COOKIE, locale, { path: "/", sameSite: "lax", maxAge: 60 * 60 * 24 * 365 });
     return response;
   } catch (error) {
     console.error("[middleware]", error);

@@ -1,6 +1,5 @@
-import { redirect } from "next/navigation";
-import { ROUTES } from "@/config/routes";
+import { redirectToChallenge } from "@/i18n/challenge-redirect";
 
-export default function DuelArenaRedirectPage() {
-  redirect(ROUTES.challenge.duelArena);
+export default async function DuelArenaRedirectPage() {
+  await redirectToChallenge("duelArena");
 }

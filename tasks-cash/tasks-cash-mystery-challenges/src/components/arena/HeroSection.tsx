@@ -5,9 +5,14 @@ import { HERO_STATS } from "@/data/mock-data";
 import { AnimatedFog } from "@/components/ui/PortalBackground";
 import { ArenaButton } from "@/components/ui/ArenaButton";
 import { GlowCard } from "@/components/ui/GlowCard";
+import { useLocale, useT } from "@/i18n/I18nProvider";
+import { withLocalePrefix } from "@/i18n/locale-path";
 import { motion } from "framer-motion";
 
 export function HeroSection() {
+  const t = useT();
+  const locale = useLocale();
+
   return (
     <section className="arena-screen relative flex min-h-screen w-screen flex-col items-center justify-center overflow-hidden px-[clamp(1rem,4vw,3rem)] py-[clamp(2rem,5vw,4rem)]">
       <AnimatedFog />
@@ -42,12 +47,12 @@ export function HeroSection() {
         </h1>
 
         <p className="mx-auto mb-10 max-w-4xl text-base text-purple-200/60 md:text-xl lg:text-2xl leading-relaxed px-2">
-          Join timed raids. Submit viral videos. Invite friends. Complete secret missions. Climb the rankings.
+          {t("arena.subtitle")}
         </p>
 
-        <Link href="#game-modes" className="mb-16 inline-block">
+        <Link href={`${withLocalePrefix("/", locale)}#game-modes`} className="mb-16 inline-block">
           <ArenaButton variant="gold" size="xl" className="animate-pulse-gold">
-            Enter The Arena
+            {t("arena.enterArena")}
           </ArenaButton>
         </Link>
 

@@ -7,6 +7,7 @@ import { ArenaButton } from "@/components/ui/ArenaButton";
 import { ReferralQrPanel } from "@/components/referral-arena/ReferralQrPanel";
 import { apiFetch } from "@/lib/api/client";
 import { buildReferralLink, formatRewardCoins, REFERRAL_STATUS_LABELS } from "@/lib/referrals";
+import { useLocale } from "@/i18n/I18nProvider";
 import { getChallengeLoginUrl, hasAuthSession } from "@/lib/auth/client-session";
 import type {
   ReferralLeaderboardChampion,

@@ -5,7 +5,10 @@ import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { PortalButton, Input, Label } from "@tasks-cash/ui";
 import { AuthLayout } from "@/components/layout/AuthLayout";
+import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
 import { apiFetch, setToken } from "@/lib/api";
+import { useLocale, useT } from "@/i18n/I18nProvider";
+import { withLocalePrefix } from "@/i18n/locale-path";
 import {
   clearStoredReferralCode,
   getStoredReferralCode,
@@ -15,6 +18,8 @@ import {
 function RegisterForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const locale = useLocale();
+  const t = useT();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [referralCode, setReferralCode] = useState("");
@@ -78,7 +83,7 @@ function RegisterForm() {
       clearStoredReferralCode();
       setToken(res.data.accessToken);
       if (res.data.user) localStorage.setItem("tc_user", JSON.stringify(res.data.user));
-      router.push("/dashboard");
+      router.push(withLocalePrefix("/dashboard", locale));
       return;
     }
 
@@ -86,10 +91,13 @@ function RegisterForm() {
   }
 
   return (
-    <AuthLayout title="Enter the Portal" subtitle="Create your explorer account and claim founder status">
+    <AuthLayout title={t("auth.registerTitle")} subtitle={t("auth.loginSubtitle")}>
+      <div className="flex justify-center mb-4">
+        <LanguageSwitcher />
+      </div>
       <p className="text-center text-sm text-purple-400/60 mb-6">
         Already a warrior?{" "}
-        <Link href="/login" className="text-amber-400 hover:underline">
+        <Link href={withLocalePrefix("/login", locale)} className="text-amber-400 hover:underline">
           Login
         </Link>
       </p>
@@ -148,7 +156,7 @@ function RegisterForm() {
         <PortalButton variant="gold" className="w-full" disabled={loading} pulse data-sound="register">
           {loading ? "Creating Account..." : "Create Account"}
         </PortalButton>
-        <PortalButton variant="secondary" className="w-full" type="button" onClick={() => router.push("/")} data-sound="explore">
+        <PortalButton variant="secondary" className="w-full" type="button" onClick={() => router.push(withLocalePrefix("/", locale))} data-sound="explore">
           Explore Worlds First
         </PortalButton>
       </form>

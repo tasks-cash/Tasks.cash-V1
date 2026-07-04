@@ -1,6 +1,5 @@
-import { redirect } from "next/navigation";
-import { ROUTES } from "@/config/routes";
+import { redirectToChallenge } from "@/i18n/challenge-redirect";
 
-export default function MysteryModeLegacyRedirect() {
-  redirect(ROUTES.challenge.hub);
+export default async function MysteryModeRedirectPage() {
+  await redirectToChallenge("hub");
 }

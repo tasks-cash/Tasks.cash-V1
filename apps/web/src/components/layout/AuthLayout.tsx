@@ -1,9 +1,15 @@
 "use client";
 
+import Link from "next/link";
 import { motion } from "framer-motion";
 import { BrandLogo, GlassCard, MotionReveal, ParticleField } from "@tasks-cash/ui";
+import { useLocale } from "@/i18n/I18nProvider";
+import { withLocalePrefix } from "@/i18n/locale-path";
 
 export function AuthLayout({ title, subtitle, children }: { title: string; subtitle?: string; children: React.ReactNode }) {
+  const locale = useLocale();
+  const homeHref = withLocalePrefix("/", locale);
+
   return (
     <div className="relative min-h-screen w-full flex overflow-hidden bg-black">
       <ParticleField count={50} />
@@ -22,7 +28,7 @@ export function AuthLayout({ title, subtitle, children }: { title: string; subti
           transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
           className="relative z-10 text-center"
         >
-          <BrandLogo size="hero" href="/" showTagline animated />
+          <BrandLogo size="hero" href={homeHref} showTagline animated />
           <p className="mt-8 max-w-md text-purple-200/50 text-sm leading-relaxed">
             Step through the dimensional gateway. Your journey to legendary rewards begins here.
           </p>
@@ -34,11 +40,11 @@ export function AuthLayout({ title, subtitle, children }: { title: string; subti
       <div className="flex-1 flex items-center justify-center px-4 py-12 relative z-10">
         <MotionReveal className="w-full max-w-md">
           <div className="text-center mb-8 lg:hidden">
-            <BrandLogo size="md" href="/" showTagline />
+            <BrandLogo size="md" href={homeHref} showTagline />
           </div>
           <GlassCard glow="violet" className="p-8 md:p-10">
             <div className="hidden lg:flex justify-center mb-6">
-              <BrandLogo size="sm" href="/" animated={false} />
+              <BrandLogo size="sm" href={homeHref} animated={false} />
             </div>
             <h1 className="text-2xl font-black text-white text-center font-[family-name:var(--font-cinzel)]">{title}</h1>
             {subtitle && <p className="text-purple-300/60 text-sm mt-2 text-center">{subtitle}</p>}

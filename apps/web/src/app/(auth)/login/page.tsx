@@ -1,16 +1,21 @@
 "use client";
 
-import Link from "next/link";
 import { Suspense, useState } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { PortalButton, Input, Label } from "@tasks-cash/ui";
 import { AuthLayout } from "@/components/layout/AuthLayout";
+import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
 import { apiFetch, setToken } from "@/lib/api";
 import { buildPostLoginRedirect, getSafeRedirectUrl, shouldPreserveRedirectParam } from "@/lib/auth/redirect";
+import { useLocale, useT } from "@/i18n/I18nProvider";
+import { withLocalePrefix } from "@/i18n/locale-path";
 
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const locale = useLocale();
+  const t = useT();
   const rawRedirect = searchParams.get("redirect");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -37,7 +42,7 @@ function LoginForm() {
         window.location.href = next;
         return;
       }
-      router.push(next);
+      router.push(withLocalePrefix(next, locale));
       return;
     }
 
@@ -45,34 +50,37 @@ function LoginForm() {
   }
 
   const registerHref = shouldPreserveRedirectParam(rawRedirect)
-    ? `/register?redirect=${encodeURIComponent(getSafeRedirectUrl(rawRedirect))}`
-    : "/register";
+    ? `${withLocalePrefix("/register", locale)}?redirect=${encodeURIComponent(getSafeRedirectUrl(rawRedirect))}`
+    : withLocalePrefix("/register", locale);
 
   return (
-    <AuthLayout title="Return to Portal" subtitle="Authenticate to enter your command center">
+    <AuthLayout title={t("auth.loginTitle")} subtitle={t("auth.loginSubtitle")}>
+      <div className="flex justify-center mb-4">
+        <LanguageSwitcher />
+      </div>
       <p className="text-center text-sm text-purple-400/60 mb-6">
-        No account?{" "}
+        {t("auth.noAccount")}{" "}
         <Link href={registerHref} className="text-amber-400 hover:underline">
-          Create Account
+          {t("auth.createAccount")}
         </Link>
       </p>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="email">{t("auth.email")}</Label>
           <Input id="email" name="email" type="email" required className="mt-1 auth-input" placeholder="warrior@portal.io" />
         </div>
         <div>
-          <Label htmlFor="password">Password</Label>
+          <Label htmlFor="password">{t("auth.password")}</Label>
           <Input id="password" name="password" type="password" required className="mt-1 auth-input" placeholder="••••••••" />
         </div>
         <p className="text-center text-sm">
-          <Link href="/forgot-password" className="text-purple-400 hover:underline">
-            Forgot password?
+          <Link href={withLocalePrefix("/forgot-password", locale)} className="text-purple-400 hover:underline">
+            {t("auth.forgotPassword")}
           </Link>
         </p>
         {error && <p className="text-red-400 text-sm">{error}</p>}
         <PortalButton variant="gold" className="w-full" disabled={loading} pulse data-sound="login">
-          {loading ? "Opening Portal..." : "Enter The Portal"}
+          {loading ? t("auth.openingPortal") : t("auth.enterPortal")}
         </PortalButton>
       </form>
     </AuthLayout>
@@ -80,11 +88,13 @@ function LoginForm() {
 }
 
 export default function LoginPage() {
+  const t = useT();
+
   return (
     <Suspense
       fallback={
-        <AuthLayout title="Return to Portal" subtitle="Loading login portal...">
-          <p className="text-center text-purple-300/60">Preparing secure entry...</p>
+        <AuthLayout title={t("auth.loginTitle")} subtitle={t("auth.loginSubtitle")}>
+          <p className="text-center text-purple-300/60">{t("common.loading")}</p>
         </AuthLayout>
       }
     >

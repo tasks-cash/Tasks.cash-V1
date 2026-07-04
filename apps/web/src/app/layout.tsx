@@ -49,9 +49,10 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en" className="dark" suppressHydrationWarning>
       <body
         className={`${inter.variable} ${cinzel.variable} ${orbitron.variable} ${rajdhani.variable} min-h-screen w-full overflow-x-hidden bg-black font-sans text-white antialiased`}
+        suppressHydrationWarning
       >
         <PortalBackground intensity="medium" />
         <I18nProvider>
