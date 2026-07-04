@@ -9,83 +9,96 @@ import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
 import { useLocale } from "@/i18n/I18nProvider";
 import { stripLocalePrefix, withLocalePrefix } from "@/i18n/locale-path";
 
-function usePublicLinks() {
-  const locale = useLocale();
-  const challenge = challengeRoutes(locale);
-  const prefix = (path: string) => withLocalePrefix(path, locale);
+const PUBLIC_LINK_DEFS = [
+  { href: "/worlds", label: "Worlds" },
+  { href: "/missions", label: "Missions" },
+  { href: "/mystery-missions", label: "Mystery" },
+  { route: "hub" as const, label: "Challenges", external: true },
+  { href: "/treasure", label: "Treasure" },
+  { route: "rewards" as const, label: "Rewards", external: true },
+  { route: "leaderboards" as const, label: "Leaderboards", external: true },
+  { href: "/marketplace", label: "Marketplace" },
+  { href: "/community", label: "Community" },
+] as const;
 
-  return {
-    nav: [
-      { href: prefix("/worlds"), label: "Worlds" },
-      { href: prefix("/missions"), label: "Missions" },
-      { href: prefix("/mystery-missions"), label: "Mystery" },
-      { href: challenge.hub, label: "Challenges", external: true },
-      { href: prefix("/treasure"), label: "Treasure" },
-      { href: challenge.rewards, label: "Rewards", external: true },
-      { href: challenge.leaderboards, label: "Leaderboards", external: true },
-      { href: prefix("/marketplace"), label: "Marketplace" },
-      { href: prefix("/community"), label: "Community" },
+const FOOTER_SECTION_DEFS = [
+  {
+    title: "Explore",
+    links: [
+      { href: "/worlds", label: "Worlds" },
+      { href: "/missions", label: "Missions" },
+      { href: "/mystery-missions", label: "Mystery Missions" },
+      { route: "hub" as const, label: "Challenges", external: true },
+      { href: "/treasure", label: "Treasure" },
+      { route: "rewards" as const, label: "Rewards", external: true },
+      { route: "leaderboards" as const, label: "Leaderboards", external: true },
     ],
-    footer: [
-      {
-        title: "Explore",
-        links: [
-          { href: prefix("/worlds"), label: "Worlds" },
-          { href: prefix("/missions"), label: "Missions" },
-          { href: prefix("/mystery-missions"), label: "Mystery Missions" },
-          { href: challenge.hub, label: "Challenges", external: true },
-          { href: prefix("/treasure"), label: "Treasure" },
-          { href: challenge.rewards, label: "Rewards", external: true },
-          { href: challenge.leaderboards, label: "Leaderboards", external: true },
-        ],
-      },
-      {
-        title: "Platform",
-        links: [
-          { href: prefix("/marketplace"), label: "Marketplace" },
-          { href: prefix("/community"), label: "Community" },
-          { href: prefix("/blog"), label: "Blog" },
-          { href: prefix("/about"), label: "About Us" },
-          { href: prefix("/faq"), label: "FAQ" },
-          { href: prefix("/help"), label: "Help Center" },
-        ],
-      },
-      {
-        title: "Legal",
-        links: [
-          { href: prefix("/terms"), label: "Terms of Service" },
-          { href: prefix("/privacy"), label: "Privacy Policy" },
-          { href: prefix("/refund"), label: "Refund Policy" },
-          { href: prefix("/cookies"), label: "Cookie Policy" },
-          { href: prefix("/contact"), label: "Contact" },
-        ],
-      },
+  },
+  {
+    title: "Platform",
+    links: [
+      { href: "/marketplace", label: "Marketplace" },
+      { href: "/community", label: "Community" },
+      { href: "/blog", label: "Blog" },
+      { href: "/about", label: "About Us" },
+      { href: "/faq", label: "FAQ" },
+      { href: "/help", label: "Help Center" },
     ],
-    login: prefix("/login"),
-    register: prefix("/register"),
-    home: prefix("/"),
-  };
+  },
+  {
+    title: "Legal",
+    links: [
+      { href: "/terms", label: "Terms of Service" },
+      { href: "/privacy", label: "Privacy Policy" },
+      { href: "/refund", label: "Refund Policy" },
+      { href: "/cookies", label: "Cookie Policy" },
+      { href: "/contact", label: "Contact" },
+    ],
+  },
+] as const;
+
+function resolveLink(
+  link: { href?: string; route?: keyof ReturnType<typeof challengeRoutes>; label: string; external?: boolean },
+  locale: ReturnType<typeof useLocale>
+) {
+  if ("route" in link && link.route) {
+    return { href: challengeRoutes(locale)[link.route], label: link.label, external: true as const };
+  }
+  return { href: withLocalePrefix(link.href!, locale), label: link.label, external: false as const };
 }
 
 export function PublicLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() ?? "/";
   const locale = useLocale();
   const { pathname: bare } = stripLocalePrefix(pathname);
-  const links = usePublicLinks();
 
   if (bare === "/") {
     return <>{children}</>;
   }
 
+  const publicLinks = PUBLIC_LINK_DEFS.map((link) => resolveLink(link, locale));
+  const footerSections = FOOTER_SECTION_DEFS.map((section) => ({
+    title: section.title,
+    links: section.links.map((link) => resolveLink(link, locale)),
+  }));
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar
-        links={links.nav}
+        links={publicLinks}
         rightSlot={
           <>
             <LanguageSwitcher className="hidden sm:flex" />
-            <Link href={links.login}><PortalButton variant="ghost" size="sm" data-sound="login">Login</PortalButton></Link>
-            <Link href={links.register}><PortalButton variant="gold" size="sm" pulse data-sound="enter-portal">Enter The Portal</PortalButton></Link>
+            <Link href={withLocalePrefix("/login", locale)}>
+              <PortalButton variant="ghost" size="sm" data-sound="login">
+                Login
+              </PortalButton>
+            </Link>
+            <Link href={withLocalePrefix("/register", locale)}>
+              <PortalButton variant="gold" size="sm" pulse data-sound="enter-portal">
+                Enter The Portal
+              </PortalButton>
+            </Link>
           </>
         }
       />
@@ -96,18 +109,18 @@ export function PublicLayout({ children }: { children: React.ReactNode }) {
         <div className="relative mx-auto max-w-6xl">
           <div className="grid md:grid-cols-4 gap-10 mb-12">
             <div className="flex flex-col items-start">
-              <BrandLogo size="md" href={links.home} showTagline />
+              <BrandLogo size="md" href={withLocalePrefix("/", locale)} showTagline />
               <p className="text-purple-400/50 text-sm leading-relaxed mt-4">
                 Complete missions. Earn coins. Ascend through the portal. A premium gamified universe awaits.
               </p>
             </div>
-            {links.footer.map((section) => (
+            {footerSections.map((section) => (
               <div key={section.title}>
                 <h4 className="text-sm font-bold text-purple-200 mb-4 uppercase tracking-wider">{section.title}</h4>
                 <ul className="space-y-2">
                   {section.links.map((l) => (
                     <li key={l.href}>
-                      {"external" in l && l.external ? (
+                      {l.external ? (
                         <a href={l.href} className="text-sm text-purple-300/60 hover:text-amber-300 transition-colors">
                           {l.label}
                         </a>
@@ -129,13 +142,19 @@ export function PublicLayout({ children }: { children: React.ReactNode }) {
             className="flex flex-col md:flex-row items-center justify-between gap-4 pt-8 border-t border-purple-500/10"
           >
             <div className="flex items-center gap-3">
-              <BrandLogo size="xs" href={links.home} animated={false} />
+              <BrandLogo size="xs" href={withLocalePrefix("/", locale)} animated={false} />
               <p className="text-purple-400/40 text-sm">© 2026 Tasks.cash — All dimensions reserved.</p>
             </div>
             <div className="flex gap-4 text-sm text-purple-400/50">
-              <Link href={withLocalePrefix("/terms", locale)} className="hover:text-purple-200">Terms</Link>
-              <Link href={withLocalePrefix("/privacy", locale)} className="hover:text-purple-200">Privacy</Link>
-              <Link href={withLocalePrefix("/cookies", locale)} className="hover:text-purple-200">Cookies</Link>
+              <Link href={withLocalePrefix("/terms", locale)} className="hover:text-purple-200">
+                Terms
+              </Link>
+              <Link href={withLocalePrefix("/privacy", locale)} className="hover:text-purple-200">
+                Privacy
+              </Link>
+              <Link href={withLocalePrefix("/cookies", locale)} className="hover:text-purple-200">
+                Cookies
+              </Link>
             </div>
           </motion.div>
         </div>

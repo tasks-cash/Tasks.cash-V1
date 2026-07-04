@@ -15,7 +15,7 @@ export function HomepageHeader() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const NAV = [
+  const nav = [
     { href: withLocalePrefix("/worlds", locale), label: "Worlds" },
     { href: withLocalePrefix("/missions", locale), label: "Missions" },
     { href: withLocalePrefix("/treasure", locale), label: "Treasure" },
@@ -41,7 +41,7 @@ export function HomepageHeader() {
         <BrandLogo size="lg" href={withLocalePrefix("/", locale)} animated={false} className="shrink-0" />
 
         <nav className="hidden xl:flex items-center gap-1">
-          {NAV.map((link) => (
+          {nav.map((link) => (
             <a
               key={link.href}
               href={link.href}
@@ -69,7 +69,9 @@ export function HomepageHeader() {
           <LanguageSwitcher className="hidden sm:flex" />
 
           <Link href={withLocalePrefix("/login", locale)} className="hidden sm:block">
-            <GameButton variant="ghost" size="sm" data-sound="login">Login</GameButton>
+            <GameButton variant="ghost" size="sm" data-sound="login">
+              Login
+            </GameButton>
           </Link>
           <Link href={withLocalePrefix("/register", locale)}>
             <GameButton variant="gold" size="sm" pulse className="hp-btn-glow" data-sound="register">
@@ -100,7 +102,7 @@ export function HomepageHeader() {
           >
             <div className="px-4 py-6 space-y-1">
               <input type="search" placeholder="Search..." className="hp-search w-full px-4 py-3 rounded-xl mb-4 md:hidden" />
-              {NAV.map((link) => (
+              {nav.map((link) => (
                 <a
                   key={link.href}
                   href={link.href}
@@ -111,8 +113,16 @@ export function HomepageHeader() {
                 </a>
               ))}
               <div className="flex gap-3 pt-4 border-t border-purple-500/20 sm:hidden">
-                <Link href={withLocalePrefix("/login", locale)} className="flex-1"><GameButton variant="ghost" size="sm" className="w-full">Login</GameButton></Link>
-                <Link href={withLocalePrefix("/register", locale)} className="flex-1"><GameButton variant="gold" size="sm" className="w-full">Register</GameButton></Link>
+                <Link href={withLocalePrefix("/login", locale)} className="flex-1">
+                  <GameButton variant="ghost" size="sm" className="w-full">
+                    Login
+                  </GameButton>
+                </Link>
+                <Link href={withLocalePrefix("/register", locale)} className="flex-1">
+                  <GameButton variant="gold" size="sm" className="w-full">
+                    Register
+                  </GameButton>
+                </Link>
               </div>
             </div>
           </motion.div>

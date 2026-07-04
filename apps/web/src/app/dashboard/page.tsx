@@ -44,8 +44,8 @@ const DEFAULT_CURRENCIES: ICurrencies = {
 
 export default function DashboardOverviewPage() {
   const { profile, loading: gameLoading, claimDailyReward } = useGame();
-  const t = useT();
   const locale = useLocale();
+  const t = useT();
   const challenge = challengeRoutes(locale);
   const { get: content } = usePageContent("dashboard");
   const [stats, setStats] = useState<DashboardStats | null>(null);
