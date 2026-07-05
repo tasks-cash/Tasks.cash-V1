@@ -1,5 +1,7 @@
 import { AUTH_PAGES, isAuthPage } from "./config";
-import { MAIN_APP_URL, ROUTES, trustedExternalOrigins } from "@/config/routes";
+import { MAIN_APP_URL, trustedExternalOrigins } from "@/config/routes";
+import type { Locale } from "@/i18n/config";
+import { stripLocalePrefix, withLocalePrefix } from "@/i18n/locale-path";
 
 export const DEFAULT_REDIRECT = "/dashboard";
 
@@ -36,7 +38,7 @@ export function getSafeRedirectUrl(redirect: string | null | undefined): string 
 
   if (decoded.startsWith("/") && !decoded.startsWith("//")) {
     const pathOnly = decoded.split("?")[0];
-    if (isAuthPage(pathOnly)) return DEFAULT_REDIRECT;
+    if (isAuthPage(stripLocalePrefix(pathOnly).pathname)) return DEFAULT_REDIRECT;
     return decoded;
   }
 
@@ -50,7 +52,7 @@ export function getSafeRedirectUrl(redirect: string | null | undefined): string 
 
     const mainOrigin = new URL(MAIN_APP_URL).origin;
     if (url.origin === mainOrigin) {
-      if (isAuthPage(url.pathname)) return DEFAULT_REDIRECT;
+      if (isAuthPage(stripLocalePrefix(url.pathname).pathname)) return DEFAULT_REDIRECT;
       return `${url.pathname}${url.search}${url.hash}`;
     }
   } catch {
@@ -72,10 +74,11 @@ export function shouldPreserveRedirectParam(raw: string | null | undefined): boo
 }
 
 export function getLoginUrl(requestUrl: string, returnPath: string): string {
-  const login = new URL("/login", requestUrl);
+  const { locale } = stripLocalePrefix(returnPath.split("?")[0]);
+  const login = new URL(withLocalePrefix("/login", locale), requestUrl);
   const pathOnly = returnPath.split("?")[0];
 
-  if (isAuthPage(pathOnly)) {
+  if (isAuthPage(stripLocalePrefix(pathOnly).pathname)) {
     return login.toString();
   }
 
@@ -88,11 +91,19 @@ export function getLoginUrl(requestUrl: string, returnPath: string): string {
 }
 
 /** After login, send user to dashboard or challenge callback on localhost cross-port. */
-export function buildPostLoginRedirect(redirectParam: string | null | undefined, accessToken: string): string {
+export function buildPostLoginRedirect(
+  redirectParam: string | null | undefined,
+  accessToken: string,
+  currentLocale?: Locale
+): string {
   const safe = getSafeRedirectUrl(redirectParam);
 
   if (!safe.startsWith("http")) {
-    return safe;
+    const query = safe.includes("?") ? safe.slice(safe.indexOf("?")) : "";
+    const pathOnly = safe.split("?")[0] || "/";
+    const stripped = stripLocalePrefix(pathOnly);
+    const locale = safe === DEFAULT_REDIRECT && currentLocale ? currentLocale : stripped.locale;
+    return `${withLocalePrefix(stripped.pathname, locale)}${query}`;
   }
 
   const sharedDomain =

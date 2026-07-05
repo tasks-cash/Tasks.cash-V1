@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { BrandLogo, GlassCard, MotionReveal, ParticleField } from "@tasks-cash/ui";
+import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
 import { useLocale } from "@/i18n/I18nProvider";
 import { withLocalePrefix } from "@/i18n/locale-path";
 
@@ -12,6 +13,10 @@ export function AuthLayout({ title, subtitle, children }: { title: string; subti
   return (
     <div className="relative min-h-screen w-full flex overflow-hidden bg-black">
       <ParticleField count={50} />
+
+      <div className="absolute top-4 end-4 z-20">
+        <LanguageSwitcher />
+      </div>
 
       <div className="hidden lg:flex lg:w-1/2 relative items-center justify-center p-12 border-r border-purple-500/10">
         <div className="portal-ring absolute h-[500px] w-[500px] opacity-20 animate-portal-spin" />

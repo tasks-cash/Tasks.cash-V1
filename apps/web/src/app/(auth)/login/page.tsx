@@ -37,12 +37,12 @@ function LoginForm() {
       setToken(res.data.accessToken);
       if (res.data.user) localStorage.setItem("tc_user", JSON.stringify(res.data.user));
 
-      const next = buildPostLoginRedirect(rawRedirect, res.data.accessToken);
+      const next = buildPostLoginRedirect(rawRedirect, res.data.accessToken, locale);
       if (next.startsWith("http")) {
         window.location.href = next;
         return;
       }
-      router.push(withLocalePrefix(next, locale));
+      router.push(next);
       return;
     }
 
@@ -87,18 +87,17 @@ function LoginForm() {
   );
 }
 
-function LoginFallback() {
-  const t = useT();
-  return (
-    <AuthLayout title={t("auth.loginTitle")} subtitle={t("auth.loginSubtitle")}>
-      <p className="text-center text-purple-300/60">{t("common.loading")}</p>
-    </AuthLayout>
-  );
-}
-
 export default function LoginPage() {
+  const t = useT();
+
   return (
-    <Suspense fallback={<LoginFallback />}>
+    <Suspense
+      fallback={
+        <AuthLayout title={t("auth.loginTitle")} subtitle={t("auth.loginSubtitle")}>
+          <p className="text-center text-purple-300/60">Preparing secure entry...</p>
+        </AuthLayout>
+      }
+    >
       <LoginForm />
     </Suspense>
   );

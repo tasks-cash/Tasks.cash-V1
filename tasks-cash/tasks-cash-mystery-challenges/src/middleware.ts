@@ -56,7 +56,9 @@ export async function middleware(request: NextRequest) {
 
     const url = request.nextUrl.clone();
     url.pathname = barePath;
-    const response = NextResponse.rewrite(url);
+    const requestHeaders = new Headers(request.headers);
+    requestHeaders.set("x-locale", locale);
+    const response = NextResponse.rewrite(url, { request: { headers: requestHeaders } });
     response.cookies.set(LOCALE_COOKIE, locale, { path: "/", sameSite: "lax", maxAge: 60 * 60 * 24 * 365 });
     return response;
   } catch (error) {

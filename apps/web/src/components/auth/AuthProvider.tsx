@@ -13,6 +13,7 @@ import { apiFetch, getToken, logoutSession, setToken } from "@/lib/api";
 import type { AppRole } from "@/lib/auth/config";
 import { hasMinRole, normalizeRole } from "@/lib/auth/config";
 import { buildPostLoginRedirect } from "@/lib/auth/redirect";
+import { stripLocalePrefix } from "@/i18n/locale-path";
 
 export interface AuthUser {
   _id: string;
@@ -151,9 +152,11 @@ export function useAuthSessionRecovery(redirectParam?: string | null) {
         });
         if (!res.ok) return;
 
-        const next = buildPostLoginRedirect(redirectParam, token);
+        const { locale } = stripLocalePrefix(window.location.pathname);
+        const next = buildPostLoginRedirect(redirectParam, token, locale);
         const pathOnly = next.startsWith("http") ? new URL(next).pathname : next.split("?")[0];
-        if (pathOnly === "/login" || pathOnly === "/register" || pathOnly.startsWith("/forgot-password")) {
+        const bareRedirect = stripLocalePrefix(pathOnly).pathname;
+        if (bareRedirect === "/login" || bareRedirect === "/register" || bareRedirect.startsWith("/forgot-password")) {
           return;
         }
 

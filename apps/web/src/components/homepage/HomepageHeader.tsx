@@ -4,13 +4,14 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { challengeRoutes } from "@/config/routes";
-import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
-import { useLocale } from "@/i18n/I18nProvider";
-import { withLocalePrefix } from "@/i18n/locale-path";
 import { BrandLogo, GameButton } from "@tasks-cash/ui";
+import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
+import { useLocale, useT } from "@/i18n/I18nProvider";
+import { withLocalePrefix } from "@/i18n/locale-path";
 
 export function HomepageHeader() {
   const locale = useLocale();
+  const t = useT();
   const challenge = challengeRoutes(locale);
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -75,7 +76,7 @@ export function HomepageHeader() {
           </Link>
           <Link href={withLocalePrefix("/register", locale)}>
             <GameButton variant="gold" size="sm" pulse className="hp-btn-glow" data-sound="register">
-              Register
+              {t("home.enterPortal")}
             </GameButton>
           </Link>
 
@@ -120,7 +121,7 @@ export function HomepageHeader() {
                 </Link>
                 <Link href={withLocalePrefix("/register", locale)} className="flex-1">
                   <GameButton variant="gold" size="sm" className="w-full">
-                    Register
+                    {t("home.enterPortal")}
                   </GameButton>
                 </Link>
               </div>

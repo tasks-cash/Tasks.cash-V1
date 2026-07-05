@@ -5,13 +5,11 @@ import { HERO_STATS } from "@/data/mock-data";
 import { AnimatedFog } from "@/components/ui/PortalBackground";
 import { ArenaButton } from "@/components/ui/ArenaButton";
 import { GlowCard } from "@/components/ui/GlowCard";
-import { useLocale, useT } from "@/i18n/I18nProvider";
-import { withLocalePrefix } from "@/i18n/locale-path";
+import { useT } from "@/i18n/I18nProvider";
 import { motion } from "framer-motion";
 
 export function HeroSection() {
   const t = useT();
-  const locale = useLocale();
 
   return (
     <section className="arena-screen relative flex min-h-screen w-screen flex-col items-center justify-center overflow-hidden px-[clamp(1rem,4vw,3rem)] py-[clamp(2rem,5vw,4rem)]">
@@ -37,7 +35,7 @@ export function HeroSection() {
           animate={{ opacity: [0.5, 1, 0.5] }}
           transition={{ duration: 3, repeat: Infinity }}
         >
-          ◈ Challenge Arena ◈
+          ◈ {t("arena.title")} ◈
         </motion.p>
 
         <h1 className="arena-heading text-4xl sm:text-5xl md:text-7xl lg:text-8xl xl:text-9xl mb-6 leading-none">
@@ -50,47 +48,27 @@ export function HeroSection() {
           {t("arena.subtitle")}
         </p>
 
-        <Link href={`${withLocalePrefix("/", locale)}#game-modes`} className="mb-16 inline-block">
+        <Link href="#game-modes" className="mb-16 inline-block">
           <ArenaButton variant="gold" size="xl" className="animate-pulse-gold">
             {t("arena.enterArena")}
           </ArenaButton>
         </Link>
 
-        <div className="grid w-full grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 lg:gap-6">
+        <div className="grid w-full max-w-5xl grid-cols-2 gap-3 md:grid-cols-4 md:gap-6">
           {HERO_STATS.map((stat, i) => (
             <motion.div
               key={stat.label}
-              initial={{ opacity: 0, y: 24 }}
+              initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 + i * 0.1, duration: 0.6 }}
+              transition={{ delay: 0.4 + i * 0.1 }}
             >
-              <GlowCard glow={stat.glow === "gold" ? "gold" : "violet"} className="p-5 md:p-8 h-full">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-[10px] md:text-xs uppercase tracking-widest text-purple-400/60 font-semibold">
-                    {stat.label}
-                  </span>
-                  <span className="text-2xl md:text-3xl">{stat.icon}</span>
-                </div>
-                <p
-                  className={`text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black tabular-nums ${
-                    stat.glow === "gold" ? "text-amber-400" : "text-white"
-                  }`}
-                >
-                  {stat.value}
-                </p>
+              <GlowCard glow="violet" className="p-4 md:p-6 text-center">
+                <p className="text-2xl md:text-3xl font-black text-amber-300 font-display">{stat.value}</p>
+                <p className="text-[10px] md:text-xs uppercase tracking-widest text-purple-400/60 mt-1">{stat.label}</p>
               </GlowCard>
             </motion.div>
           ))}
         </div>
-      </motion.div>
-
-      <motion.div
-        className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2"
-        animate={{ y: [0, 10, 0] }}
-        transition={{ duration: 2.5, repeat: Infinity }}
-      >
-        <span className="text-[10px] uppercase tracking-[0.4em] text-purple-400/40">Scroll</span>
-        <div className="h-12 w-px bg-gradient-to-b from-purple-500/60 to-transparent" />
       </motion.div>
     </section>
   );
