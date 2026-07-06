@@ -10,12 +10,14 @@ import { apiFetch, setToken } from "@/lib/api";
 import { buildPostLoginRedirect, getSafeRedirectUrl, shouldPreserveRedirectParam } from "@/lib/auth/redirect";
 import { useLocale, useT } from "@/i18n/I18nProvider";
 import { withLocalePrefix } from "@/i18n/locale-path";
+import { useContent } from "@/hooks/useContent";
 
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const locale = useLocale();
   const t = useT();
+  const { getText } = useContent("main", "login");
   const rawRedirect = searchParams.get("redirect");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -46,7 +48,7 @@ function LoginForm() {
       return;
     }
 
-    setError(res.error ?? "Invalid credentials");
+    setError(res.error ?? getText("errors", "invalidCredentials", "Invalid credentials"));
   }
 
   const registerHref = shouldPreserveRedirectParam(rawRedirect)
@@ -54,33 +56,36 @@ function LoginForm() {
     : withLocalePrefix("/register", locale);
 
   return (
-    <AuthLayout title={t("auth.loginTitle")} subtitle={t("auth.loginSubtitle")}>
+    <AuthLayout
+      title={getText("hero", "title", t("auth.loginTitle"))}
+      subtitle={getText("hero", "subtitle", t("auth.loginSubtitle"))}
+    >
       <div className="flex justify-center mb-4">
         <LanguageSwitcher />
       </div>
       <p className="text-center text-sm text-purple-400/60 mb-6">
-        {t("auth.noAccount")}{" "}
+        {getText("messages", "noAccount", t("auth.noAccount"))}{" "}
         <Link href={registerHref} className="text-amber-400 hover:underline">
-          {t("auth.createAccount")}
+          {getText("buttons", "createAccount", t("auth.createAccount"))}
         </Link>
       </p>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <Label htmlFor="email">{t("auth.email")}</Label>
-          <Input id="email" name="email" type="email" required className="mt-1 auth-input" placeholder="warrior@portal.io" />
+          <Label htmlFor="email">{getText("forms", "emailLabel", t("auth.email"))}</Label>
+          <Input id="email" name="email" type="email" required className="mt-1 auth-input" placeholder={getText("forms", "emailPlaceholder", "warrior@portal.io")} />
         </div>
         <div>
-          <Label htmlFor="password">{t("auth.password")}</Label>
+          <Label htmlFor="password">{getText("forms", "passwordLabel", t("auth.password"))}</Label>
           <Input id="password" name="password" type="password" required className="mt-1 auth-input" placeholder="••••••••" />
         </div>
         <p className="text-center text-sm">
           <Link href={withLocalePrefix("/forgot-password", locale)} className="text-purple-400 hover:underline">
-            {t("auth.forgotPassword")}
+            {getText("buttons", "forgotPassword", t("auth.forgotPassword"))}
           </Link>
         </p>
         {error && <p className="text-red-400 text-sm">{error}</p>}
         <PortalButton variant="gold" className="w-full" disabled={loading} pulse data-sound="login">
-          {loading ? t("auth.openingPortal") : t("auth.enterPortal")}
+          {loading ? getText("buttons", "submitLoading", t("auth.openingPortal")) : getText("buttons", "submit", t("auth.enterPortal"))}
         </PortalButton>
       </form>
     </AuthLayout>

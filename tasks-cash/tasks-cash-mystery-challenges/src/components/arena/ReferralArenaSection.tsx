@@ -8,6 +8,7 @@ import { ReferralQrPanel } from "@/components/referral-arena/ReferralQrPanel";
 import { apiFetch } from "@/lib/api/client";
 import { buildReferralLink, formatRewardCoins, REFERRAL_STATUS_LABELS } from "@/lib/referrals";
 import { useLocale } from "@/i18n/I18nProvider";
+import { useContent } from "@/hooks/useContent";
 import { getChallengeLoginUrl, hasAuthSession } from "@/lib/auth/client-session";
 import type {
   ReferralLeaderboardChampion,
@@ -60,6 +61,13 @@ function ChampionCard({ entry, index }: { entry: ReferralLeaderboardChampion; in
 }
 
 export function ReferralArenaSection() {
+  const { getText } = useContent("challenge", "referral-arena");
+  const arenaTitle = getText("hero", "title", "Referral Arena");
+  const arenaSubtitle = getText(
+    "hero",
+    "subtitle",
+    "Grow the portal network and earn rewards for every active ally you recruit."
+  );
   const [me, setMe] = useState<ReferralMeResponse | null>(null);
   const [history, setHistory] = useState<ReferralRecord[]>([]);
   const [leaderboards, setLeaderboards] = useState<ReferralLeaderboardsResponse | null>(null);
@@ -135,7 +143,7 @@ export function ReferralArenaSection() {
       <SectionShell
         id="referral-arena"
         eyebrow="Referral War"
-        title="Referral Arena"
+        title={arenaTitle}
         subtitle="Loading your portal invite command center…"
         minHeight={false}
         className="!min-h-0 py-16 md:py-24"
@@ -154,7 +162,7 @@ export function ReferralArenaSection() {
       <SectionShell
         id="referral-arena"
         eyebrow="Referral War"
-        title="Referral Arena"
+        title={arenaTitle}
         subtitle="Sign in to access your referral command center."
         minHeight={false}
         className="!min-h-0 py-16 md:py-24"
@@ -179,7 +187,7 @@ export function ReferralArenaSection() {
       <SectionShell
         id="referral-arena"
         eyebrow="Referral War"
-        title="Referral Arena"
+        title={arenaTitle}
         subtitle={
           isAuthError
             ? "Authenticate to access your referral command center."
@@ -217,8 +225,8 @@ export function ReferralArenaSection() {
     <SectionShell
       id="referral-arena"
       eyebrow="Referral War"
-      title="Referral Arena"
-      subtitle="Recruit allies into the portal. Track invites, earn rewards, and climb daily, weekly, and monthly champion boards."
+      title={arenaTitle}
+      subtitle={arenaSubtitle}
       minHeight={false}
       className="!min-h-0 py-12 md:py-20"
     >

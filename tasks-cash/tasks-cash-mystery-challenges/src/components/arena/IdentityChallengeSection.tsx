@@ -7,6 +7,7 @@ import { ArenaButton } from "@/components/ui/ArenaButton";
 import { apiFetch } from "@/lib/api/client";
 import { getChallengeLoginUrl, hasAuthSession, redirectToLoginOnce } from "@/lib/auth/client-session";
 import { useLocale } from "@/i18n/I18nProvider";
+import { useContent } from "@/hooks/useContent";
 import { withLocalePrefix } from "@/i18n/locale-path";
 import type {
   IdentityChallengePayload,
@@ -138,6 +139,13 @@ interface IdentityChallengeSectionProps {
 
 export function IdentityChallengeSection({ variant = "embedded" }: IdentityChallengeSectionProps) {
   const locale = useLocale();
+  const { getText } = useContent("challenge", "identity-challenge");
+  const identityTitle = getText("hero", "title", "Identity Challenge");
+  const identitySubtitle = getText(
+    "hero",
+    "subtitle",
+    "Answer portal questions to unlock classified missions and personalized rewards."
+  );
   const hubHref = withLocalePrefix("/", locale);
   const explorerDnaHref = withLocalePrefix("/explorer-dna", locale);
   const [loadState, setLoadState] = useState<LoadState>("loading");
@@ -433,11 +441,8 @@ export function IdentityChallengeSection({ variant = "embedded" }: IdentityChall
               <span className="ic-hero-badge-dot" />
               Portal Verification · Mode 03
             </span>
-            <h1 className="ic-title mb-4">Identity Challenge</h1>
-            <p className="ic-subtitle">
-              Answer identity questions from the portal database. Each verified answer unlocks rewards once per question
-              and sharpens your explorer profile.
-            </p>
+            <h1 className="ic-title mb-4">{identityTitle}</h1>
+            <p className="ic-subtitle">{identitySubtitle}</p>
           </motion.header>
 
           {loadState === "loading" && (
@@ -626,10 +631,10 @@ export function IdentityChallengeSection({ variant = "embedded" }: IdentityChall
           <div className="mb-8 md:mb-12 text-center lg:text-left">
             <p className="arena-subheading mb-3">Portal Verification · Mode 03</p>
             <h1 className="text-3xl md:text-5xl lg:text-6xl font-black text-white tracking-tight mb-4">
-              Identity Challenge
+              {identityTitle}
             </h1>
             <p className="text-purple-300/55 text-sm md:text-base max-w-3xl mx-auto lg:mx-0">
-              Answer identity questions from the portal database. Each verified answer unlocks rewards once per question.
+              {identitySubtitle}
             </p>
           </div>
 

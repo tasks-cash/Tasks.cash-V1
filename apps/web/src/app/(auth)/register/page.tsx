@@ -7,6 +7,7 @@ import { PortalButton, Input, Label } from "@tasks-cash/ui";
 import { AuthLayout } from "@/components/layout/AuthLayout";
 import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
 import { apiFetch, setToken } from "@/lib/api";
+import { useContent } from "@/hooks/useContent";
 import { useLocale, useT } from "@/i18n/I18nProvider";
 import { withLocalePrefix } from "@/i18n/locale-path";
 import {
@@ -20,6 +21,7 @@ function RegisterForm() {
   const searchParams = useSearchParams();
   const locale = useLocale();
   const t = useT();
+  const { getText } = useContent("main", "register");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [referralCode, setReferralCode] = useState("");
@@ -91,33 +93,36 @@ function RegisterForm() {
   }
 
   return (
-    <AuthLayout title={t("auth.registerTitle")} subtitle={t("auth.loginSubtitle")}>
+    <AuthLayout
+      title={getText("hero", "title", t("auth.registerTitle"))}
+      subtitle={getText("hero", "subtitle", t("auth.loginSubtitle"))}
+    >
       <div className="flex justify-center mb-4">
         <LanguageSwitcher />
       </div>
       <p className="text-center text-sm text-purple-400/60 mb-6">
-        Already a warrior?{" "}
+        {getText("messages", "hasAccount", "Already a warrior?")}{" "}
         <Link href={withLocalePrefix("/login", locale)} className="text-amber-400 hover:underline">
-          Login
+          {getText("buttons", "login", "Login")}
         </Link>
       </p>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <Label htmlFor="username">Username</Label>
+          <Label htmlFor="username">{getText("forms", "usernameLabel", "Username")}</Label>
           <Input id="username" name="username" required className="mt-1 auth-input" placeholder="VoidRunner" />
         </div>
         <div>
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="email">{getText("forms", "emailLabel", "Email")}</Label>
           <Input id="email" name="email" type="email" required className="mt-1 auth-input" placeholder="warrior@portal.io" />
         </div>
         <div>
-          <Label htmlFor="password">Password</Label>
+          <Label htmlFor="password">{getText("forms", "passwordLabel", "Password")}</Label>
           <Input id="password" name="password" type="password" required className="mt-1 auth-input" placeholder="••••••••" />
         </div>
 
         <div>
-          <Label htmlFor="referralCode">Who invited you? / Invite code</Label>
+          <Label htmlFor="referralCode">{getText("forms", "referralLabel", "Who invited you? / Invite code")}</Label>
           <Input
             id="referralCode"
             name="referralCodeDisplay"
@@ -154,10 +159,10 @@ function RegisterForm() {
         {error && <p className="text-red-400 text-sm">{error}</p>}
 
         <PortalButton variant="gold" className="w-full" disabled={loading} pulse data-sound="register">
-          {loading ? "Creating Account..." : "Create Account"}
+          {loading ? getText("buttons", "submitLoading", "Creating Account...") : getText("buttons", "submit", "Create Account")}
         </PortalButton>
         <PortalButton variant="secondary" className="w-full" type="button" onClick={() => router.push(withLocalePrefix("/", locale))} data-sound="explore">
-          Explore Worlds First
+          {getText("buttons", "exploreFirst", "Explore Worlds First")}
         </PortalButton>
       </form>
     </AuthLayout>

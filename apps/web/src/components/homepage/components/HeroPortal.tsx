@@ -3,9 +3,14 @@
 import Link from "next/link";
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 import { BrandLogo, GameButton } from "@tasks-cash/ui";
+import { useContent } from "@/hooks/useContent";
+import { useLocale } from "@/i18n/I18nProvider";
+import { withLocalePrefix } from "@/i18n/locale-path";
 
 /** Cinematic full-viewport hero with portal, character, and epic CTAs */
 export function HeroPortal() {
+  const locale = useLocale();
+  const { getText } = useContent("main", "home");
   const mx = useMotionValue(0);
   const my = useMotionValue(0);
   const sx = useSpring(mx, { stiffness: 50, damping: 20 });
@@ -54,30 +59,33 @@ export function HeroPortal() {
               animate={{ opacity: [0.6, 1, 0.6] }}
               transition={{ duration: 3, repeat: Infinity }}
             >
-              Premium AAA Game Universe
+              {getText("hero", "eyebrow", "Premium AAA Game Universe")}
             </motion.p>
 
             <h1 className="text-4xl sm:text-5xl md:text-6xl xl:text-7xl 2xl:text-8xl font-black leading-[0.95] mb-6 font-[family-name:var(--font-cinzel)]">
-              <span className="block text-white hp-title-glow">Enter The</span>
+              <span className="block text-white hp-title-glow">{getText("hero", "titleLine1", "Enter The")}</span>
               <span className="block bg-gradient-to-r from-amber-200 via-yellow-400 to-amber-600 bg-clip-text text-transparent">
-                Dimensional Portal
+                {getText("hero", "titleLine2", "Dimensional Portal")}
               </span>
             </h1>
 
             <p className="text-base md:text-xl text-purple-200/55 mb-8 max-w-xl mx-auto lg:mx-0 font-[family-name:var(--font-inter)] leading-relaxed">
-              Complete epic missions. Earn legendary rewards. Ascend through infinite worlds.
-              The first million explorers claim founder status.
+              {getText(
+                "hero",
+                "description",
+                "Complete epic missions. Earn legendary rewards. Ascend through infinite worlds. The first million explorers claim founder status."
+              )}
             </p>
 
             <div className="flex flex-col sm:flex-row flex-wrap gap-4 justify-center lg:justify-start">
-              <Link href="/register">
+              <Link href={withLocalePrefix("/register", locale)}>
                 <GameButton variant="gold" size="lg" pulse className="hp-btn-glow w-full sm:w-auto px-10 font-[family-name:var(--font-rajdhani)] uppercase tracking-wider">
-                  Start Your Journey
+                  {getText("hero", "primaryButton", "Start Your Journey")}
                 </GameButton>
               </Link>
-              <Link href="/worlds">
+              <Link href={withLocalePrefix("/worlds", locale)}>
                 <GameButton variant="purple" size="lg" className="w-full sm:w-auto px-10 font-[family-name:var(--font-rajdhani)] uppercase tracking-wider">
-                  Explore Worlds
+                  {getText("hero", "secondaryButton", "Explore Worlds")}
                 </GameButton>
               </Link>
             </div>

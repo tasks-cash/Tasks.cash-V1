@@ -1,10 +1,12 @@
 import { Router, Response } from "express";
 import { z } from "zod";
-import type { ContentLocale } from "@tasks-cash/types";
+import type { ContentAppKey, ContentLocale } from "@tasks-cash/types";
 import { authMiddleware, adminMiddleware, AuthRequest } from "../middleware/auth";
 import { isDbConnected } from "../config/database";
 import { ContentBlock } from "../models/ContentBlock";
+import { toContentBlock, type ContentRowLike } from "../lib/contentService";
 import {
+  bulkUpsertContentBlocks,
   createContentBlock,
   deleteContentBlock,
   listContentBlocks,
@@ -15,47 +17,131 @@ import {
 const router = Router();
 router.use(authMiddleware, adminMiddleware);
 
+const CONTENT_TYPES = [
+  "title",
+  "subtitle",
+  "description",
+  "button",
+  "label",
+  "placeholder",
+  "empty_state",
+  "error_message",
+  "success_message",
+  "badge",
+  "nav",
+  "notice",
+] as const;
+
 const blockSchema = z.object({
+  appKey: z.enum(["main", "challenge", "admin"]).default("main"),
   pageKey: z.string().min(1),
   sectionKey: z.string().min(1).default("main"),
   contentKey: z.string().min(1),
-  type: z.enum(["title", "subtitle", "description", "button", "label", "notice"]),
+  type: z.enum(CONTENT_TYPES),
   value: z.string().min(1),
+  defaultValue: z.string().optional(),
   locale: z.enum(["en", "ar", "fr"]),
   isActive: z.boolean().optional(),
 });
 
+const bulkSchema = z.object({
+  blocks: z.array(blockSchema),
+});
+
+function parseFilters(req: AuthRequest) {
+  return {
+    appKey: req.query.appKey ? (String(req.query.appKey) as ContentAppKey) : undefined,
+    pageKey: req.query.pageKey ? String(req.query.pageKey) : undefined,
+    locale: req.query.locale ? (String(req.query.locale) as ContentLocale) : undefined,
+    sectionKey: req.query.sectionKey ? String(req.query.sectionKey) : undefined,
+    type: req.query.type ? String(req.query.type) : undefined,
+    search: req.query.search ? String(req.query.search) : undefined,
+  };
+}
+
 /** GET /api/admin/content */
 router.get("/", async (req: AuthRequest, res: Response) => {
-  const pageKey = req.query.pageKey ? String(req.query.pageKey) : undefined;
-  const locale = req.query.locale ? (String(req.query.locale) as ContentLocale) : undefined;
+  const filters = parseFilters(req);
 
   if (isDbConnected()) {
-    const filter: Record<string, unknown> = {};
-    if (pageKey) filter.pageKey = pageKey;
-    if (locale) filter.locale = locale;
-    const rows = await ContentBlock.find(filter).sort({ pageKey: 1, locale: 1, sectionKey: 1 }).lean();
+    const query: Record<string, unknown> = {};
+    if (filters.appKey) query.appKey = filters.appKey;
+    if (filters.pageKey) query.pageKey = filters.pageKey;
+    if (filters.locale) query.locale = filters.locale;
+    if (filters.sectionKey) query.sectionKey = filters.sectionKey;
+    if (filters.type) query.type = filters.type;
+
+    let rows = await ContentBlock.find(query).sort({ appKey: 1, pageKey: 1, sectionKey: 1, contentKey: 1, locale: 1 }).lean();
+
+    if (filters.search) {
+      const q = filters.search.toLowerCase();
+      rows = rows.filter((r) =>
+        `${r.pageKey} ${r.sectionKey} ${r.contentKey} ${r.value}`.toLowerCase().includes(q)
+      );
+    }
+
+    const blocks = rows.map((r) => toContentBlock(r as unknown as ContentRowLike));
     const pages = [...new Set(rows.map((r) => r.pageKey))];
-    res.json({ success: true, data: { blocks: rows, pages } });
+    res.json({ success: true, data: { blocks, pages } });
     return;
   }
 
-  const blocks = listContentBlocks({ pageKey, locale });
-  res.json({ success: true, data: { blocks, pages: listPageKeys() } });
+  const blocks = listContentBlocks(filters);
+  res.json({ success: true, data: { blocks, pages: listPageKeys(filters.appKey) } });
+});
+
+/** POST /api/admin/content/bulk-upsert */
+router.post("/bulk-upsert", async (req: AuthRequest, res: Response) => {
+  try {
+    const { blocks } = bulkSchema.parse(req.body);
+
+    if (isDbConnected()) {
+      const upserted = [];
+      for (const item of blocks) {
+        const defaultValue = item.defaultValue ?? item.value;
+        const doc = await ContentBlock.findOneAndUpdate(
+          {
+            appKey: item.appKey,
+            pageKey: item.pageKey,
+            sectionKey: item.sectionKey,
+            contentKey: item.contentKey,
+            locale: item.locale,
+          },
+          { ...item, defaultValue },
+          { upsert: true, new: true, setDefaultsOnInsert: true }
+        );
+        upserted.push(toContentBlock(doc.toObject() as unknown as ContentRowLike));
+      }
+      res.json({ success: true, data: { blocks: upserted } });
+      return;
+    }
+
+    const result = bulkUpsertContentBlocks(
+      blocks.map((b) => ({ ...b, defaultValue: b.defaultValue ?? b.value }))
+    );
+    res.json({ success: true, data: { blocks: result.upserted } });
+  } catch (err) {
+    if (err instanceof z.ZodError) {
+      res.status(400).json({ success: false, error: err.errors[0].message });
+      return;
+    }
+    res.status(500).json({ success: false, error: "Bulk upsert failed" });
+  }
 });
 
 /** POST /api/admin/content */
 router.post("/", async (req: AuthRequest, res: Response) => {
   try {
     const data = blockSchema.parse(req.body);
+    const payload = { ...data, defaultValue: data.defaultValue ?? data.value };
 
     if (isDbConnected()) {
-      const created = await ContentBlock.create(data);
-      res.status(201).json({ success: true, data: created });
+      const created = await ContentBlock.create(payload);
+      res.status(201).json({ success: true, data: toContentBlock(created.toObject() as unknown as ContentRowLike) });
       return;
     }
 
-    const created = createContentBlock(data);
+    const created = createContentBlock(payload);
     res.status(201).json({ success: true, data: created });
   } catch (err) {
     if (err instanceof z.ZodError) {
@@ -71,19 +157,42 @@ router.patch("/:id", async (req: AuthRequest, res: Response) => {
   const id = String(req.params.id);
 
   try {
-    const data = blockSchema.partial().parse(req.body);
+    const data = blockSchema.partial().extend({ resetToDefault: z.boolean().optional() }).parse(req.body);
 
     if (isDbConnected()) {
-      const updated = await ContentBlock.findByIdAndUpdate(id, data, { new: true });
+      const existing = await ContentBlock.findById(id);
+      if (!existing) {
+        res.status(404).json({ success: false, error: "Content block not found" });
+        return;
+      }
+
+      const patch = { ...data };
+      if (data.resetToDefault) {
+        patch.value = existing.defaultValue || existing.value;
+        delete (patch as { resetToDefault?: boolean }).resetToDefault;
+      }
+
+      const updated = await ContentBlock.findByIdAndUpdate(id, patch, { new: true });
       if (!updated) {
         res.status(404).json({ success: false, error: "Content block not found" });
         return;
       }
-      res.json({ success: true, data: updated });
+      res.json({ success: true, data: toContentBlock(updated.toObject() as unknown as ContentRowLike) });
       return;
     }
 
-    const updated = updateContentBlock(id, data);
+    const existing = listContentBlocks().find((b) => b.id === id);
+    if (!existing) {
+      res.status(404).json({ success: false, error: "Content block not found" });
+      return;
+    }
+
+    const patch = { ...data };
+    if (data.resetToDefault) {
+      patch.value = existing.defaultValue;
+    }
+
+    const updated = updateContentBlock(id, patch);
     if (!updated) {
       res.status(404).json({ success: false, error: "Content block not found" });
       return;

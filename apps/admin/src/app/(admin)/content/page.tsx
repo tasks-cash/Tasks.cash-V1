@@ -1,359 +1,471 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { AdminPageShell, AdminTable } from "@/components/AdminPageShell";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { ContentAppKey, ContentBlockType, ContentLocale, IContentBlock } from "@tasks-cash/types";
 import { GlassCard, PortalButton, Input, Label } from "@tasks-cash/ui";
 import { adminFetch } from "@/lib/api";
-import type { ContentBlockType, ContentLocale, IContentBlock } from "@tasks-cash/types";
+import {
+  CMS_APPS,
+  CMS_CONTENT_TYPES,
+  CMS_PAGES,
+  CMS_SECTION_LABELS,
+  CMS_SECTION_ORDER,
+} from "@/config/contentPages";
 import { cn } from "@/lib/utils";
 
 const LOCALES: ContentLocale[] = ["en", "ar", "fr"];
-const TYPES: ContentBlockType[] = ["title", "subtitle", "description", "button", "label", "notice"];
 
-type ContentListResponse = {
-  blocks: IContentBlock[];
-  pages: string[];
-};
+type ContentListResponse = { blocks: IContentBlock[]; pages: string[] };
 
-function emptyForm(): Omit<IContentBlock, "id" | "updatedAt"> {
-  return {
-    pageKey: "dashboard",
-    sectionKey: "hero",
-    contentKey: "title",
-    type: "title",
-    value: "",
-    locale: "en",
-    isActive: true,
-  };
+type DraftMap = Record<string, string>;
+
+function blockCompositeKey(block: Pick<IContentBlock, "sectionKey" | "contentKey">) {
+  return `${block.sectionKey}::${block.contentKey}`;
+}
+
+function groupBlocksBySection(blocks: IContentBlock[]) {
+  const groups = new Map<string, IContentBlock[]>();
+  for (const block of blocks) {
+    const list = groups.get(block.sectionKey) ?? [];
+    list.push(block);
+    groups.set(block.sectionKey, list);
+  }
+  return groups;
 }
 
 export default function AdminContentPage() {
+  const [appKey, setAppKey] = useState<ContentAppKey>("main");
+  const [pageKey, setPageKey] = useState("home");
+  const [localeTab, setLocaleTab] = useState<ContentLocale>("en");
+  const [typeFilter, setTypeFilter] = useState<string>("all");
+  const [search, setSearch] = useState("");
   const [blocks, setBlocks] = useState<IContentBlock[]>([]);
-  const [pages, setPages] = useState<string[]>([]);
-  const [pageKey, setPageKey] = useState<string>("all");
-  const [locale, setLocale] = useState<ContentLocale | "all">("all");
   const [loading, setLoading] = useState(true);
-  const [savingId, setSavingId] = useState<string | null>(null);
+  const [drafts, setDrafts] = useState<DraftMap>({});
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
-  const [editing, setEditing] = useState<Record<string, string>>({});
-  const [showCreate, setShowCreate] = useState(false);
-  const [createForm, setCreateForm] = useState(emptyForm());
+  const autosaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const dirty = Object.keys(drafts).length > 0;
+
+  const pages = CMS_PAGES[appKey];
+
+  useEffect(() => {
+    const first = CMS_PAGES[appKey][0]?.key;
+    if (first && !CMS_PAGES[appKey].some((p) => p.key === pageKey)) {
+      setPageKey(first);
+    }
+  }, [appKey, pageKey]);
 
   const loadBlocks = useCallback(async () => {
     setLoading(true);
     setError("");
-    const params = new URLSearchParams();
-    if (pageKey !== "all") params.set("pageKey", pageKey);
-    if (locale !== "all") params.set("locale", locale);
-    const qs = params.toString();
-    const res = await adminFetch<ContentListResponse>(`/api/admin/content${qs ? `?${qs}` : ""}`);
+    const params = new URLSearchParams({ appKey, pageKey });
+    if (search.trim()) params.set("search", search.trim());
+    if (typeFilter !== "all") params.set("type", typeFilter);
+
+    const res = await adminFetch<ContentListResponse>(`/api/admin/content?${params}`);
     if (res.success && res.data) {
       setBlocks(res.data.blocks);
-      setPages(res.data.pages);
-      setEditing({});
+      setDrafts({});
     } else {
-      setError(res.error ?? "Failed to load content blocks");
+      setError(res.error ?? "Failed to load content");
     }
     setLoading(false);
-  }, [pageKey, locale]);
+  }, [appKey, pageKey, search, typeFilter]);
 
   useEffect(() => {
     void loadBlocks();
   }, [loadBlocks]);
 
-  const stats = useMemo(
-    () => [
-      { label: "Pages", value: pages.length, icon: "📄", glow: "gold" as const },
-      { label: "Blocks", value: blocks.length, icon: "📝" },
-      { label: "Locales", value: LOCALES.length, icon: "🌐" },
-      { label: "Active", value: blocks.filter((b) => b.isActive).length, icon: "✅" },
-    ],
-    [blocks, pages.length]
+  useEffect(() => {
+    function onBeforeUnload(e: BeforeUnloadEvent) {
+      if (dirty) {
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    }
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, [dirty]);
+
+  const localeBlocks = useMemo(
+    () => blocks.filter((b) => b.locale === localeTab),
+    [blocks, localeTab]
   );
 
-  function startEdit(block: IContentBlock) {
-    setEditing((prev) => ({ ...prev, [block.id]: block.value }));
-  }
+  const sectionGroups = useMemo(() => groupBlocksBySection(localeBlocks), [localeBlocks]);
 
-  function updateEdit(id: string, value: string) {
-    setEditing((prev) => ({ ...prev, [id]: value }));
-  }
-
-  async function saveBlock(block: IContentBlock) {
-    const value = editing[block.id];
-    if (value === undefined || value === block.value) return;
-
-    setSavingId(block.id);
-    setError("");
-    setSuccess("");
-    const res = await adminFetch<IContentBlock>(`/api/admin/content/${block.id}`, {
-      method: "PATCH",
-      body: JSON.stringify({ value }),
+  const orderedSections = useMemo(() => {
+    const keys = [...sectionGroups.keys()];
+    return keys.sort((a, b) => {
+      const ai = CMS_SECTION_ORDER.indexOf(a as (typeof CMS_SECTION_ORDER)[number]);
+      const bi = CMS_SECTION_ORDER.indexOf(b as (typeof CMS_SECTION_ORDER)[number]);
+      return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi);
     });
-    setSavingId(null);
+  }, [sectionGroups]);
 
-    if (!res.success || !res.data) {
-      setError(res.error ?? "Failed to save content block");
+  function getDraftValue(block: IContentBlock) {
+    const key = `${block.id}`;
+    return drafts[key] ?? block.value;
+  }
+
+  function setDraft(block: IContentBlock, value: string) {
+    setDrafts((prev) => {
+      if (value === block.value) {
+        const next = { ...prev };
+        delete next[block.id];
+        return next;
+      }
+      return { ...prev, [block.id]: value };
+    });
+  }
+
+  const saveAll = useCallback(async () => {
+    const changed = blocks.filter((b) => drafts[b.id] !== undefined && drafts[b.id] !== b.value);
+    if (changed.length === 0) return;
+
+    setSaveState("saving");
+    setError("");
+
+    const payload = changed.map((b) => ({
+      appKey: b.appKey,
+      pageKey: b.pageKey,
+      sectionKey: b.sectionKey,
+      contentKey: b.contentKey,
+      type: b.type,
+      locale: b.locale,
+      value: drafts[b.id] ?? b.value,
+      defaultValue: b.defaultValue,
+      isActive: b.isActive,
+    }));
+
+    const res = await adminFetch<{ blocks: IContentBlock[] }>("/api/admin/content/bulk-upsert", {
+      method: "POST",
+      body: JSON.stringify({ blocks: payload }),
+    });
+
+    if (!res.success) {
+      setSaveState("error");
+      setError(res.error ?? "Save failed");
       return;
     }
 
-    setBlocks((prev) => prev.map((b) => (b.id === block.id ? res.data! : b)));
-    setEditing((prev) => {
-      const next = { ...prev };
-      delete next[block.id];
-      return next;
+    setBlocks((prev) =>
+      prev.map((b) => {
+        const updated = res.data?.blocks.find(
+          (u) =>
+            u.appKey === b.appKey &&
+            u.pageKey === b.pageKey &&
+            u.sectionKey === b.sectionKey &&
+            u.contentKey === b.contentKey &&
+            u.locale === b.locale
+        );
+        return updated ?? b;
+      })
+    );
+    setDrafts({});
+    setSaveState("saved");
+    setTimeout(() => setSaveState("idle"), 2000);
+  }, [blocks, drafts]);
+
+  useEffect(() => {
+    if (!dirty) return;
+    if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
+    autosaveTimer.current = setTimeout(() => {
+      void saveAll();
+    }, 1500);
+    return () => {
+      if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
+    };
+  }, [dirty, drafts, saveAll]);
+
+  async function resetBlock(block: IContentBlock) {
+    setSaveState("saving");
+    const res = await adminFetch<IContentBlock>(`/api/admin/content/${block.id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ resetToDefault: true }),
     });
-    setSuccess(`Saved ${block.pageKey} · ${block.contentKey} (${block.locale})`);
+    setSaveState("idle");
+    if (res.success && res.data) {
+      setBlocks((prev) => prev.map((b) => (b.id === block.id ? res.data! : b)));
+      setDrafts((prev) => {
+        const next = { ...prev };
+        delete next[block.id];
+        return next;
+      });
+    }
   }
 
   async function toggleActive(block: IContentBlock) {
-    setSavingId(block.id);
     const res = await adminFetch<IContentBlock>(`/api/admin/content/${block.id}`, {
       method: "PATCH",
       body: JSON.stringify({ isActive: !block.isActive }),
     });
-    setSavingId(null);
     if (res.success && res.data) {
       setBlocks((prev) => prev.map((b) => (b.id === block.id ? res.data! : b)));
     }
   }
 
-  async function createBlock(e: React.FormEvent) {
-    e.preventDefault();
-    setSavingId("create");
-    setError("");
-    const res = await adminFetch<IContentBlock>("/api/admin/content", {
+  async function createBlock(sectionKey: string) {
+    const contentKey = window.prompt("Content key (e.g. title, submitButton):");
+    if (!contentKey?.trim()) return;
+    const value = window.prompt("Default value (EN):") ?? "";
+    if (!value.trim()) return;
+
+    const rows = LOCALES.map((locale) => ({
+      appKey,
+      pageKey,
+      sectionKey,
+      contentKey: contentKey.trim(),
+      type: "label" as ContentBlockType,
+      locale,
+      value: locale === "en" ? value.trim() : value.trim(),
+      defaultValue: value.trim(),
+      isActive: true,
+    }));
+
+    const res = await adminFetch<{ blocks: IContentBlock[] }>("/api/admin/content/bulk-upsert", {
       method: "POST",
-      body: JSON.stringify(createForm),
+      body: JSON.stringify({ blocks: rows }),
     });
-    setSavingId(null);
 
-    if (!res.success || !res.data) {
-      setError(res.error ?? "Failed to create content block");
-      return;
-    }
-
-    setBlocks((prev) => [...prev, res.data!]);
-    if (!pages.includes(res.data!.pageKey)) {
-      setPages((prev) => [...prev, res.data!.pageKey].sort());
-    }
-    setShowCreate(false);
-    setCreateForm(emptyForm());
-    setSuccess(`Created ${res.data.pageKey} · ${res.data.contentKey}`);
+    if (res.success) void loadBlocks();
   }
 
+  const stats = [
+    { label: "Blocks", value: blocks.length },
+    { label: "This locale", value: localeBlocks.length },
+    { label: "Sections", value: sectionGroups.size },
+    { label: "Unsaved", value: Object.keys(drafts).length },
+  ];
+
   return (
-    <AdminPageShell
-      title="Content Management"
-      subtitle="Edit page titles, subtitles, buttons, labels, and descriptions per locale"
-      action={
-        <PortalButton variant="gold" size="sm" onClick={() => setShowCreate(true)}>
-          + New Block
-        </PortalButton>
-      }
-      stats={stats}
-    >
-      <GlassCard className="p-4 mb-6">
-        <div className="flex flex-wrap gap-4 items-end">
-          <div>
-            <Label htmlFor="pageFilter">Page</Label>
-            <select
-              id="pageFilter"
-              value={pageKey}
-              onChange={(e) => setPageKey(e.target.value)}
-              className="mt-1 block rounded-lg border border-purple-500/20 bg-black/40 px-3 py-2 text-sm text-white"
-            >
-              <option value="all">All pages</option>
-              {pages.map((p) => (
-                <option key={p} value={p}>
-                  {p}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <Label htmlFor="localeFilter">Locale</Label>
-            <select
-              id="localeFilter"
-              value={locale}
-              onChange={(e) => setLocale(e.target.value as ContentLocale | "all")}
-              className="mt-1 block rounded-lg border border-purple-500/20 bg-black/40 px-3 py-2 text-sm text-white"
-            >
-              <option value="all">All locales</option>
-              {LOCALES.map((l) => (
-                <option key={l} value={l}>
-                  {l}
-                </option>
-              ))}
-            </select>
-          </div>
-          <PortalButton variant="ghost" size="sm" onClick={() => void loadBlocks()}>
-            Refresh
+    <div className="min-h-screen bg-black text-white -m-6">
+      <div className="border-b border-purple-500/20 bg-black/80 backdrop-blur-xl px-6 py-4 flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-black font-[family-name:var(--font-cinzel)] text-white">Content Management</h1>
+          <p className="text-sm text-purple-400/60 mt-1">Edit live copy for Main (3000) and Challenge (3001) apps</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <span
+            className={cn(
+              "text-xs font-bold uppercase tracking-wider px-3 py-1.5 rounded-lg border",
+              saveState === "saving" && "border-amber-400/40 text-amber-300 bg-amber-950/30",
+              saveState === "saved" && "border-emerald-400/40 text-emerald-300 bg-emerald-950/30",
+              saveState === "error" && "border-red-400/40 text-red-300 bg-red-950/30",
+              saveState === "idle" && !dirty && "border-purple-500/20 text-purple-400/50",
+              saveState === "idle" && dirty && "border-amber-400/40 text-amber-300"
+            )}
+          >
+            {saveState === "saving" ? "Saving…" : saveState === "saved" ? "All changes saved" : dirty ? "Unsaved changes" : "Up to date"}
+          </span>
+          <PortalButton variant="gold" size="sm" disabled={!dirty || saveState === "saving"} onClick={() => void saveAll()}>
+            Save All
           </PortalButton>
         </div>
-        {error && <p className="text-red-400 text-sm mt-3">{error}</p>}
-        {success && <p className="text-emerald-400 text-sm mt-3">{success}</p>}
-      </GlassCard>
+      </div>
 
-      {showCreate && (
-        <GlassCard glow="gold" className="p-6 mb-6">
-          <h3 className="text-lg font-bold text-white mb-4">New Content Block</h3>
-          <form onSubmit={createBlock} className="grid md:grid-cols-2 gap-4">
-            <div>
-              <Label>Page Key</Label>
-              <Input
-                value={createForm.pageKey}
-                onChange={(e) => setCreateForm((f) => ({ ...f, pageKey: e.target.value }))}
-                required
-                className="mt-1"
-                placeholder="dashboard"
-              />
-            </div>
-            <div>
-              <Label>Section Key</Label>
-              <Input
-                value={createForm.sectionKey}
-                onChange={(e) => setCreateForm((f) => ({ ...f, sectionKey: e.target.value }))}
-                required
-                className="mt-1"
-                placeholder="hero"
-              />
-            </div>
-            <div>
-              <Label>Content Key</Label>
-              <Input
-                value={createForm.contentKey}
-                onChange={(e) => setCreateForm((f) => ({ ...f, contentKey: e.target.value }))}
-                required
-                className="mt-1"
-                placeholder="title"
-              />
-            </div>
-            <div>
-              <Label>Type</Label>
-              <select
-                value={createForm.type}
-                onChange={(e) => setCreateForm((f) => ({ ...f, type: e.target.value as ContentBlockType }))}
-                className="mt-1 w-full rounded-lg border border-purple-500/20 bg-black/40 px-3 py-2 text-sm text-white"
-              >
-                {TYPES.map((t) => (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <Label>Locale</Label>
-              <select
-                value={createForm.locale}
-                onChange={(e) => setCreateForm((f) => ({ ...f, locale: e.target.value as ContentLocale }))}
-                className="mt-1 w-full rounded-lg border border-purple-500/20 bg-black/40 px-3 py-2 text-sm text-white"
-              >
-                {LOCALES.map((l) => (
-                  <option key={l} value={l}>
-                    {l}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="md:col-span-2">
-              <Label>Value</Label>
-              <textarea
-                value={createForm.value}
-                onChange={(e) => setCreateForm((f) => ({ ...f, value: e.target.value }))}
-                required
-                rows={3}
-                className="mt-1 w-full rounded-lg border border-purple-500/20 bg-black/40 px-3 py-2 text-sm text-white"
-              />
-            </div>
-            <div className="md:col-span-2 flex gap-2">
-              <PortalButton variant="gold" size="sm" disabled={savingId === "create"}>
-                Create
-              </PortalButton>
-              <PortalButton variant="ghost" size="sm" type="button" onClick={() => setShowCreate(false)}>
-                Cancel
-              </PortalButton>
-            </div>
-          </form>
-        </GlassCard>
-      )}
-
-      {loading ? (
-        <p className="text-purple-400/60 text-sm">Loading content blocks...</p>
-      ) : (
-        <AdminTable
-          headers={["Page", "Section", "Key", "Type", "Locale", "Value", "Status", "Actions"]}
-          rows={blocks.map((block) => {
-            const isEditing = editing[block.id] !== undefined;
-            const draft = isEditing ? editing[block.id] : block.value;
-            const dirty = isEditing && draft !== block.value;
-
-            return [
-              block.pageKey,
-              block.sectionKey,
-              block.contentKey,
-              block.type,
-              block.locale,
-              <div key={`val-${block.id}`} className="min-w-[200px] max-w-md">
-                {isEditing ? (
-                  <textarea
-                    value={draft}
-                    onChange={(e) => updateEdit(block.id, e.target.value)}
-                    rows={2}
-                    className="w-full rounded border border-purple-500/20 bg-black/40 px-2 py-1 text-xs text-white"
-                  />
-                ) : (
-                  <span className="text-xs text-purple-200/80 line-clamp-2">{block.value}</span>
-                )}
-              </div>,
+      <div className="flex min-h-[calc(100vh-5rem)]">
+        {/* Apps sidebar */}
+        <aside className="w-52 shrink-0 border-r border-purple-500/15 bg-purple-950/10 p-4">
+          <p className="text-[10px] uppercase tracking-widest text-purple-400/40 mb-3 font-bold">Applications</p>
+          <nav className="space-y-1">
+            {CMS_APPS.map((app) => (
               <button
-                key={`status-${block.id}`}
+                key={app.key}
                 type="button"
-                onClick={() => void toggleActive(block)}
+                onClick={() => setAppKey(app.key)}
                 className={cn(
-                  "text-xs font-bold uppercase",
-                  block.isActive ? "text-green-400" : "text-amber-400"
+                  "w-full flex items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm transition-colors",
+                  appKey === app.key
+                    ? "bg-purple-900/50 text-amber-200 border border-amber-400/30"
+                    : "text-purple-300/70 hover:bg-purple-900/30 hover:text-purple-100"
                 )}
               >
-                {block.isActive ? "active" : "inactive"}
-              </button>,
-              <div key={`actions-${block.id}`} className="flex gap-2 flex-wrap">
-                {!isEditing ? (
-                  <PortalButton variant="ghost" size="sm" onClick={() => startEdit(block)}>
-                    Edit
-                  </PortalButton>
-                ) : (
-                  <>
-                    <PortalButton
-                      variant="gold"
-                      size="sm"
-                      disabled={!dirty || savingId === block.id}
-                      onClick={() => void saveBlock(block)}
-                    >
-                      Save
-                    </PortalButton>
-                    <PortalButton
-                      variant="ghost"
-                      size="sm"
-                      onClick={() =>
-                        setEditing((prev) => {
-                          const next = { ...prev };
-                          delete next[block.id];
-                          return next;
-                        })
-                      }
-                    >
-                      Cancel
-                    </PortalButton>
-                  </>
+                <span>{app.icon}</span>
+                <span className="font-semibold">{app.label}</span>
+              </button>
+            ))}
+          </nav>
+        </aside>
+
+        {/* Pages list */}
+        <aside className="w-56 shrink-0 border-r border-purple-500/15 p-4 overflow-y-auto">
+          <p className="text-[10px] uppercase tracking-widest text-purple-400/40 mb-3 font-bold">Pages</p>
+          <nav className="space-y-0.5">
+            {pages.map((page) => (
+              <button
+                key={page.key}
+                type="button"
+                onClick={() => setPageKey(page.key)}
+                className={cn(
+                  "w-full rounded-lg px-3 py-2 text-left text-xs font-semibold transition-colors",
+                  pageKey === page.key
+                    ? "bg-violet-900/40 text-violet-100"
+                    : "text-purple-400/60 hover:text-purple-200 hover:bg-purple-950/40"
                 )}
-              </div>,
-            ];
-          })}
-        />
-      )}
-    </AdminPageShell>
+              >
+                {page.label}
+              </button>
+            ))}
+          </nav>
+        </aside>
+
+        {/* Editor */}
+        <main className="flex-1 min-w-0 p-6 overflow-y-auto">
+          <GlassCard className="p-4 mb-6">
+            <div className="flex flex-wrap gap-4 items-end">
+              <div className="flex-1 min-w-[200px]">
+                <Label htmlFor="cms-search">Search</Label>
+                <Input
+                  id="cms-search"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search keys or values…"
+                  className="mt-1"
+                />
+              </div>
+              <div>
+                <Label htmlFor="type-filter">Type</Label>
+                <select
+                  id="type-filter"
+                  value={typeFilter}
+                  onChange={(e) => setTypeFilter(e.target.value)}
+                  className="mt-1 block rounded-lg border border-purple-500/20 bg-black/40 px-3 py-2 text-sm text-white"
+                >
+                  <option value="all">All types</option>
+                  {CMS_CONTENT_TYPES.map((t) => (
+                    <option key={t} value={t}>
+                      {t}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <PortalButton variant="ghost" size="sm" onClick={() => void loadBlocks()}>
+                Refresh
+              </PortalButton>
+            </div>
+
+            <div className="flex flex-wrap gap-4 mt-4 pt-4 border-t border-purple-500/10">
+              {stats.map((s) => (
+                <div key={s.label} className="text-center">
+                  <p className="text-lg font-black text-amber-300">{s.value}</p>
+                  <p className="text-[10px] uppercase tracking-wider text-purple-400/50">{s.label}</p>
+                </div>
+              ))}
+            </div>
+            {error && <p className="text-red-400 text-sm mt-3">{error}</p>}
+          </GlassCard>
+
+          {/* Locale tabs */}
+          <div className="flex gap-2 mb-6">
+            {LOCALES.map((loc) => (
+              <button
+                key={loc}
+                type="button"
+                onClick={() => setLocaleTab(loc)}
+                className={cn(
+                  "rounded-xl px-4 py-2 text-sm font-bold uppercase tracking-wider border transition-colors",
+                  localeTab === loc
+                    ? "border-amber-400/50 bg-amber-950/40 text-amber-200"
+                    : "border-purple-500/20 text-purple-400/60 hover:text-purple-200"
+                )}
+              >
+                {loc === "en" ? "English" : loc === "ar" ? "العربية" : "Français"}
+              </button>
+            ))}
+          </div>
+
+          {loading ? (
+            <p className="text-purple-400/60 text-sm">Loading content blocks…</p>
+          ) : localeBlocks.length === 0 ? (
+            <GlassCard className="p-8 text-center">
+              <p className="text-purple-300/60 mb-4">No content blocks for this page yet.</p>
+              <PortalButton variant="gold" size="sm" onClick={() => void createBlock("hero")}>
+                Add hero block
+              </PortalButton>
+              <p className="text-xs text-purple-400/40 mt-4">Run <code className="text-amber-300">pnpm seed:content</code> in services/api to seed defaults.</p>
+            </GlassCard>
+          ) : (
+            <div className="space-y-8">
+              {orderedSections.map((sectionKey) => {
+                const sectionBlocks = (sectionGroups.get(sectionKey) ?? []).filter(
+                  (b) => typeFilter === "all" || b.type === typeFilter
+                );
+                if (sectionBlocks.length === 0) return null;
+
+                return (
+                  <section key={sectionKey}>
+                    <div className="flex items-center justify-between mb-4">
+                      <h2 className="text-sm font-black uppercase tracking-[0.2em] text-purple-200">
+                        {CMS_SECTION_LABELS[sectionKey] ?? sectionKey}
+                      </h2>
+                      <PortalButton variant="ghost" size="sm" onClick={() => void createBlock(sectionKey)}>
+                        + Add field
+                      </PortalButton>
+                    </div>
+                    <div className="grid gap-4">
+                      {sectionBlocks.map((block) => {
+                        const draft = getDraftValue(block);
+                        const isDirty = drafts[block.id] !== undefined;
+                        return (
+                          <GlassCard
+                            key={block.id}
+                            className={cn("p-4", !block.isActive && "opacity-50", isDirty && "ring-1 ring-amber-400/30")}
+                          >
+                            <div className="flex flex-wrap items-start justify-between gap-2 mb-3">
+                              <div>
+                                <span className="text-[10px] uppercase tracking-wider text-purple-400/50 font-mono">
+                                  {blockCompositeKey(block)}
+                                </span>
+                                <span className="ml-2 text-[10px] rounded px-1.5 py-0.5 bg-purple-950/50 text-purple-300/70 border border-purple-500/20">
+                                  {block.type}
+                                </span>
+                              </div>
+                              <div className="flex gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => void toggleActive(block)}
+                                  className={cn(
+                                    "text-[10px] font-bold uppercase",
+                                    block.isActive ? "text-emerald-400" : "text-amber-400"
+                                  )}
+                                >
+                                  {block.isActive ? "Active" : "Inactive"}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => void resetBlock(block)}
+                                  className="text-[10px] font-bold uppercase text-purple-400/60 hover:text-purple-200"
+                                >
+                                  Reset
+                                </button>
+                              </div>
+                            </div>
+                            <textarea
+                              value={draft}
+                              onChange={(e) => setDraft(block, e.target.value)}
+                              rows={block.type === "description" ? 4 : 2}
+                              dir={block.locale === "ar" ? "rtl" : "ltr"}
+                              className={cn(
+                                "w-full rounded-lg border border-purple-500/20 bg-black/40 px-3 py-2 text-sm text-white",
+                                block.locale === "ar" && "text-right"
+                              )}
+                            />
+                            {block.defaultValue && block.defaultValue !== draft && (
+                              <p className="text-[10px] text-purple-400/40 mt-2 truncate">Default: {block.defaultValue}</p>
+                            )}
+                          </GlassCard>
+                        );
+                      })}
+                    </div>
+                  </section>
+                );
+              })}
+            </div>
+          )}
+        </main>
+      </div>
+    </div>
   );
 }

@@ -1,128 +1,125 @@
-import type { ContentBlockInput, ContentLocale, IContentBlock, PageContentMap } from "@tasks-cash/types";
+import type {
+  ContentAppKey,
+  ContentBlockInput,
+  ContentLocale,
+  IContentBlock,
+  PageSectionsMap,
+} from "@tasks-cash/types";
+import { buildSectionsMap, toContentBlock, type ContentRowLike } from "./contentService";
 
-type SeedRow = Omit<ContentBlockInput, "isActive">;
+let blocks: ContentRowLike[] = [];
 
-const SEED_ROWS: SeedRow[] = [
-  // Dashboard
-  { pageKey: "dashboard", sectionKey: "hero", contentKey: "title", type: "title", locale: "en", value: "Explorer Command Center" },
-  { pageKey: "dashboard", sectionKey: "hero", contentKey: "subtitle", type: "subtitle", locale: "en", value: "Your RPG progression hub — currencies, levels, challenges, and secrets." },
-  { pageKey: "dashboard", sectionKey: "hero", contentKey: "badge", type: "label", locale: "en", value: "Player Dashboard" },
-  { pageKey: "dashboard", sectionKey: "hero", contentKey: "title", type: "title", locale: "ar", value: "مركز قيادة المستكشف" },
-  { pageKey: "dashboard", sectionKey: "hero", contentKey: "subtitle", type: "subtitle", locale: "ar", value: "مركز تقدمك في اللعب — العملات والمستويات والتحديات والأسرار." },
-  { pageKey: "dashboard", sectionKey: "hero", contentKey: "badge", type: "label", locale: "ar", value: "لوحة اللاعب" },
-  { pageKey: "dashboard", sectionKey: "hero", contentKey: "title", type: "title", locale: "fr", value: "Centre de Commande Explorateur" },
-  { pageKey: "dashboard", sectionKey: "hero", contentKey: "subtitle", type: "subtitle", locale: "fr", value: "Votre hub de progression RPG — devises, niveaux, défis et secrets." },
-  { pageKey: "dashboard", sectionKey: "hero", contentKey: "badge", type: "label", locale: "fr", value: "Tableau de bord joueur" },
-
-  // Referrals
-  { pageKey: "referrals", sectionKey: "hero", contentKey: "title", type: "title", locale: "en", value: "Referrals" },
-  { pageKey: "referrals", sectionKey: "hero", contentKey: "subtitle", type: "subtitle", locale: "en", value: "Invite allies, share your QR code, and earn referral rewards" },
-  { pageKey: "referrals", sectionKey: "hero", contentKey: "title", type: "title", locale: "ar", value: "الإحالات" },
-  { pageKey: "referrals", sectionKey: "hero", contentKey: "subtitle", type: "subtitle", locale: "ar", value: "ادعُ الحلفاء، شارك رمز QR، واكسب مكافآت الإحالة" },
-  { pageKey: "referrals", sectionKey: "hero", contentKey: "title", type: "title", locale: "fr", value: "Parrainages" },
-  { pageKey: "referrals", sectionKey: "hero", contentKey: "subtitle", type: "subtitle", locale: "fr", value: "Invitez des alliés, partagez votre QR code et gagnez des récompenses" },
-
-  // Video Hunter
-  { pageKey: "video-hunter", sectionKey: "hero", contentKey: "title", type: "title", locale: "en", value: "VIDEO HUNTER" },
-  { pageKey: "video-hunter", sectionKey: "hero", contentKey: "subtitle", type: "subtitle", locale: "en", value: "Submit public video links, track review status, and earn coins and XP after approval." },
-  { pageKey: "video-hunter", sectionKey: "hero", contentKey: "eyebrow", type: "label", locale: "en", value: "Submit · Track · Earn" },
-  { pageKey: "video-hunter", sectionKey: "form", contentKey: "submitButton", type: "button", locale: "en", value: "Submit Video Link" },
-  { pageKey: "video-hunter", sectionKey: "hero", contentKey: "title", type: "title", locale: "ar", value: "صياد الفيديو" },
-  { pageKey: "video-hunter", sectionKey: "hero", contentKey: "subtitle", type: "subtitle", locale: "ar", value: "أرسل روابط فيديو عامة، تتبع حالة المراجعة، واكسب العملات ونقاط الخبرة بعد الموافقة." },
-  { pageKey: "video-hunter", sectionKey: "hero", contentKey: "title", type: "title", locale: "fr", value: "CHASSEUR VIDÉO" },
-  { pageKey: "video-hunter", sectionKey: "hero", contentKey: "subtitle", type: "subtitle", locale: "fr", value: "Soumettez des liens vidéo publics, suivez le statut de révision et gagnez des pièces et de l'XP après approbation." },
-  { pageKey: "video-hunter", sectionKey: "form", contentKey: "submitButton", type: "button", locale: "fr", value: "Soumettre le lien vidéo" },
-
-  // Mystery Missions / Identity Challenge
-  { pageKey: "mystery-missions", sectionKey: "hero", contentKey: "title", type: "title", locale: "en", value: "Special Missions" },
-  { pageKey: "mystery-missions", sectionKey: "hero", contentKey: "subtitle", type: "subtitle", locale: "en", value: "Identity challenges, secret objectives, and classified portal operations." },
-  { pageKey: "mystery-missions", sectionKey: "hero", contentKey: "title", type: "title", locale: "ar", value: "مهام خاصة" },
-  { pageKey: "mystery-missions", sectionKey: "hero", contentKey: "subtitle", type: "subtitle", locale: "ar", value: "تحديات الهوية، أهداف سرية، وعمليات البوابة المصنفة." },
-  { pageKey: "mystery-missions", sectionKey: "hero", contentKey: "title", type: "title", locale: "fr", value: "Missions Spéciales" },
-  { pageKey: "mystery-missions", sectionKey: "hero", contentKey: "subtitle", type: "subtitle", locale: "fr", value: "Défis d'identité, objectifs secrets et opérations classifiées du portail." },
-
-  // Explorer DNA
-  { pageKey: "explorer-dna", sectionKey: "hero", contentKey: "title", type: "title", locale: "en", value: "Explorer DNA" },
-  { pageKey: "explorer-dna", sectionKey: "hero", contentKey: "subtitle", type: "subtitle", locale: "en", value: "Build your Explorer DNA. The more we understand your skills, interests, experience, and goals, the better we can recommend missions and rewards designed specifically for you." },
-  { pageKey: "explorer-dna", sectionKey: "hero", contentKey: "title", type: "title", locale: "ar", value: "حمض المستكشف" },
-  { pageKey: "explorer-dna", sectionKey: "hero", contentKey: "subtitle", type: "subtitle", locale: "ar", value: "ابنِ حمض المستكشف الخاص بك. كلما فهمنا مهاراتك واهتماماتك وخبرتك وأهدافك بشكل أفضل، كلما استطعنا التوصية بمهام ومكافآت مصممة خصيصاً لك." },
-  { pageKey: "explorer-dna", sectionKey: "hero", contentKey: "title", type: "title", locale: "fr", value: "ADN Explorateur" },
-  { pageKey: "explorer-dna", sectionKey: "hero", contentKey: "subtitle", type: "subtitle", locale: "fr", value: "Construisez votre ADN Explorateur. Plus nous comprenons vos compétences, intérêts, expérience et objectifs, mieux nous pouvons recommander des missions et récompenses conçues pour vous." },
-
-  // Referral Arena label
-  { pageKey: "referral-arena", sectionKey: "hero", contentKey: "title", type: "title", locale: "en", value: "Referral Arena" },
-  { pageKey: "referral-arena", sectionKey: "hero", contentKey: "subtitle", type: "subtitle", locale: "en", value: "Grow the portal network and earn rewards for every active ally you recruit." },
-  { pageKey: "referral-arena", sectionKey: "hero", contentKey: "title", type: "title", locale: "fr", value: "Arène de Parrainage" },
-  { pageKey: "referral-arena", sectionKey: "hero", contentKey: "subtitle", type: "subtitle", locale: "fr", value: "Développez le réseau du portail et gagnez des récompenses pour chaque allié actif recruté." },
-];
-
-let blocks: IContentBlock[] = SEED_ROWS.map((row, index) => ({
-  id: `content_${index + 1}`,
-  ...row,
-  isActive: true,
-  updatedAt: new Date().toISOString(),
-}));
-
-function toMap(rows: IContentBlock[]): PageContentMap {
-  const map: PageContentMap = {};
-  for (const row of rows) {
-    if (row.isActive) map[row.contentKey] = row.value;
-  }
-  return map;
+export function setDevContentBlocks(rows: ContentRowLike[]) {
+  blocks = rows;
 }
 
 export function listContentBlocks(filters?: {
+  appKey?: ContentAppKey;
   pageKey?: string;
   locale?: ContentLocale;
+  sectionKey?: string;
+  type?: string;
+  search?: string;
 }): IContentBlock[] {
-  return blocks.filter((b) => {
-    if (filters?.pageKey && b.pageKey !== filters.pageKey) return false;
-    if (filters?.locale && b.locale !== filters.locale) return false;
-    return true;
-  });
+  const q = (filters?.search ?? "").trim().toLowerCase();
+  return blocks
+    .filter((b) => {
+      if (filters?.appKey && (b.appKey ?? "main") !== filters.appKey) return false;
+      if (filters?.pageKey && b.pageKey !== filters.pageKey) return false;
+      if (filters?.locale && b.locale !== filters.locale) return false;
+      if (filters?.sectionKey && b.sectionKey !== filters.sectionKey) return false;
+      if (filters?.type && b.type !== filters.type) return false;
+      if (q) {
+        const hay = `${b.pageKey} ${b.sectionKey} ${b.contentKey} ${b.value}`.toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    })
+    .map(toContentBlock);
 }
 
-export function getPageContent(pageKey: string, locale: ContentLocale): PageContentMap {
-  const rows = blocks.filter((b) => b.pageKey === pageKey && b.locale === locale && b.isActive);
+export function getPageSections(
+  appKey: ContentAppKey,
+  pageKey: string,
+  locale: ContentLocale
+): PageSectionsMap {
+  const rows = blocks.filter(
+    (b) => (b.appKey ?? "main") === appKey && b.pageKey === pageKey && b.locale === locale && b.isActive
+  );
   if (rows.length === 0 && locale !== "en") {
-    return toMap(blocks.filter((b) => b.pageKey === pageKey && b.locale === "en" && b.isActive));
+    return buildSectionsMap(
+      blocks.filter((b) => (b.appKey ?? "main") === appKey && b.pageKey === pageKey && b.locale === "en" && b.isActive)
+    );
   }
-  return toMap(rows);
+  return buildSectionsMap(rows);
 }
 
 export function createContentBlock(input: ContentBlockInput): IContentBlock {
-  const block: IContentBlock = {
-    id: `content_${Date.now()}`,
+  const block: ContentRowLike = {
+    id: `content_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+    appKey: input.appKey,
     pageKey: input.pageKey,
     sectionKey: input.sectionKey,
     contentKey: input.contentKey,
     type: input.type,
     value: input.value,
+    defaultValue: input.defaultValue ?? input.value,
     locale: input.locale,
     isActive: input.isActive ?? true,
     updatedAt: new Date().toISOString(),
   };
   blocks.push(block);
-  return block;
+  return toContentBlock(block);
 }
 
 export function updateContentBlock(id: string, patch: Partial<ContentBlockInput>): IContentBlock | null {
-  const idx = blocks.findIndex((b) => b.id === id);
+  const idx = blocks.findIndex((b) => (b.id ?? b._id) === id);
   if (idx < 0) return null;
   blocks[idx] = {
     ...blocks[idx],
     ...patch,
+    defaultValue: patch.defaultValue ?? blocks[idx].defaultValue ?? blocks[idx].value,
     updatedAt: new Date().toISOString(),
   };
-  return blocks[idx];
+  return toContentBlock(blocks[idx]);
 }
 
 export function deleteContentBlock(id: string): boolean {
   const before = blocks.length;
-  blocks = blocks.filter((b) => b.id !== id);
+  blocks = blocks.filter((b) => (b.id ?? b._id) !== id);
   return blocks.length < before;
 }
 
-export function listPageKeys(): string[] {
-  return [...new Set(blocks.map((b) => b.pageKey))].sort();
+export function listPageKeys(appKey?: ContentAppKey): string[] {
+  return [
+    ...new Set(
+      blocks.filter((b) => !appKey || (b.appKey ?? "main") === appKey).map((b) => b.pageKey)
+    ),
+  ].sort();
+}
+
+export function bulkUpsertContentBlocks(
+  items: ContentBlockInput[]
+): { upserted: IContentBlock[]; errors: string[] } {
+  const upserted: IContentBlock[] = [];
+  const errors: string[] = [];
+
+  for (const input of items) {
+    const idx = blocks.findIndex(
+      (b) =>
+        (b.appKey ?? "main") === input.appKey &&
+        b.pageKey === input.pageKey &&
+        b.sectionKey === input.sectionKey &&
+        b.contentKey === input.contentKey &&
+        b.locale === input.locale
+    );
+    if (idx >= 0) {
+      const updated = updateContentBlock(blocks[idx].id as string, input);
+      if (updated) upserted.push(updated);
+    } else {
+      upserted.push(createContentBlock(input));
+    }
+  }
+
+  return { upserted, errors };
 }

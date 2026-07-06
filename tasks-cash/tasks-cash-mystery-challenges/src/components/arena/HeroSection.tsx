@@ -6,10 +6,12 @@ import { AnimatedFog } from "@/components/ui/PortalBackground";
 import { ArenaButton } from "@/components/ui/ArenaButton";
 import { GlowCard } from "@/components/ui/GlowCard";
 import { useT } from "@/i18n/I18nProvider";
+import { useContent } from "@/hooks/useContent";
 import { motion } from "framer-motion";
 
 export function HeroSection() {
   const t = useT();
+  const { getText } = useContent("challenge", "home");
 
   return (
     <section className="arena-screen relative flex min-h-screen w-screen flex-col items-center justify-center overflow-hidden px-[clamp(1rem,4vw,3rem)] py-[clamp(2rem,5vw,4rem)]">
@@ -35,22 +37,22 @@ export function HeroSection() {
           animate={{ opacity: [0.5, 1, 0.5] }}
           transition={{ duration: 3, repeat: Infinity }}
         >
-          ◈ {t("arena.title")} ◈
+          ◈ {getText("hero", "eyebrow", t("arena.title"))} ◈
         </motion.p>
 
         <h1 className="arena-heading text-4xl sm:text-5xl md:text-7xl lg:text-8xl xl:text-9xl mb-6 leading-none">
-          MYSTERY
+          {getText("hero", "titleLine1", "MYSTERY")}
           <br />
-          CHALLENGES
+          {getText("hero", "titleLine2", "CHALLENGES")}
         </h1>
 
         <p className="mx-auto mb-10 max-w-4xl text-base text-purple-200/60 md:text-xl lg:text-2xl leading-relaxed px-2">
-          {t("arena.subtitle")}
+          {getText("hero", "subtitle", t("arena.subtitle"))}
         </p>
 
         <Link href="#game-modes" className="mb-16 inline-block">
           <ArenaButton variant="gold" size="xl" className="animate-pulse-gold">
-            {t("arena.enterArena")}
+            {getText("buttons", "enterArena", t("arena.enterArena"))}
           </ArenaButton>
         </Link>
 

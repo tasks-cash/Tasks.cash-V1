@@ -3,6 +3,7 @@ import { proxyRequest } from "@/lib/proxy";
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
+  const appKey = url.searchParams.get("appKey") ?? "main";
   const pageKey = url.searchParams.get("pageKey");
   const locale = url.searchParams.get("locale") ?? "en";
 
@@ -10,8 +11,6 @@ export async function GET(request: Request) {
     return NextResponse.json({ success: false, error: "pageKey is required" }, { status: 400 });
   }
 
-  return proxyRequest(
-    `/api/content?pageKey=${encodeURIComponent(pageKey)}&locale=${encodeURIComponent(locale)}`,
-    request
-  );
+  const params = new URLSearchParams({ appKey, pageKey, locale });
+  return proxyRequest(`/api/content?${params}`, request);
 }
