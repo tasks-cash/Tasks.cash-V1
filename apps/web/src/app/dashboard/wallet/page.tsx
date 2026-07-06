@@ -9,11 +9,13 @@ import {
   StatCard,
 } from "@tasks-cash/ui";
 import { useGame } from "@/components/game/GameProvider";
+import { useContent } from "@/hooks/useContent";
 import { apiFetch } from "@/lib/api";
 import type { ICurrencies } from "@tasks-cash/types";
 import { CURRENCY_META } from "@tasks-cash/utils";
 
 export default function WalletPage() {
+  const { getText } = useContent("main", "wallet");
   const { profile, refresh } = useGame();
   const [currencies, setCurrencies] = useState<ICurrencies | null>(null);
   const [exchangeMsg, setExchangeMsg] = useState("");
@@ -61,12 +63,12 @@ export default function WalletPage() {
   return (
     <div>
       <PageHeader
-        title="Multi-Currency Wallet"
-        subtitle="Bronze, silver, gold, gems, crystals, tokens, and portal energy."
-        badge="Economy System"
+        title={getText("hero", "title", "Multi-Currency Wallet")}
+        subtitle={getText("hero", "subtitle", "Bronze, silver, gold, gems, crystals, tokens, and portal energy.")}
+        badge={getText("hero", "badge", "Economy System")}
       />
 
-      {walletLoading && <p className="text-xs text-purple-400/50 mb-4">Loading wallet...</p>}
+      {walletLoading && <p className="text-xs text-purple-400/50 mb-4">{getText("messages", "loading", "Loading wallet...")}</p>}
       {walletError && <p className="text-amber-400 text-sm mb-4">{walletError}</p>}
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -77,13 +79,13 @@ export default function WalletPage() {
       </div>
 
       <GlassCard className="p-6 mb-8">
-        <h2 className="text-lg font-bold text-white mb-4">All Currencies</h2>
+        <h2 className="text-lg font-bold text-white mb-4">{getText("cards", "allCurrencies", "All Currencies")}</h2>
         <CurrencyWallet currencies={display} />
       </GlassCard>
 
       <GlassCard glow="violet" className="p-6 mb-8">
-        <h2 className="text-lg font-bold text-white mb-4">Currency Exchange</h2>
-        <p className="text-purple-300/60 text-sm mb-4">Convert between portal currencies at live rates.</p>
+        <h2 className="text-lg font-bold text-white mb-4">{getText("cards", "exchange", "Currency Exchange")}</h2>
+        <p className="text-purple-300/60 text-sm mb-4">{getText("messages", "exchangeDesc", "Convert between portal currencies at live rates.")}</p>
         <div className="flex flex-wrap gap-3">
           <GameButton variant="secondary" size="sm" onClick={() => handleExchange("bronze", "silver")}>
             100 Bronze → Silver

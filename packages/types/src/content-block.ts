@@ -57,3 +57,37 @@ export interface PageContentResponse {
 
 /** @deprecated Use PageSectionsMap via useContent */
 export type PageContentMap = Record<string, string>;
+
+/** CMS audit report */
+export interface ContentAuditMissingKey {
+  appKey: ContentAppKey;
+  pageKey: string;
+  sectionKey: string;
+  contentKey: string;
+  locale: ContentLocale;
+  defaultValue: string;
+}
+
+export interface ContentAuditUnwiredPage {
+  appKey: ContentAppKey;
+  pageKey: string;
+  label: string;
+}
+
+export interface ContentAuditTranslationGap {
+  appKey: ContentAppKey;
+  pageKey: string;
+  sectionKey: string;
+  contentKey: string;
+  missingLocales: ContentLocale[];
+}
+
+export interface ContentAuditReport {
+  missingKeys: ContentAuditMissingKey[];
+  unwiredPages: ContentAuditUnwiredPage[];
+  translationGaps: ContentAuditTranslationGap[];
+  seedKeyCount: number;
+  dbKeyCount: number;
+  lastUpdated: string | null;
+  generatedAt: string;
+}

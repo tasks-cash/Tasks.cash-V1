@@ -13,6 +13,7 @@ import {
   listPageKeys,
   updateContentBlock,
 } from "../lib/contentStore";
+import { auditContentBlocks, importMissingContent } from "../lib/contentAudit";
 
 const router = Router();
 router.use(authMiddleware, adminMiddleware);
@@ -88,6 +89,48 @@ router.get("/", async (req: AuthRequest, res: Response) => {
 
   const blocks = listContentBlocks(filters);
   res.json({ success: true, data: { blocks, pages: listPageKeys(filters.appKey) } });
+});
+
+/** GET /api/admin/content/audit — CMS coverage report */
+router.get("/audit", async (_req: AuthRequest, res: Response) => {
+  if (!isDbConnected()) {
+    res.json({
+      success: true,
+      data: {
+        missingKeys: [],
+        unwiredPages: [],
+        translationGaps: [],
+        seedKeyCount: 0,
+        dbKeyCount: 0,
+        lastUpdated: null,
+        generatedAt: new Date().toISOString(),
+      },
+    });
+    return;
+  }
+
+  try {
+    const report = await auditContentBlocks();
+    res.json({ success: true, data: report });
+  } catch {
+    res.status(500).json({ success: false, error: "Audit failed" });
+  }
+});
+
+/** POST /api/admin/content/import-missing — insert seed rows not yet in DB */
+router.post("/import-missing", async (_req: AuthRequest, res: Response) => {
+  if (!isDbConnected()) {
+    res.status(503).json({ success: false, error: "Database not connected" });
+    return;
+  }
+
+  try {
+    const result = await importMissingContent();
+    const report = await auditContentBlocks();
+    res.json({ success: true, data: { ...result, audit: report } });
+  } catch {
+    res.status(500).json({ success: false, error: "Import failed" });
+  }
 });
 
 /** POST /api/admin/content/bulk-upsert */

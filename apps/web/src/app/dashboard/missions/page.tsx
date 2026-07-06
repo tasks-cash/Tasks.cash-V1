@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { GlassCard, StatWidget, PortalButton, MotionReveal } from "@tasks-cash/ui";
 import { DashboardPageShell } from "@/components/dashboard/DashboardPageShell";
+import { useContent } from "@/hooks/useContent";
 import { apiFetch } from "@/lib/api";
 
 type MissionRow = {
@@ -18,6 +19,7 @@ type MissionRow = {
 };
 
 export default function DashboardMissionsPage() {
+  const { getText } = useContent("main", "dashboard-missions");
   const [missions, setMissions] = useState<MissionRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -40,8 +42,8 @@ export default function DashboardMissionsPage() {
 
   return (
     <DashboardPageShell
-      title="My Missions"
-      subtitle="Track active quests and claim completed rewards"
+      title={getText("hero", "title", "My Missions")}
+      subtitle={getText("hero", "subtitle", "Track active quests and claim completed rewards")}
       action={
         <Link href="/dashboard/missions/submit">
           <PortalButton variant="gold" size="sm">Submit Proof</PortalButton>

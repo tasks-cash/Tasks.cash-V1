@@ -2,7 +2,7 @@ import dotenv from "dotenv";
 import path from "path";
 import { connectDatabase, disconnectDatabase } from "./config/database";
 import { ContentBlock } from "./models/ContentBlock";
-import { CONTENT_SEED_ROWS } from "./data/contentSeed";
+import { importMissingContent } from "./lib/contentAudit";
 
 dotenv.config({ path: path.resolve(__dirname, "../../../.env") });
 
@@ -35,41 +35,7 @@ async function seedContent() {
   await connectDatabase();
   await ensureContentIndexes();
 
-  let created = 0;
-  let skipped = 0;
-  let failed = 0;
-
-  for (const row of CONTENT_SEED_ROWS) {
-    const existing = await ContentBlock.findOne({
-      appKey: row.appKey,
-      pageKey: row.pageKey,
-      sectionKey: row.sectionKey,
-      contentKey: row.contentKey,
-      locale: row.locale,
-    });
-
-    if (existing) {
-      skipped += 1;
-      continue;
-    }
-
-    try {
-      await ContentBlock.create({
-        ...row,
-        defaultValue: row.value,
-        isActive: true,
-      });
-      created += 1;
-    } catch (err: unknown) {
-      const code = (err as { code?: number })?.code;
-      if (code === 11000) {
-        skipped += 1;
-      } else {
-        failed += 1;
-        console.error("[seed:content] Failed row:", row, err);
-      }
-    }
-  }
+  const { created, skipped, failed } = await importMissingContent();
 
   console.log(`Content seed complete: ${created} created, ${skipped} skipped, ${failed} failed.`);
   await disconnectDatabase();

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { ContentAppKey, ContentBlockType, ContentLocale, IContentBlock } from "@tasks-cash/types";
+import type { ContentAppKey, ContentAuditReport, ContentBlockType, ContentLocale, IContentBlock } from "@tasks-cash/types";
 import { GlassCard, PortalButton, Input, Label } from "@tasks-cash/ui";
 import { adminFetch } from "@/lib/api";
 import {
@@ -44,6 +44,10 @@ export default function AdminContentPage() {
   const [drafts, setDrafts] = useState<DraftMap>({});
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [error, setError] = useState("");
+  const [audit, setAudit] = useState<ContentAuditReport | null>(null);
+  const [auditLoading, setAuditLoading] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [auditOpen, setAuditOpen] = useState(true);
   const autosaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const dirty = Object.keys(drafts).length > 0;
 
@@ -76,6 +80,33 @@ export default function AdminContentPage() {
   useEffect(() => {
     void loadBlocks();
   }, [loadBlocks]);
+
+  const loadAudit = useCallback(async () => {
+    setAuditLoading(true);
+    const res = await adminFetch<ContentAuditReport>("/api/admin/content/audit");
+    if (res.success && res.data) setAudit(res.data);
+    setAuditLoading(false);
+  }, []);
+
+  useEffect(() => {
+    void loadAudit();
+  }, [loadAudit]);
+
+  async function handleImportMissing() {
+    setImporting(true);
+    setError("");
+    const res = await adminFetch<{ created: number; skipped: number; failed: number; audit: ContentAuditReport }>(
+      "/api/admin/content/import-missing",
+      { method: "POST", body: JSON.stringify({}) }
+    );
+    setImporting(false);
+    if (res.success && res.data) {
+      setAudit(res.data.audit);
+      void loadBlocks();
+    } else {
+      setError(res.error ?? "Import failed");
+    }
+  }
 
   useEffect(() => {
     function onBeforeUnload(e: BeforeUnloadEvent) {
@@ -263,6 +294,91 @@ export default function AdminContentPage() {
             Save All
           </PortalButton>
         </div>
+      </div>
+
+      {/* CMS Audit Report */}
+      <div className="border-b border-purple-500/15 bg-purple-950/20 px-6 py-4">
+        <button
+          type="button"
+          onClick={() => setAuditOpen((v) => !v)}
+          className="flex w-full items-center justify-between text-left"
+        >
+          <div>
+            <h2 className="text-sm font-black uppercase tracking-[0.2em] text-amber-200">CMS Audit Report</h2>
+            <p className="text-xs text-purple-400/50 mt-1">
+              Coverage gaps, missing translations, and unwired pages
+            </p>
+          </div>
+          <span className="text-purple-400/60 text-xs">{auditOpen ? "▲" : "▼"}</span>
+        </button>
+
+        {auditOpen && (
+          <div className="mt-4 space-y-4">
+            {auditLoading && !audit ? (
+              <p className="text-sm text-purple-400/60">Running audit…</p>
+            ) : audit ? (
+              <>
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                  <AuditStat label="Seed keys" value={audit.seedKeyCount} />
+                  <AuditStat label="In database" value={audit.dbKeyCount} />
+                  <AuditStat label="Missing keys" value={audit.missingKeys.length} warn={audit.missingKeys.length > 0} />
+                  <AuditStat label="Unwired pages" value={audit.unwiredPages.length} warn={audit.unwiredPages.length > 0} />
+                  <AuditStat label="Translation gaps" value={audit.translationGaps.length} warn={audit.translationGaps.length > 0} />
+                </div>
+
+                <div className="flex flex-wrap items-center gap-3">
+                  <PortalButton
+                    variant="gold"
+                    size="sm"
+                    disabled={importing || audit.missingKeys.length === 0}
+                    onClick={() => void handleImportMissing()}
+                  >
+                    {importing ? "Importing…" : "Import Missing Content"}
+                  </PortalButton>
+                  <PortalButton variant="ghost" size="sm" onClick={() => void loadAudit()}>
+                    Refresh Audit
+                  </PortalButton>
+                  {audit.lastUpdated && (
+                    <span className="text-[10px] text-purple-400/50 uppercase tracking-wider">
+                      Last updated: {new Date(audit.lastUpdated).toLocaleString()}
+                    </span>
+                  )}
+                </div>
+
+                {audit.missingKeys.length > 0 && (
+                  <AuditList
+                    title="Missing content keys (in seed, not in database)"
+                    items={audit.missingKeys.slice(0, 20).map(
+                      (k) => `${k.appKey}/${k.pageKey} · ${k.sectionKey}.${k.contentKey} [${k.locale}]`
+                    )}
+                    more={audit.missingKeys.length > 20 ? audit.missingKeys.length - 20 : 0}
+                  />
+                )}
+
+                {audit.unwiredPages.length > 0 && (
+                  <AuditList
+                    title="Pages not connected to CMS (no useContent wired)"
+                    items={audit.unwiredPages.map((p) => `${p.appKey}/${p.pageKey} — ${p.label}`)}
+                  />
+                )}
+
+                {audit.translationGaps.length > 0 && (
+                  <AuditList
+                    title="Translation gaps (missing AR/FR in seed definitions)"
+                    items={audit.translationGaps.slice(0, 15).map(
+                      (g) => `${g.appKey}/${g.pageKey} · ${g.sectionKey}.${g.contentKey} → ${g.missingLocales.join(", ")}`
+                    )}
+                    more={audit.translationGaps.length > 15 ? audit.translationGaps.length - 15 : 0}
+                  />
+                )}
+
+                {audit.missingKeys.length === 0 && audit.unwiredPages.length === 0 && audit.translationGaps.length === 0 && (
+                  <p className="text-sm text-emerald-300/80">All seed content is in the database and pages are wired.</p>
+                )}
+              </>
+            ) : null}
+          </div>
+        )}
       </div>
 
       <div className="flex min-h-[calc(100vh-5rem)]">
@@ -466,6 +582,29 @@ export default function AdminContentPage() {
           )}
         </main>
       </div>
+    </div>
+  );
+}
+
+function AuditStat({ label, value, warn }: { label: string; value: number; warn?: boolean }) {
+  return (
+    <div className={cn("rounded-lg border px-3 py-2 text-center", warn ? "border-amber-400/30 bg-amber-950/20" : "border-purple-500/20 bg-black/30")}>
+      <p className={cn("text-lg font-black", warn ? "text-amber-300" : "text-white")}>{value}</p>
+      <p className="text-[9px] uppercase tracking-wider text-purple-400/50">{label}</p>
+    </div>
+  );
+}
+
+function AuditList({ title, items, more }: { title: string; items: string[]; more?: number }) {
+  return (
+    <div className="rounded-lg border border-purple-500/15 bg-black/30 p-3">
+      <p className="text-[10px] font-bold uppercase tracking-wider text-purple-300/70 mb-2">{title}</p>
+      <ul className="text-xs text-purple-400/60 space-y-1 font-mono max-h-32 overflow-y-auto">
+        {items.map((item) => (
+          <li key={item}>{item}</li>
+        ))}
+      </ul>
+      {more && more > 0 ? <p className="text-[10px] text-purple-400/40 mt-2">+{more} more…</p> : null}
     </div>
   );
 }

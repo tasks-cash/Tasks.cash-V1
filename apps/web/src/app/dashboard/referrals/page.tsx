@@ -7,7 +7,7 @@ import { DashboardPageShell } from "@/components/dashboard/DashboardPageShell";
 import { ReferralQrCode } from "@/components/referrals/ReferralQrCode";
 import { apiFetch } from "@/lib/api";
 import { buildReferralLink } from "@/lib/referral-storage";
-import { usePageContent } from "@/hooks/usePageContent";
+import { useContent } from "@/hooks/useContent";
 import { useT } from "@/i18n/I18nProvider";
 import { REFERRAL_STATUS_LABELS } from "@/lib/referral-utils";
 const EMPTY_REFERRAL: IReferralMeResponse = {
@@ -22,7 +22,7 @@ const EMPTY_REFERRAL: IReferralMeResponse = {
 
 export default function ReferralsPage() {
   const t = useT();
-  const { get: content } = usePageContent("referrals");
+  const { getText } = useContent("main", "referrals");
   const [data, setData] = useState<IReferralMeResponse>(EMPTY_REFERRAL);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -45,19 +45,19 @@ export default function ReferralsPage() {
 
   return (
     <DashboardPageShell
-      title={content("title", t("referrals.title"))}
-      subtitle={content("subtitle", t("referrals.subtitle"))}
+      title={getText("hero", "title", t("referrals.title"))}
+      subtitle={getText("hero", "subtitle", t("referrals.subtitle"))}
     >
       <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-4 mb-8">
-        <StatWidget label="Total Invited" value={data.totalInvites} icon="🔗" />
-        <StatWidget label="Active Referrals" value={data.activeReferrals} icon="⚡" glow="purple" />
-        <StatWidget label="Pending Rewards" value={`${data.pendingRewards} ◈`} icon="⏳" />
-        <StatWidget label="Earned Rewards" value={`${data.earnedRewards} ◈`} icon="🎁" glow="gold" />
+        <StatWidget label={getText("stats", "totalInvited", "Total Invited")} value={data.totalInvites} icon="🔗" />
+        <StatWidget label={getText("stats", "activeReferrals", "Active Referrals")} value={data.activeReferrals} icon="⚡" glow="purple" />
+        <StatWidget label={getText("stats", "pendingRewards", "Pending Rewards")} value={`${data.pendingRewards} ◈`} icon="⏳" />
+        <StatWidget label={getText("stats", "earnedRewards", "Earned Rewards")} value={`${data.earnedRewards} ◈`} icon="🎁" glow="gold" />
       </div>
 
       <GlassCard glow="gold" className="p-6 md:p-8 mb-8">
         <div className="text-center mb-6">
-          <p className="text-xs uppercase tracking-widest text-purple-400/60 mb-2">{content("yourCodeLabel", t("referrals.yourCode"))}</p>
+          <p className="text-xs uppercase tracking-widest text-purple-400/60 mb-2">{getText("cards", "yourCode", t("referrals.yourCode"))}</p>
           <p className="text-3xl md:text-4xl font-black text-amber-400 tracking-widest">{data.referralCode}</p>
         </div>
 
@@ -69,18 +69,18 @@ export default function ReferralsPage() {
 
       <GlassCard className="p-6">
         <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
-          <h2 className="font-bold text-white">{content("historyTitle", t("referrals.history"))}</h2>
-          {loading && <span className="text-xs text-purple-400/50">Syncing...</span>}
+          <h2 className="font-bold text-white">{getText("table", "historyTitle", t("referrals.history"))}</h2>
+          {loading && <span className="text-xs text-purple-400/50">{getText("messages", "syncing", "Syncing...")}</span>}
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-sm min-w-[720px]">
             <thead>
               <tr className="text-left text-purple-400/60 border-b border-purple-500/20">
-                <th className="pb-3 pr-4">Referred User</th>
-                <th className="pb-3 pr-4">Date</th>
-                <th className="pb-3 pr-4">Status</th>
-                <th className="pb-3 pr-4">Reward</th>
+                <th className="pb-3 pr-4">{getText("table", "referredUser", "Referred User")}</th>
+                <th className="pb-3 pr-4">{getText("table", "date", "Date")}</th>
+                <th className="pb-3 pr-4">{getText("table", "status", "Status")}</th>
+                <th className="pb-3 pr-4">{getText("table", "reward", "Reward")}</th>
                 <th className="pb-3">Admin Note</th>
               </tr>
             </thead>
@@ -88,7 +88,7 @@ export default function ReferralsPage() {
               {data.history.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="py-8 text-center text-purple-400/50">
-                    {content("noReferrals", t("referrals.noReferrals"))}
+                    {getText("empty_states", "noReferrals", t("referrals.noReferrals"))}
                   </td>
                 </tr>
               ) : (
@@ -120,7 +120,7 @@ export default function ReferralsPage() {
             size="sm"
             onClick={() => navigator.clipboard?.writeText(data.referralLink || buildReferralLink(data.referralCode))}
           >
-            {content("copyLink", t("referrals.copyLink"))}
+            {getText("buttons", "copyLink", t("referrals.copyLink"))}
           </PortalButton>
         </div>
       </GlassCard>

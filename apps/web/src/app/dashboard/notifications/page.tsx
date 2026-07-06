@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { GlassCard, PortalButton, StatWidget, Badge } from "@tasks-cash/ui";
 import { DashboardPageShell } from "@/components/dashboard/DashboardPageShell";
+import { useContent } from "@/hooks/useContent";
 import { apiFetch } from "@/lib/api";
 
 type NotificationRow = {
@@ -23,6 +24,7 @@ function formatTime(iso?: string): string {
 }
 
 export default function NotificationsPage() {
+  const { getText } = useContent("main", "notifications");
   const [rows, setRows] = useState<NotificationRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -44,8 +46,8 @@ export default function NotificationsPage() {
 
   return (
     <DashboardPageShell
-      title="Notifications"
-      subtitle="Alerts, updates, and portal intel"
+      title={getText("hero", "title", "Notifications")}
+      subtitle={getText("hero", "subtitle", "Alerts, updates, and portal intel")}
       action={<PortalButton variant="ghost" size="sm">Mark All Read</PortalButton>}
     >
       {loading && <p className="text-purple-400/50 text-sm mb-4">Loading notifications...</p>}
@@ -57,7 +59,7 @@ export default function NotificationsPage() {
       </div>
 
       {!loading && rows.length === 0 && !error && (
-        <GlassCard className="p-8 text-center text-purple-400/60">No notifications yet.</GlassCard>
+        <GlassCard className="p-8 text-center text-purple-400/60">{getText("empty_states", "noAlerts", "No notifications yet.")}</GlassCard>
       )}
 
       <div className="space-y-3">

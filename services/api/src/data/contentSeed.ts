@@ -29,8 +29,9 @@ function tri(
   ];
 }
 
-/** Default CMS content — inserted by seed script only when missing */
-export const CONTENT_SEED_ROWS: ContentSeedRow[] = [
+import { CONTENT_SEED_EXTENDED } from "./contentSeedExtended";
+
+const CONTENT_SEED_BASE: ContentSeedRow[] = [
   // ── Main App: Home ──
   ...tri("main", "home", "hero", "eyebrow", "label", "Premium AAA Game Universe", "عالم ألعاب AAA متميز", "Univers de jeu AAA premium"),
   ...tri("main", "home", "hero", "titleLine1", "title", "Enter The", "ادخل", "Entrez dans"),
@@ -216,6 +217,11 @@ export const CONTENT_SEED_ROWS: ContentSeedRow[] = [
   ...tri("challenge", "mystery-vault", "hero", "title", "title", "Mystery Vault", "الخزنة الغامضة", "Coffre Mystère"),
   ...tri("challenge", "leaderboards", "hero", "title", "title", "Leaderboards", "لوحات الصدارة", "Classements"),
   ...tri("challenge", "rewards", "hero", "title", "title", "Rewards", "المكافآت", "Récompenses"),
+];
+
+export const CONTENT_SEED_ROWS: ContentSeedRow[] = [
+  ...CONTENT_SEED_BASE,
+  ...CONTENT_SEED_EXTENDED,
 ];
 
 export { LOCALES };

@@ -17,7 +17,7 @@ import {
   MotionStaggerItem,
 } from "@tasks-cash/ui";
 import { PublicPageWrapper } from "@/components/premium/PublicPageWrapper";
-import { usePageContent } from "@/hooks/usePageContent";
+import { useContent } from "@/hooks/useContent";
 import { useT } from "@/i18n/I18nProvider";
 import {
   filterMysteryMissions,
@@ -28,7 +28,7 @@ import { apiFetch } from "@/lib/api";
 
 export default function MysteryMissionsPage() {
   const t = useT();
-  const { get: content } = usePageContent("mystery-missions");
+  const { getText } = useContent("main", "mystery-missions");
   const [missions, setMissions] = useState<IMysteryMissionView[]>([]);
   const [category, setCategory] = useState<MysteryMissionCategory | "all">("all");
   const [popupMission, setPopupMission] = useState<IMysteryMissionView | null>(null);
@@ -89,17 +89,17 @@ export default function MysteryMissionsPage() {
             animate={{ opacity: [0.4, 1, 0.4] }}
             transition={{ duration: 3, repeat: Infinity }}
           >
-            {content("eyebrow", t("mysteryMissions.eyebrow"))}
+            {getText("hero", "eyebrow", t("mysteryMissions.eyebrow"))}
           </motion.p>
           <GlowText
             as="h1"
             variant="gold"
             className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl mb-4 font-[family-name:var(--font-cinzel)]"
           >
-            {content("title", t("mysteryMissions.title"))}
+            {getText("hero", "title", t("mysteryMissions.title"))}
           </GlowText>
           <p className="text-purple-200/50 text-lg max-w-2xl mx-auto leading-relaxed mb-8">
-            {content("subtitle", t("mysteryMissions.subtitle"))}
+            {getText("hero", "subtitle", t("mysteryMissions.subtitle"))}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/register">

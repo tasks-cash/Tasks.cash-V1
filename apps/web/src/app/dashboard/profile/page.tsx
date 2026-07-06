@@ -11,11 +11,13 @@ import {
   GameButton,
 } from "@tasks-cash/ui";
 import { useGame } from "@/components/game/GameProvider";
+import { useContent } from "@/hooks/useContent";
 import { apiFetch } from "@/lib/api";
 import { ACHIEVEMENTS, BADGES } from "@tasks-cash/utils";
 import type { RPGStatType } from "@tasks-cash/types";
 
 export default function ProfilePage() {
+  const { getText } = useContent("main", "profile");
   const { profile, refresh } = useGame();
   const [username, setUsername] = useState("");
 
@@ -31,8 +33,8 @@ export default function ProfilePage() {
   return (
     <div>
       <PageHeader
-        title="Explorer Profile"
-        subtitle="Avatar, title, rank, stats, badges, and achievements."
+        title={getText("hero", "title", "Explorer Profile")}
+        subtitle={getText("hero", "subtitle", "Avatar, title, rank, stats, badges, and achievements.")}
         badge="Profile System"
       />
 

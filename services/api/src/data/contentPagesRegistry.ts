@@ -1,11 +1,6 @@
 import type { ContentAppKey } from "@tasks-cash/types";
 
-export const CMS_APPS: { key: ContentAppKey; label: string; icon: string }[] = [
-  { key: "main", label: "Main App", icon: "🌐" },
-  { key: "challenge", label: "Challenge App", icon: "⚔️" },
-  { key: "admin", label: "Admin App", icon: "🛡️" },
-];
-
+/** Page registry mirrored in admin CMS — used for audit unwired-page detection */
 export const CMS_PAGES: Record<ContentAppKey, { key: string; label: string }[]> = {
   main: [
     { key: "home", label: "Home" },
@@ -69,45 +64,34 @@ export const CMS_PAGES: Record<ContentAppKey, { key: string; label: string }[]> 
   ],
 };
 
-export const CMS_SECTION_ORDER = [
-  "hero",
-  "stats",
-  "cards",
-  "forms",
-  "table",
-  "buttons",
-  "messages",
-  "empty_states",
-  "errors",
-  "nav",
-  "main",
-] as const;
-
-export const CMS_SECTION_LABELS: Record<string, string> = {
-  hero: "Hero",
-  stats: "Stats",
-  cards: "Cards",
-  forms: "Forms",
-  table: "Table",
-  buttons: "Buttons",
-  messages: "Messages",
-  empty_states: "Empty States",
-  errors: "Errors",
-  nav: "Navigation",
-  main: "General",
+/** Pages with useContent() wired in frontend — update when connecting pages */
+export const CMS_WIRED_PAGES: Record<ContentAppKey, string[]> = {
+  main: [
+    "home",
+    "dashboard",
+    "login",
+    "register",
+    "referrals",
+    "mystery-missions",
+    "wallet",
+    "notifications",
+    "profile",
+    "missions",
+    "dashboard-missions",
+  ],
+  challenge: [
+    "home",
+    "video-hunter",
+    "referral-arena",
+    "identity-challenge",
+    "special-missions",
+    "raid-arena",
+    "duel-arena",
+    "mystery-vault",
+    "leaderboards",
+    "rewards",
+    "explorer-dna",
+    "nav",
+  ],
+  admin: ["dashboard", "content"],
 };
-
-export const CMS_CONTENT_TYPES = [
-  "title",
-  "subtitle",
-  "description",
-  "button",
-  "label",
-  "placeholder",
-  "empty_state",
-  "error_message",
-  "success_message",
-  "badge",
-  "nav",
-  "notice",
-] as const;
