@@ -12,7 +12,11 @@ overrides:
 
 importers:
 
-  .: {}
+  .:
+    dependencies:
+      jose:
+        specifier: ^6.2.3
+        version: 6.2.3
 
   apps/admin:
     dependencies:
@@ -28,6 +32,9 @@ importers:
       framer-motion:
         specifier: ^11.15.0
         version: 11.18.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      jose:
+        specifier: ^6.2.3
+        version: 6.2.3
       next:
         specifier: ^15.1.0
         version: 15.5.19(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -74,6 +81,12 @@ importers:
       framer-motion:
         specifier: ^11.15.0
         version: 11.18.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      jose:
+        specifier: ^6.2.3
+        version: 6.2.3
+      mongoose:
+        specifier: ^8.9.5
+        version: 8.24.0
       next:
         specifier: ^15.1.0
         version: 15.5.19(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -1367,6 +1380,9 @@ packages:
   jiti@1.21.7:
     resolution: {integrity: sha512-/imKNG4EbWNrVjoNC/1H5/9GFy+tqjGBHCaSsN+P2RnPqjsLmv6UD3Ej+Kj8nBWaRAwyk7kK5ZUc+OEatnTR3A==}
     hasBin: true
+
+  jose@6.2.3:
+    resolution: {integrity: sha512-YYVDInQKFJfR/xa3ojUTl8c2KoTwiL1R5Wg9YCydwH0x0B9grbzlg5HC7mMjCtUJjbQ/YnGEZIhI5tCgfTb4Hw==}
 
   js-tokens@4.0.0:
     resolution: {integrity: sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==}
@@ -2862,6 +2878,8 @@ snapshots:
   is-number@7.0.0: {}
 
   jiti@1.21.7: {}
+
+  jose@6.2.3: {}
 
   js-tokens@4.0.0: {}
 

@@ -39,12 +39,15 @@ import vaultRoutes from "./routes/vault";
 import contentRoutes from "./routes/content";
 import adminContentRoutes from "./routes/adminContent";
 
-// Load .env from monorepo root
-dotenv.config({ path: path.resolve(__dirname, "../../../.env") });
-dotenv.config();
+// Load .env in local dev only — Docker injects env vars directly; never override existing vars
+const rootEnv = path.resolve(__dirname, "../../../.env");
+if (process.env.NODE_ENV !== "production") {
+  dotenv.config({ path: rootEnv, override: false });
+  dotenv.config({ override: false });
+}
 
 const app = express();
-const PORT = process.env.API_PORT ?? 4000;
+const PORT = Number(process.env.PORT ?? process.env.API_PORT ?? 4000);
 
 app.use(helmet());
 app.use(cors({
@@ -109,8 +112,8 @@ async function bootstrap() {
     console.warn("[Redis] unavailable — continuing without cache");
   }
 
-  app.listen(PORT, () => {
-    console.log(`[API] Tasks.cash API running on http://localhost:${PORT}`);
+  app.listen(PORT, "0.0.0.0", () => {
+    console.log(`[API] Tasks.cash API running on http://0.0.0.0:${PORT}`);
   });
 }
 

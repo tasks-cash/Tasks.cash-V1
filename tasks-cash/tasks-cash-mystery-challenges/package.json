@@ -12,6 +12,7 @@
   "dependencies": {
     "clsx": "^2.1.1",
     "framer-motion": "^11.18.2",
+    "jose": "^6.2.3",
     "mongoose": "^8.9.5",
     "next": "^15.5.19",
     "qrcode.react": "^4.2.0",

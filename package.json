@@ -30,5 +30,8 @@
     "docker:down": "docker compose down",
     "docker:build": "docker compose build",
     "docker:logs": "docker compose logs -f"
+  },
+  "dependencies": {
+    "jose": "^6.2.3"
   }
 }
