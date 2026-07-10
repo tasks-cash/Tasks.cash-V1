@@ -6,7 +6,9 @@ import dotenv from "dotenv";
 import path from "path";
 
 import { connectDatabase } from "./config/database";
+import { isDbConnected } from "./config/database";
 import { connectRedis } from "./config/redis";
+import { ensureDefaultAdminAccounts } from "./services/defaultAdminAccountsService";
 import { APP_URL, ADMIN_URL, CHALLENGE_APP_URL } from "./config/env";
 import authRoutes from "./routes/auth";
 import userRoutes from "./routes/users";
@@ -102,6 +104,13 @@ app.use((_req, res) => {
 async function bootstrap() {
   try {
     await connectDatabase();
+    if (isDbConnected()) {
+      try {
+        await ensureDefaultAdminAccounts();
+      } catch (err) {
+        console.warn("[AdminBootstrap] Failed to ensure default admin accounts:", err);
+      }
+    }
   } catch (err) {
     console.warn("[DB] MongoDB unavailable — API will return 503 for database routes");
   }

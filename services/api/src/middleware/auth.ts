@@ -1,16 +1,23 @@
 import { Request, Response, NextFunction } from "express";
 import jwt, { type SignOptions } from "jsonwebtoken";
 import { User, IUserDocument } from "../models/User";
+import { Admin, IAdminDocument } from "../models/Admin";
 import { isDbConnected } from "../config/database";
+import { isAdminPortalRole } from "../lib/passwordHash";
+
+export type AccountType = "user" | "admin";
 
 export interface AuthRequest extends Request {
   user?: IUserDocument;
+  admin?: IAdminDocument;
+  accountType?: AccountType;
 }
 
 interface JwtPayload {
   userId: string;
   email?: string;
   role: string;
+  accountType?: AccountType;
 }
 
 export type AppRole =
@@ -56,7 +63,7 @@ function extractBearerToken(req: AuthRequest): string | null {
   return match ? decodeURIComponent(match[1]) : null;
 }
 
-/** Verify JWT and attach user to request */
+/** Verify JWT and attach user or admin account to request */
 export async function authMiddleware(
   req: AuthRequest,
   res: Response,
@@ -72,9 +79,26 @@ export async function authMiddleware(
 
   try {
     const payload = jwt.verify(token, secret) as JwtPayload;
+    const accountType: AccountType = payload.accountType === "admin" ? "admin" : "user";
 
     if (!isDbConnected()) {
       res.status(503).json({ success: false, error: "Database unavailable" });
+      return;
+    }
+
+    if (accountType === "admin") {
+      const admin = await Admin.findById(payload.userId).select("-passwordHash");
+      if (!admin) {
+        res.status(401).json({ success: false, error: "Admin not found" });
+        return;
+      }
+      if (admin.status !== "active") {
+        res.status(403).json({ success: false, error: "Account is not active" });
+        return;
+      }
+      req.admin = admin;
+      req.accountType = "admin";
+      next();
       return;
     }
 
@@ -84,33 +108,35 @@ export async function authMiddleware(
       return;
     }
     req.user = user;
+    req.accountType = "user";
     next();
   } catch {
     res.status(401).json({ success: false, error: "Invalid token" });
   }
 }
 
-/** Require admin-level role */
+/** Require admin account token with portal role */
 export function adminMiddleware(
   req: AuthRequest,
   res: Response,
   next: NextFunction
 ): void {
-  if (!req.user || !hasMinRole(req.user.role, "admin")) {
+  if (req.accountType !== "admin" || !req.admin || !isAdminPortalRole(req.admin.role)) {
     res.status(403).json({ success: false, error: "Admin access required" });
     return;
   }
   next();
 }
 
-/** Require minimum role rank */
+/** Require minimum role rank (user or admin token) */
 export function requireRole(minRole: AppRole) {
   return (req: AuthRequest, res: Response, next: NextFunction): void => {
-    if (!req.user) {
+    const role = req.accountType === "admin" ? req.admin?.role : req.user?.role;
+    if (!role) {
       res.status(401).json({ success: false, error: "Unauthorized" });
       return;
     }
-    if (!hasMinRole(req.user.role, minRole)) {
+    if (!hasMinRole(role, minRole)) {
       res.status(403).json({ success: false, error: "Insufficient permissions" });
       return;
     }
@@ -121,10 +147,15 @@ export function requireRole(minRole: AppRole) {
 export const authenticate = authMiddleware;
 export const requireAdmin = adminMiddleware;
 
-export function signToken(userId: string, role: string, email?: string): string {
+export function signToken(
+  accountId: string,
+  role: string,
+  email: string | undefined,
+  accountType: AccountType
+): string {
   const secret = process.env.JWT_SECRET ?? "dev-secret";
   const options: SignOptions = {
     expiresIn: (process.env.JWT_EXPIRES_IN ?? "7d") as SignOptions["expiresIn"],
   };
-  return jwt.sign({ userId, email: email ?? "", role }, secret, options);
+  return jwt.sign({ userId: accountId, email: email ?? "", role, accountType }, secret, options);
 }

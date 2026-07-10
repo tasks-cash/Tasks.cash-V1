@@ -1,14 +1,15 @@
 import { Router, Response } from "express";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
-import { isDbConnected } from "../config/database";
 import { User, IUserDocument } from "../models/User";
+import { Admin, IAdminDocument } from "../models/Admin";
 import { Transaction } from "../models/Transaction";
 import { authMiddleware, signToken, AuthRequest } from "../middleware/auth";
 import { generateReferralCode, defaultCurrencies, getSafeRPGStats } from "@tasks-cash/utils";
 import { getOrCreateUserSettings } from "../services/notificationService";
 import { createReferralOnRegister } from "../services/referralService";
 import { requireDbConnection } from "../lib/requireDb";
+import { isAdminPortalRole, resolveStoredPasswordHash } from "../lib/passwordHash";
 
 const router = Router();
 
@@ -24,7 +25,11 @@ const loginSchema = z.object({
   password: z.string(),
 });
 
-/** POST /api/auth/register */
+function isAdminLoginDebug(req: { headers: Record<string, unknown> }): boolean {
+  return req.headers["x-tc-admin-login-debug"] === "1";
+}
+
+/** POST /api/auth/register — normal users only */
 router.post("/register", async (req, res: Response) => {
   try {
     const data = registerSchema.parse(req.body);
@@ -32,7 +37,7 @@ router.post("/register", async (req, res: Response) => {
     if (!requireDbConnection(res)) return;
 
     const existing = await User.findOne({
-      $or: [{ email: data.email }, { username: data.username }],
+      $or: [{ email: data.email.toLowerCase() }, { username: data.username }],
     });
     if (existing) {
       res.status(409).json({ success: false, error: "User already exists" });
@@ -58,7 +63,7 @@ router.post("/register", async (req, res: Response) => {
 
     const user = await User.create({
       username: data.username,
-      email: data.email,
+      email: data.email.toLowerCase(),
       passwordHash,
       referralCode: generatedReferralCode,
       referredBy: referrer?._id,
@@ -83,7 +88,7 @@ router.post("/register", async (req, res: Response) => {
     }
 
     await getOrCreateUserSettings(user._id.toString());
-    const token = signToken(user._id.toString(), user.role, user.email);
+    const token = signToken(user._id.toString(), user.role, user.email, "user");
 
     res.status(201).json({
       success: true,
@@ -105,26 +110,37 @@ router.post("/register", async (req, res: Response) => {
   }
 });
 
-/** POST /api/auth/login */
+/** POST /api/auth/login — normal users only (User collection) */
 router.post("/login", async (req, res: Response) => {
   try {
     const data = loginSchema.parse(req.body);
 
     if (!requireDbConnection(res)) return;
 
-    const user = await User.findOne({ email: data.email });
+    const email = data.email.toLowerCase().trim();
+    const user = await User.findOne({ email });
     if (!user) {
       res.status(401).json({ success: false, error: "Invalid credentials" });
       return;
     }
 
-    const valid = await bcrypt.compare(data.password, user.passwordHash);
-    if (!valid) {
+    const storedHash = resolveStoredPasswordHash(user);
+    if (!storedHash || !(await bcrypt.compare(data.password, storedHash))) {
       res.status(401).json({ success: false, error: "Invalid credentials" });
       return;
     }
 
-    const token = signToken(user._id.toString(), user.role, user.email);
+    if (user.status && user.status !== "active") {
+      res.status(403).json({ success: false, error: "Account is not active" });
+      return;
+    }
+
+    if (isAdminPortalRole(user.role)) {
+      res.status(403).json({ success: false, error: "Please use the admin portal to sign in" });
+      return;
+    }
+
+    const token = signToken(user._id.toString(), user.role, user.email, "user");
     res.json({
       success: true,
       data: { accessToken: token, user: sanitizeUser(user) },
@@ -138,9 +154,88 @@ router.post("/login", async (req, res: Response) => {
   }
 });
 
-/** GET /api/auth/me */
+/** POST /api/auth/admin/login — admin portal only (Admin collection) */
+router.post("/admin/login", async (req, res: Response) => {
+  try {
+    const data = loginSchema.parse(req.body);
+
+    if (!requireDbConnection(res)) return;
+
+    const email = data.email.toLowerCase().trim();
+    const admin = await Admin.findOne({ email });
+    const storedHash = admin ? resolveStoredPasswordHash(admin) : null;
+    const userFound = Boolean(admin);
+    const passwordFieldExists = Boolean(storedHash);
+    let passwordValid = false;
+
+    if (admin && storedHash) {
+      passwordValid = await bcrypt.compare(data.password, storedHash);
+    }
+
+    const roleAllowed = Boolean(admin && passwordValid && isAdminPortalRole(admin.role));
+    const debugRequested = isAdminLoginDebug(req);
+
+    if (debugRequested) {
+      console.log("[AdminLogin:debug]", email, { userFound, passwordFieldExists, passwordValid, roleAllowed });
+    }
+
+    if (!admin || !passwordFieldExists || !passwordValid) {
+      const body: Record<string, unknown> = { success: false, error: "Invalid credentials" };
+      if (debugRequested) {
+        body.debug = { userFound, passwordFieldExists, passwordValid, roleAllowed };
+      }
+      res.status(401).json(body);
+      return;
+    }
+
+    if (!roleAllowed) {
+      const body: Record<string, unknown> = { success: false, error: "Admin access denied" };
+      if (debugRequested) {
+        body.debug = { userFound, passwordFieldExists, passwordValid, roleAllowed };
+      }
+      res.status(403).json(body);
+      return;
+    }
+
+    if (admin.status !== "active") {
+      res.status(403).json({ success: false, error: "Account is not active" });
+      return;
+    }
+
+    const token = signToken(admin._id.toString(), admin.role, admin.email, "admin");
+    const response: Record<string, unknown> = {
+      success: true,
+      data: { accessToken: token, admin: sanitizeAdmin(admin) },
+    };
+    if (debugRequested) {
+      response.debug = { userFound, passwordFieldExists, passwordValid, roleAllowed };
+    }
+    res.json(response);
+  } catch (err) {
+    if (err instanceof z.ZodError) {
+      res.status(400).json({ success: false, error: err.errors[0].message });
+      return;
+    }
+    res.status(500).json({ success: false, error: "Login failed" });
+  }
+});
+
+/** GET /api/auth/me — normal user session */
 router.get("/me", authMiddleware, async (req: AuthRequest, res: Response) => {
-  res.json({ success: true, data: sanitizeUser(req.user!) });
+  if (req.accountType !== "user" || !req.user) {
+    res.status(403).json({ success: false, error: "User session required" });
+    return;
+  }
+  res.json({ success: true, data: sanitizeUser(req.user) });
+});
+
+/** GET /api/auth/admin/me — admin session */
+router.get("/admin/me", authMiddleware, async (req: AuthRequest, res: Response) => {
+  if (req.accountType !== "admin" || !req.admin) {
+    res.status(403).json({ success: false, error: "Admin session required" });
+    return;
+  }
+  res.json({ success: true, data: sanitizeAdmin(req.admin) });
 });
 
 /** POST /api/auth/logout — stateless JWT logout acknowledgement */
@@ -154,6 +249,7 @@ function sanitizeUser(user: IUserDocument) {
     username: user.username,
     email: user.email,
     role: user.role,
+    accountType: "user" as const,
     coins: user.coins,
     xp: user.xp,
     level: user.level,
@@ -170,6 +266,18 @@ function sanitizeUser(user: IUserDocument) {
     explorerRank: user.explorerRank,
     streakDays: user.streakDays ?? 0,
     createdAt: user.createdAt,
+  };
+}
+
+function sanitizeAdmin(admin: IAdminDocument) {
+  return {
+    _id: admin._id,
+    username: admin.username,
+    email: admin.email,
+    role: admin.role,
+    accountType: "admin" as const,
+    status: admin.status,
+    createdAt: admin.createdAt,
   };
 }
 

@@ -1,4 +1,5 @@
 export { User } from "./User";
+export { Admin } from "./Admin";
 export { Mission } from "./Mission";
 export { Reward } from "./Reward";
 export { Transaction } from "./Transaction";

@@ -38,6 +38,12 @@ export interface IUserDocument extends Document {
   email: string;
   passwordHash: string;
   role: UserRole;
+  status: "active" | "suspended" | "inactive";
+  adminRole?: string;
+  permissions?: string[];
+  isSuperAdmin?: boolean;
+  isOwner?: boolean;
+  isVerified?: boolean;
   coins: number;
   xp: number;
   level: number;
@@ -68,7 +74,13 @@ const userSchema = new Schema<IUserDocument>(
     username: { type: String, required: true, unique: true, trim: true },
     email: { type: String, required: true, unique: true, lowercase: true },
     passwordHash: { type: String, required: true },
-    role: { type: String, enum: ["user", "admin", "moderator"], default: "user" },
+    role: { type: String, enum: ["user", "admin", "moderator", "super_admin"], default: "user" },
+    status: { type: String, enum: ["active", "suspended", "inactive"], default: "active" },
+    adminRole: { type: String },
+    permissions: [{ type: String }],
+    isSuperAdmin: { type: Boolean, default: false },
+    isOwner: { type: Boolean, default: false },
+    isVerified: { type: Boolean, default: false },
     coins: { type: Number, default: 100 },
     xp: { type: Number, default: 0 },
     level: { type: Number, default: 1 },

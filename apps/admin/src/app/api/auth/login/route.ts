@@ -1,33 +1,20 @@
 import { NextResponse } from "next/server";
 import { SESSION_COOKIE } from "@/lib/auth/config";
+import { getAdminSessionCookieOptions } from "@/lib/auth/session";
 import { API_URL } from "@/config/env";
-
-const SESSION_MAX_AGE = 60 * 60 * 24 * 7;
-
-function sessionCookieOptions() {
-  const isProd = process.env.NODE_ENV === "production";
-  const mainUrl = process.env.NEXT_PUBLIC_MAIN_APP_URL ?? "";
-  return {
-    httpOnly: true,
-    secure: isProd && mainUrl.startsWith("https://"),
-    sameSite: "lax" as const,
-    path: "/",
-    maxAge: SESSION_MAX_AGE,
-  };
-}
 
 function normalizeJwt(raw: string): string {
   return raw.replace(/^Bearer\s+/i, "").trim();
 }
 
-/** POST /api/auth/login — authenticate and set shared session cookie */
+/** POST /api/auth/login — admin portal login via Admin collection */
 export async function POST(request: Request) {
   const body = await request.text();
 
   try {
-    const res = await fetch(`${API_URL}/api/auth/login`, {
+    const res = await fetch(`${API_URL}/api/auth/admin/login`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", "X-Tc-Admin-Login-Debug": "1" },
       body,
     });
     const data = await res.json().catch(() => ({ success: false, error: "Invalid API response" }));
@@ -35,8 +22,7 @@ export async function POST(request: Request) {
 
     if (data.success && data.data?.accessToken) {
       const token = normalizeJwt(String(data.data.accessToken));
-      console.log("[login] cookieName", SESSION_COOKIE, "tokenStartsWithEyJ", token.startsWith("eyJ"));
-      response.cookies.set(SESSION_COOKIE, token, sessionCookieOptions());
+      response.cookies.set(SESSION_COOKIE, token, getAdminSessionCookieOptions());
     }
 
     return response;

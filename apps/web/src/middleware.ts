@@ -11,12 +11,18 @@ import { verifyAccessToken } from "@/lib/auth/jwt";
 import { LOCALE_COOKIE, defaultLocale } from "@/i18n/config";
 import { resolvePreferredLocale, stripLocalePrefix, withLocalePrefix } from "@/i18n/locale-path";
 
+function normalizeJwt(raw: string): string {
+  return raw.replace(/^Bearer\s+/i, "").trim();
+}
+
 function readToken(request: NextRequest): string | null {
-  return (
-    request.cookies.get(SESSION_COOKIE)?.value ??
-    request.headers.get("Authorization")?.replace(/^Bearer\s+/i, "") ??
-    null
-  );
+  const fromCookie = request.cookies.get(SESSION_COOKIE)?.value;
+  if (fromCookie) return normalizeJwt(fromCookie);
+
+  const fromAuth = request.headers.get("Authorization");
+  if (fromAuth) return normalizeJwt(fromAuth);
+
+  return null;
 }
 
 function shouldSkipLocale(pathname: string): boolean {
@@ -29,6 +35,23 @@ function shouldSkipLocale(pathname: string): boolean {
     isPublicLegalPage(bare) ||
     /\.(?:png|jpg|jpeg|gif|webp|svg|ico|mp3|webm|wav|ogg|mp4)$/.test(pathname)
   );
+}
+
+function logAuthCheck(
+  pathname: string,
+  request: NextRequest,
+  token: string | null,
+  payload: Awaited<ReturnType<typeof verifyAccessToken>>
+) {
+  const allCookieNames = request.cookies.getAll().map((c) => c.name);
+  console.log("[middleware] auth", {
+    path: pathname,
+    cookieName: SESSION_COOKIE,
+    allCookieNames,
+    hasSessionCookie: request.cookies.has(SESSION_COOKIE),
+    tokenStartsWithEyJ: token?.startsWith("eyJ") ?? false,
+    verifyResult: payload ? "ok" : "null",
+  });
 }
 
 export async function middleware(request: NextRequest) {
@@ -57,6 +80,10 @@ export async function middleware(request: NextRequest) {
     const token = readToken(request);
     const payload = token ? await verifyAccessToken(token) : null;
     const authenticated = Boolean(payload);
+
+    if (isProtectedPath(barePath) || isAuthPage(barePath)) {
+      logAuthCheck(pathname, request, token, payload);
+    }
 
     if (isAuthPage(barePath)) {
       if (authenticated && token) {

@@ -1,6 +1,6 @@
 /** Shared TypeScript types for Tasks.cash */
 
-export type UserRole = "user" | "admin" | "moderator";
+export type UserRole = "user" | "admin" | "moderator" | "super_admin";
 
 export type MissionDifficulty = "easy" | "medium" | "hard" | "epic" | "legendary";
 export type MissionStatus = "active" | "completed" | "expired" | "locked";

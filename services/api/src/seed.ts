@@ -7,6 +7,7 @@ import { Mission } from "./models/Mission";
 import { MysteryMission } from "./models/MysteryMission";
 import { Reward } from "./models/Reward";
 import { generateReferralCode } from "@tasks-cash/utils";
+import { ensureDefaultAdminAccounts } from "./services/defaultAdminAccountsService";
 
 dotenv.config({ path: path.resolve(__dirname, "../../../.env") });
 
@@ -159,23 +160,7 @@ async function seed() {
   await connectDatabase();
   console.log("[Seed] Starting database seed...");
 
-  // Admin user
-  const adminExists = await User.findOne({ email: "admin@tasks.cash" });
-  if (!adminExists) {
-    const hash = await bcrypt.hash("admin123", 12);
-    await User.create({
-      username: "PortalMaster",
-      email: "admin@tasks.cash",
-      passwordHash: hash,
-      role: "admin",
-      coins: 9999,
-      xp: 50000,
-      level: 50,
-      referralCode: generateReferralCode("PortalMaster"),
-      badges: ["Portal Master"],
-    });
-    console.log("[Seed] Admin user created (admin@tasks.cash / admin123)");
-  }
+  await ensureDefaultAdminAccounts();
 
   // Demo user
   const demoExists = await User.findOne({ email: "demo@tasks.cash" });

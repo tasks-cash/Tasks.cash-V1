@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { SESSION_COOKIE_NAME } from "@/lib/auth/cookie";
-import { verifySessionToken } from "@/lib/auth/jwt";
+import { decodeSessionToken, verifySessionToken } from "@/lib/auth/jwt";
 import { API_URL } from "@/config/env";
 
 /** GET /api/auth/session — verify cookie and return current user */
@@ -13,8 +13,11 @@ export async function GET() {
     return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
   }
 
+  const decoded = await decodeSessionToken(token);
+  const mePath = decoded?.accountType === "admin" ? "/api/auth/admin/me" : "/api/auth/me";
+
   try {
-    const res = await fetch(`${API_URL}/api/auth/me`, {
+    const res = await fetch(`${API_URL}${mePath}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     const data = await res.json().catch(() => ({ success: false, error: "Invalid API response" }));

@@ -3,6 +3,7 @@ import { jwtVerify, type JWTPayload } from "jose";
 export interface TokenPayload extends JWTPayload {
   userId: string;
   role: string;
+  accountType?: "user" | "admin";
 }
 
 function getSecret(): Uint8Array {

@@ -44,11 +44,15 @@ services:
     env_file:
       - .env
     environment:
-      NODE_ENV: production
+      NODE_ENV: development
+      APP_ENV: development
       PORT: 4000
       API_URL: http://api:4000
       MONGODB_URI: mongodb://mongodb:27017/taskscash
       REDIS_URL: redis://redis:6379
+      COOKIE_DOMAIN: ""
+      COOKIE_SECURE: "false"
+      AUTH_COOKIE_DOMAIN: ""
     depends_on:
       mongodb:
         condition: service_healthy
@@ -74,11 +78,15 @@ services:
     env_file:
       - .env
     environment:
-      NODE_ENV: production
+      NODE_ENV: development
+      APP_ENV: development
       PORT: 3000
       API_URL: http://api:4000
       MONGODB_URI: mongodb://mongodb:27017/taskscash
       REDIS_URL: redis://redis:6379
+      COOKIE_DOMAIN: ""
+      COOKIE_SECURE: "false"
+      AUTH_COOKIE_DOMAIN: ""
     depends_on:
       api:
         condition: service_started
@@ -102,11 +110,15 @@ services:
     env_file:
       - .env
     environment:
-      NODE_ENV: production
+      NODE_ENV: development
+      APP_ENV: development
       PORT: 3001
       API_URL: http://api:4000
       MONGODB_URI: mongodb://mongodb:27017/taskscash
       REDIS_URL: redis://redis:6379
+      COOKIE_DOMAIN: ""
+      COOKIE_SECURE: "false"
+      AUTH_COOKIE_DOMAIN: ""
     depends_on:
       api:
         condition: service_started
@@ -130,9 +142,13 @@ services:
     env_file:
       - .env
     environment:
-      NODE_ENV: production
+      NODE_ENV: development
+      APP_ENV: development
       PORT: 3002
       API_URL: http://api:4000
+      COOKIE_DOMAIN: ""
+      COOKIE_SECURE: "false"
+      AUTH_COOKIE_DOMAIN: ""
     depends_on:
       api:
         condition: service_started

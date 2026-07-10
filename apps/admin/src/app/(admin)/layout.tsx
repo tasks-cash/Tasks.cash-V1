@@ -46,7 +46,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <AdminSidebar
         items={ADMIN_NAV}
         pathname={pathname}
-        onLogout={() => { localStorage.removeItem("tc_token"); router.push("/"); }}
+        onLogout={() => {
+          localStorage.removeItem("tc_admin_token");
+          void fetch("/api/auth/logout", { method: "POST" });
+          router.push("/");
+        }}
       />
       <div className="flex-1 min-w-0 relative z-10">
         <main className="p-6">{children}</main>
