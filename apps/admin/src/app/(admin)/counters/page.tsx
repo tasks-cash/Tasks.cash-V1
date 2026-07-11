@@ -85,7 +85,7 @@ export default function AdminCountersPage() {
 
   if (!data) {
     return (
-      <AdminPageShell title="Live Counters" subtitle="Loading counter settings…">
+      <AdminPageShell cmsPageKey="counters" title="Live Counters" subtitle="Loading counter settings…">
         <p className="text-purple-300/60">Loading…</p>
       </AdminPageShell>
     );
@@ -93,6 +93,7 @@ export default function AdminCountersPage() {
 
   return (
     <AdminPageShell
+      cmsPageKey="counters"
       title="Live Counters"
       subtitle="Control all public platform statistics — launch, stop, and edit increment speeds."
       stats={[

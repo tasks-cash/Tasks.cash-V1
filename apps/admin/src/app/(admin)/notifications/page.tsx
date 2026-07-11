@@ -33,6 +33,7 @@ export default function AdminNotificationsPage() {
 
   return (
     <AdminPageShell
+      cmsPageKey="notifications"
       title="Notifications"
       subtitle="Send platform-wide alerts and announcements"
       action={<PortalButton variant="gold" size="sm">+ Send Notification</PortalButton>}

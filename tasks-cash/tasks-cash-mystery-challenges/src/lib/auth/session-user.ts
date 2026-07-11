@@ -10,6 +10,7 @@ export interface SessionUser {
   userId: string;
   email?: string;
   role?: string;
+  accountType?: "user" | "admin";
 }
 
 export async function getTokenFromRequest(request: Request): Promise<string | null> {
@@ -28,10 +29,15 @@ export async function getSessionUser(request: Request): Promise<SessionUser | nu
     const { payload } = await jwtVerify(token, getJwtSecret());
     const userId = payload.userId;
     if (typeof userId !== "string" || !userId) return null;
+    const accountType =
+      payload.accountType === "admin" || payload.accountType === "user"
+        ? payload.accountType
+        : "user";
     return {
       userId,
       email: typeof payload.email === "string" ? payload.email : undefined,
       role: typeof payload.role === "string" ? payload.role : undefined,
+      accountType,
     };
   } catch {
     return null;

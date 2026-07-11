@@ -1,14 +1,15 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { PortalButton, Input, Label } from "@tasks-cash/ui";
 import { AuthLayout } from "@/components/layout/AuthLayout";
 import { apiFetch, setToken } from "@/lib/api";
+import { useContent } from "@/hooks/useContent";
 
 export default function VerifyEmailPage() {
   const router = useRouter();
+  const { text } = useContent("main", "verify-email");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -38,12 +39,22 @@ export default function VerifyEmailPage() {
   }
 
   return (
-    <AuthLayout title="Verify Your Email" subtitle="Confirm your identity to enter the portal">
-      <p className="text-purple-200/60 text-sm text-center mb-4">Enter the 6-digit code sent to your email.</p>
+    <AuthLayout
+      title={text("hero", "title", "Verify Your Email")}
+      subtitle={text("hero", "subtitle", "Confirm your identity to enter the portal")}
+    >
+      <p className="text-purple-200/60 text-sm text-center mb-4">
+        {text("messages", "codeHint", "Enter the 6-digit code sent to your email.")}
+      </p>
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div><Label htmlFor="code">Verification Code</Label><Input id="code" name="code" required className="mt-1 auth-input text-center tracking-[0.5em] text-lg" placeholder="000000" maxLength={6} /></div>
+        <div>
+          <Label htmlFor="code">{text("forms", "codeLabel", "Verification Code")}</Label>
+          <Input id="code" name="code" required className="mt-1 auth-input text-center tracking-[0.5em] text-lg" placeholder="000000" maxLength={6} />
+        </div>
         {error && <p className="text-red-400 text-sm">{error}</p>}
-        <PortalButton variant="gold" className="w-full" disabled={loading} pulse data-sound="verify">{loading ? "Verifying..." : "Enter The Portal"}</PortalButton>
+        <PortalButton variant="gold" className="w-full" disabled={loading} pulse data-sound="verify">
+          {loading ? text("buttons", "verifying", "Verifying...") : text("buttons", "enterPortal", "Enter The Portal")}
+        </PortalButton>
       </form>
     </AuthLayout>
   );

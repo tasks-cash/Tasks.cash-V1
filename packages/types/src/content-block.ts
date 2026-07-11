@@ -27,6 +27,7 @@ export interface IContentBlock {
   type: ContentBlockType;
   value: string;
   defaultValue: string;
+  description?: string;
   locale: ContentLocale;
   isActive: boolean;
   createdAt?: string;
@@ -90,4 +91,13 @@ export interface ContentAuditReport {
   dbKeyCount: number;
   lastUpdated: string | null;
   generatedAt: string;
+  /** Extended audit counters */
+  connectedPages?: number;
+  totalPages?: number;
+  missingEn?: number;
+  missingAr?: number;
+  missingFr?: number;
+  translationRequiredCount?: number;
+  duplicateKeys?: string[];
+  translationCompletenessPercent?: number;
 }

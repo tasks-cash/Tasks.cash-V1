@@ -37,8 +37,21 @@ export async function proxyRequest(
       body = await request.text();
     }
 
-    const url = new URL(request.url);
-    const res = await fetch(`${API_URL}${apiPath}${url.search}`, { method, headers, body });
+    // Never double-append search: callers may pass apiPath with or without query.
+    const incoming = new URL(request.url);
+    const target = new URL(apiPath, API_URL.endsWith("/") ? API_URL : `${API_URL}/`);
+    if (!apiPath.includes("?")) {
+      incoming.searchParams.forEach((value, key) => {
+        target.searchParams.set(key, value);
+      });
+    }
+
+    const res = await fetch(target.toString(), {
+      method,
+      headers,
+      body,
+      cache: "no-store",
+    });
     const data = await res.json().catch(() => ({ success: false, error: "Invalid API response" }));
     return NextResponse.json(data, { status: res.status });
   } catch {

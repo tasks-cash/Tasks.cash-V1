@@ -233,6 +233,7 @@ export default function AdminExplorerDnaPage() {
 
   return (
     <AdminPageShell
+      cmsPageKey="explorer-dna"
       title="Explorer DNA"
       subtitle="Manage modules, unlimited questions, rewards, import/export — database-ready intelligence engine"
       stats={[

@@ -9,6 +9,7 @@ export interface IContentBlockDocument extends Document {
   type: ContentBlockType;
   value: string;
   defaultValue: string;
+  description?: string;
   locale: ContentLocale;
   isActive: boolean;
   createdAt: Date;
@@ -37,8 +38,10 @@ const contentBlockSchema = new Schema<IContentBlockDocument>(
     sectionKey: { type: String, required: true, trim: true, default: "main" },
     contentKey: { type: String, required: true, trim: true },
     type: { type: String, enum: CONTENT_TYPES, required: true },
-    value: { type: String, required: true, trim: true },
-    defaultValue: { type: String, required: true, trim: true },
+    // Do not trim value — multiline / intentional whitespace must persist
+    value: { type: String, required: true, default: "" },
+    defaultValue: { type: String, required: true, default: "" },
+    description: { type: String, default: "" },
     locale: { type: String, enum: ["en", "ar", "fr"], required: true, index: true },
     isActive: { type: Boolean, default: true },
   },

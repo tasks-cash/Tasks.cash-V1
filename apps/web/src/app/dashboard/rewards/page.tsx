@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { GlassCard, PortalButton, Badge, StatWidget } from "@tasks-cash/ui";
 import { DashboardPageShell } from "@/components/dashboard/DashboardPageShell";
 import { apiFetch } from "@/lib/api";
+import { useContent } from "@/hooks/useContent";
 
 type RewardItem = {
   _id: string;
@@ -23,6 +24,7 @@ const STATUS_STYLE: Record<string, string> = {
 };
 
 export default function DashboardRewardsPage() {
+  const { text } = useContent("main", "dashboard-rewards");
   const [rewards, setRewards] = useState<RewardItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -68,7 +70,10 @@ export default function DashboardRewardsPage() {
   const claimable = rewards.filter((r) => r.status === "available" || r.status === "pending");
 
   return (
-    <DashboardPageShell title="My Rewards" subtitle="Claim bonuses, streaks, and challenge prizes">
+    <DashboardPageShell
+      title={text("hero", "title", "My Rewards")}
+      subtitle={text("hero", "subtitle", "Claim bonuses, streaks, and challenge prizes")}
+    >
       {loading && <p className="text-xs text-purple-400/50 mb-4">Loading rewards...</p>}
       {error && <p className="text-red-400 text-sm mb-4">{error}</p>}
       {claimMsg && <p className="text-emerald-400 text-sm mb-4">{claimMsg}</p>}

@@ -31,6 +31,7 @@ export default function AdminLevelsPage() {
 
   return (
     <AdminPageShell
+      cmsPageKey="levels"
       title="Levels"
       subtitle="Configure XP thresholds and level rewards"
       action={

@@ -27,6 +27,7 @@ export default function AdminTreasuresPage() {
 
   return (
     <AdminPageShell
+      cmsPageKey="treasures"
       title="Treasures"
       subtitle="Manage collectible artifacts and drop rates"
       action={<PortalButton variant="gold" size="sm">+ Add Treasure</PortalButton>}

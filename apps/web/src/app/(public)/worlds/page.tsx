@@ -6,11 +6,19 @@ import { PageHero } from "@/components/layout/PageHero";
 import { PublicPageWrapper } from "@/components/premium/PublicPageWrapper";
 import { EpicCTA, SectionHeader, StatsBanner, FeatureGrid } from "@/components/pages/PublicSections";
 import { WORLDS } from "@/lib/mock-data";
+import { useContent } from "@/hooks/useContent";
 
 export default function WorldsPage() {
+  const { text } = useContent("main", "worlds");
+
   return (
     <PublicPageWrapper>
-      <PageHero eyebrow="Explore" title="Dimensional Worlds" subtitle="Explore realms, each with unique missions, treasures, and challenges." variant="gold" />
+      <PageHero
+        eyebrow={text("hero", "eyebrow", "Explore")}
+        title={text("hero", "title", "Dimensional Worlds")}
+        subtitle={text("hero", "subtitle", "Explore realms, each with unique missions, treasures, and challenges.")}
+        variant="gold"
+      />
 
       <StatsBanner stats={[
         { label: "Active Worlds", value: 4, icon: "🌌" },

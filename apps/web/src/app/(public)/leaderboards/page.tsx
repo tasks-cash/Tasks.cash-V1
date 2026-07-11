@@ -7,8 +7,10 @@ import { PageHero } from "@/components/layout/PageHero";
 import { PublicPageWrapper } from "@/components/premium/PublicPageWrapper";
 import { EpicCTA, SectionHeader, StatsBanner } from "@/components/pages/PublicSections";
 import type { ILeaderboardEntry } from "@tasks-cash/types";
+import { useContent } from "@/hooks/useContent";
 
 export default function LeaderboardsPage() {
+  const { text } = useContent("main", "leaderboards");
   const [entries, setEntries] = useState<ILeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -37,7 +39,12 @@ export default function LeaderboardsPage() {
 
   return (
     <PublicPageWrapper>
-      <PageHero eyebrow="Rankings" title="Global Leaderboards" subtitle="The elite warriors dominating the portal multiverse." variant="gold" />
+      <PageHero
+        eyebrow={text("hero", "eyebrow", "Rankings")}
+        title={text("hero", "title", "Global Leaderboards")}
+        subtitle={text("hero", "subtitle", "The elite warriors dominating the portal multiverse.")}
+        variant="gold"
+      />
 
       <StatsBanner stats={[
         { label: "Ranked Explorers", value: entries.length, icon: "👥" },

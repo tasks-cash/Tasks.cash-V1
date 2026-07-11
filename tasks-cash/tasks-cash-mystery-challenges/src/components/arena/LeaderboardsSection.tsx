@@ -5,17 +5,19 @@ import { LEADERBOARD_TABS, LEADERBOARD_DATA } from "@/data/mock-data";
 import { SectionShell, GlowCard } from "@/components/ui/GlowCard";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
+import { useContent } from "@/hooks/useContent";
 
 export function LeaderboardsSection() {
+  const { text } = useContent("challenge", "leaderboards");
   const [tab, setTab] = useState<(typeof LEADERBOARD_TABS)[number]>("Today");
   const entries = LEADERBOARD_DATA[tab];
 
   return (
     <SectionShell
       id="leaderboards"
-      eyebrow="Rankings"
-      title="Leaderboards"
-      subtitle="Climb the arena. Today, this week, this month, or the entire season."
+      eyebrow={text("hero", "eyebrow", "Rankings")}
+      title={text("hero", "title", "Leaderboards")}
+      subtitle={text("hero", "subtitle", "Climb the arena. Today, this week, this month, or the entire season.")}
     >
       <div className="flex flex-wrap gap-2 mb-8">
         {LEADERBOARD_TABS.map((t) => (

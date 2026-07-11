@@ -46,6 +46,7 @@ export default function AdminUsersPage() {
 
   return (
     <AdminPageShell
+      cmsPageKey="users"
       title="Users"
       subtitle="Manage portal explorers and account settings"
       action={

@@ -75,6 +75,7 @@ export default function AdminVideoSubmissionsPage() {
 
   return (
     <AdminPageShell
+      cmsPageKey="video-submissions"
       title="Video Review"
       subtitle="Approve or reject Video Hunter submissions"
       stats={[

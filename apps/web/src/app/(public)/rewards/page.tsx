@@ -6,6 +6,7 @@ import { PageHero } from "@/components/layout/PageHero";
 import { PublicPageWrapper } from "@/components/premium/PublicPageWrapper";
 import { EpicCTA, FeatureGrid, SectionHeader, StatsBanner } from "@/components/pages/PublicSections";
 import { PUBLIC_REWARDS } from "@/lib/page-data";
+import { useContent } from "@/hooks/useContent";
 
 const TIER_COLORS: Record<string, string> = {
   common: "border-purple-500/30",
@@ -16,9 +17,16 @@ const TIER_COLORS: Record<string, string> = {
 };
 
 export default function RewardsPage() {
+  const { text } = useContent("main", "rewards");
+
   return (
     <PublicPageWrapper>
-      <PageHero eyebrow="Earn" title="Portal Rewards" subtitle="Daily bonuses, mission payouts, referrals, and legendary prizes await." variant="gold" />
+      <PageHero
+        eyebrow={text("hero", "eyebrow", "Earn")}
+        title={text("hero", "title", "Portal Rewards")}
+        subtitle={text("hero", "subtitle", "Daily bonuses, mission payouts, referrals, and legendary prizes await.")}
+        variant="gold"
+      />
 
       <StatsBanner stats={[
         { label: "Rewards Distributed", value: 847000, suffix: "+", icon: "🎁" },

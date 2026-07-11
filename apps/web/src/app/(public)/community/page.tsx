@@ -6,11 +6,19 @@ import { PageHero } from "@/components/layout/PageHero";
 import { PublicPageWrapper } from "@/components/premium/PublicPageWrapper";
 import { EpicCTA, SectionHeader, StatsBanner, FeatureGrid } from "@/components/pages/PublicSections";
 import { COMMUNITY_STATS } from "@/lib/page-data";
+import { useContent } from "@/hooks/useContent";
 
 export default function CommunityPage() {
+  const { text } = useContent("main", "community");
+
   return (
     <PublicPageWrapper>
-      <PageHero eyebrow="Connect" title="Portal Community" subtitle="Join guilds, events, and conversations across the multiverse." variant="gold" />
+      <PageHero
+        eyebrow={text("hero", "eyebrow", "Connect")}
+        title={text("hero", "title", "Portal Community")}
+        subtitle={text("hero", "subtitle", "Join guilds, events, and conversations across the multiverse.")}
+        variant="gold"
+      />
 
       <StatsBanner stats={COMMUNITY_STATS.map((s) => ({
         label: s.label,

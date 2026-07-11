@@ -7,14 +7,21 @@ import { PageHero } from "@/components/layout/PageHero";
 import { PublicPageWrapper } from "@/components/premium/PublicPageWrapper";
 import { EpicCTA, SectionHeader, StatsBanner } from "@/components/pages/PublicSections";
 import { MARKETPLACE_CATEGORIES, MARKETPLACE_ITEMS } from "@/lib/page-data";
+import { useContent } from "@/hooks/useContent";
 
 export default function MarketplacePage() {
+  const { text } = useContent("main", "marketplace");
   const [category, setCategory] = useState<string>("all");
   const filtered = category === "all" ? MARKETPLACE_ITEMS : MARKETPLACE_ITEMS.filter((i) => i.type === category);
 
   return (
     <PublicPageWrapper>
-      <PageHero eyebrow="Trade" title="Portal Marketplace" subtitle="Spend portal coins on boosts, cosmetics, utilities, and legendary bundles." variant="gold" />
+      <PageHero
+        eyebrow={text("hero", "eyebrow", "Trade")}
+        title={text("hero", "title", "Portal Marketplace")}
+        subtitle={text("hero", "subtitle", "Spend portal coins on boosts, cosmetics, utilities, and legendary bundles.")}
+        variant="gold"
+      />
 
       <StatsBanner stats={[
         { label: "Items Listed", value: 50, icon: "🛒" },

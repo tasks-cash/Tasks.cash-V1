@@ -3,8 +3,11 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { BrandLogo, PortalButton, GlassCard, ParticleField } from "@tasks-cash/ui";
+import { useContent } from "@/hooks/useContent";
 
 export default function NotFound() {
+  const { text } = useContent("main", "not-found");
+
   return (
     <div className="relative min-h-screen flex items-center justify-center px-4 overflow-hidden bg-black">
       <ParticleField count={50} />
@@ -22,23 +25,27 @@ export default function NotFound() {
           animate={{ opacity: [0.7, 1, 0.7] }}
           transition={{ duration: 3, repeat: Infinity }}
         >
-          404
+          {text("hero", "code", "404")}
         </motion.p>
         <h1 className="text-2xl md:text-3xl mb-4 font-black text-white font-[family-name:var(--font-cinzel)]">
-          Lost in the Void
+          {text("hero", "title", "Lost in the Void")}
         </h1>
         <p className="text-purple-200/60 mb-8 leading-relaxed">
-          This dimension does not exist. The portal you seek has collapsed into the multiverse abyss.
+          {text("hero", "subtitle", "This dimension does not exist. The portal you seek has collapsed into the multiverse abyss.")}
         </p>
         <GlassCard className="p-6 mb-8 inline-block">
-          <p className="text-sm text-purple-400/60">Error Code: VOID-NOT-FOUND</p>
+          <p className="text-sm text-purple-400/60">{text("messages", "errorCode", "Error Code: VOID-NOT-FOUND")}</p>
         </GlassCard>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Link href="/">
-            <PortalButton variant="gold" size="lg" pulse>Return to Portal</PortalButton>
+            <PortalButton variant="gold" size="lg" pulse>
+              {text("buttons", "returnHome", "Return to Portal")}
+            </PortalButton>
           </Link>
           <Link href="/help">
-            <PortalButton variant="secondary" size="lg">Help Center</PortalButton>
+            <PortalButton variant="secondary" size="lg">
+              {text("buttons", "helpCenter", "Help Center")}
+            </PortalButton>
           </Link>
         </div>
       </motion.div>

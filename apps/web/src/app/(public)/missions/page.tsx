@@ -14,9 +14,11 @@ import {
 import { PublicPageWrapper } from "@/components/premium/PublicPageWrapper";
 import { MissionBoardCard } from "@/components/missions/MissionBoardCard";
 import { MISSION_BOARD_ITEMS, MISSION_BOARD_STATS } from "@/lib/missions-board-data";
+import { useContent } from "@/hooks/useContent";
 
 /** Public missions board — clean Mystery Mode layout */
 export default function MissionsPage() {
+  const { text } = useContent("main", "missions");
   const availableCount = MISSION_BOARD_ITEMS.filter((m) => m.status === "available").length;
   const lockedCount = MISSION_BOARD_ITEMS.filter((m) => m.status === "locked").length;
 
@@ -35,28 +37,31 @@ export default function MissionsPage() {
             animate={{ opacity: [0.5, 1, 0.5] }}
             transition={{ duration: 3, repeat: Infinity }}
           >
-            ◈ Mystery Mode · Mission Board ◈
+            {text("hero", "eyebrow", "◈ Mystery Mode · Mission Board ◈")}
           </motion.p>
           <GlowText
             as="h1"
             variant="gold"
             className="text-3xl md:text-5xl lg:text-6xl mb-4 font-[family-name:var(--font-cinzel)]"
           >
-            Missions
+            {text("hero", "title", "Missions")}
           </GlowText>
           <p className="mx-auto max-w-2xl text-purple-200/55 text-base md:text-lg leading-relaxed mb-8">
-            Track active portal operations, sealed missions, and classified rewards.
-            Most entries remain locked until you meet their unlock requirements.
+            {text(
+              "hero",
+              "subtitle",
+              "Track active portal operations, sealed missions, and classified rewards. Most entries remain locked until you meet their unlock requirements."
+            )}
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link href="/register">
               <PortalButton variant="gold" size="md" pulse data-sound="start-mission">
-                Start First Mission
+                {text("buttons", "startFirst", "Start First Mission")}
               </PortalButton>
             </Link>
             <Link href="/mystery-missions">
               <PortalButton variant="secondary" size="md">
-                Explore Mystery Archive
+                {text("buttons", "exploreArchive", "Explore Mystery Archive")}
               </PortalButton>
             </Link>
           </div>

@@ -25,7 +25,8 @@ export function useContent(appKey: ContentAppKey, pageKey: string) {
     async function load() {
       setLoading(true);
       const res = await apiFetch<ContentApiResponse>(
-        `/api/content?appKey=${encodeURIComponent(appKey)}&pageKey=${encodeURIComponent(pageKey)}&locale=${encodeURIComponent(locale)}`
+        `/api/content?appKey=${encodeURIComponent(appKey)}&pageKey=${encodeURIComponent(pageKey)}&locale=${encodeURIComponent(locale)}`,
+        { cache: "no-store" }
       );
       if (!cancelled) {
         setSections(res.success && res.data?.sections ? res.data.sections : {});
@@ -42,14 +43,21 @@ export function useContent(appKey: ContentAppKey, pageKey: string) {
   const getText = useCallback(
     (sectionKey: string, contentKey: string, fallback: string): string => {
       const section = sections[sectionKey];
-      if (section?.[contentKey]) return section[contentKey];
+      if (section && Object.prototype.hasOwnProperty.call(section, contentKey)) {
+        return section[contentKey];
+      }
       for (const sec of Object.values(sections)) {
-        if (sec[contentKey]) return sec[contentKey];
+        if (Object.prototype.hasOwnProperty.call(sec, contentKey)) return sec[contentKey];
       }
       return fallback;
     },
     [sections]
   );
 
-  return useMemo(() => ({ getText, sections, loading, locale }), [getText, sections, loading, locale]);
+  const text = getText;
+
+  return useMemo(
+    () => ({ getText, text, sections, loading, locale }),
+    [getText, sections, loading, locale]
+  );
 }

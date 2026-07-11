@@ -34,6 +34,7 @@ export default function AdminLeaderboardsPage() {
 
   return (
     <AdminPageShell
+      cmsPageKey="leaderboards"
       title="Leaderboards"
       subtitle="Manage seasons and ranking competitions"
       stats={[

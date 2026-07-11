@@ -10,6 +10,7 @@ import { useLocale } from "@/i18n/I18nProvider";
 import { withLocalePrefix } from "@/i18n/locale-path";
 import type { SpecialMissionDetailPayload, SpecialMissionSubmission } from "@/types/special-mission";
 import { cn } from "@/lib/utils";
+import { useContent } from "@/hooks/useContent";
 
 const DIFFICULTY_STYLES: Record<string, string> = {
   Easy: "border-emerald-400/35 text-emerald-300 bg-emerald-950/30",
@@ -104,6 +105,7 @@ function RewardChip({ label, value }: { label: string; value: string }) {
 
 export function SpecialMissionDetailPage({ missionId }: { missionId: string }) {
   const locale = useLocale();
+  const { text } = useContent("challenge", "special-mission-detail");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [payload, setPayload] = useState<SpecialMissionDetailPayload | null>(null);
@@ -181,7 +183,7 @@ export function SpecialMissionDetailPage({ missionId }: { missionId: string }) {
     <div className="special-missions-page special-mission-detail">
       <div className="mb-6">
         <Link href={withLocalePrefix("/special-missions", locale)} className="sm-back-link">
-          ← Back to Special Missions
+          {text("nav", "back", "← Back to Special Missions")}
         </Link>
       </div>
 
@@ -192,7 +194,7 @@ export function SpecialMissionDetailPage({ missionId }: { missionId: string }) {
             animate={{ rotate: 360 }}
             transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
           />
-          <p className="text-purple-300/60">Loading mission from database…</p>
+          <p className="text-purple-300/60">{text("messages", "loading", "Loading mission from database…")}</p>
         </div>
       )}
 
@@ -200,7 +202,7 @@ export function SpecialMissionDetailPage({ missionId }: { missionId: string }) {
         <div className="sm-state-card border-red-400/25">
           <p className="text-red-300 mb-4">{error}</p>
           <ArenaButton variant="gold" onClick={() => void loadMission()}>
-            Retry
+            {text("buttons", "retry", "Retry")}
           </ArenaButton>
         </div>
       )}
@@ -231,31 +233,31 @@ export function SpecialMissionDetailPage({ missionId }: { missionId: string }) {
 
           <div className="sm-detail-meta-row">
             <div className="sm-detail-meta-chip">
-              <span className="label">Deadline</span>
+              <span className="label">{text("meta", "deadline", "Deadline")}</span>
               <span className="value">{formatDate(mission.deadline)}</span>
             </div>
             <div className="sm-detail-meta-chip">
-              <span className="label">Difficulty</span>
+              <span className="label">{text("meta", "difficulty", "Difficulty")}</span>
               <span className="value">{mission.difficulty}</span>
             </div>
             <div className="sm-detail-meta-chip">
-              <span className="label">Status</span>
+              <span className="label">{text("meta", "status", "Status")}</span>
               <span className="value capitalize">{mission.status.replace("_", " ")}</span>
             </div>
             <div className="sm-detail-meta-chip">
-              <span className="label">Your Proofs</span>
+              <span className="label">{text("meta", "yourProofs", "Your Proofs")}</span>
               <span className="value">{payload.submissions.length}</span>
             </div>
           </div>
 
           <div className="sm-detail-grid-top">
             <section className="sm-detail-panel">
-              <h2 className="sm-detail-heading">Mission Info</h2>
+              <h2 className="sm-detail-heading">{text("sections", "missionInfo", "Mission Info")}</h2>
               <p className="text-sm text-purple-100/85 leading-relaxed mb-6">{mission.description}</p>
 
               {mission.rules.length > 0 && (
                 <>
-                  <h2 className="sm-detail-heading">Rules</h2>
+                  <h2 className="sm-detail-heading">{text("sections", "rules", "Rules")}</h2>
                   <ul className="space-y-2">
                     {mission.rules.map((rule) => (
                       <li key={rule} className="flex gap-2 text-sm text-purple-200/70">
@@ -269,7 +271,7 @@ export function SpecialMissionDetailPage({ missionId }: { missionId: string }) {
             </section>
 
             <section className="sm-detail-panel">
-              <h2 className="sm-detail-heading">Reward Panel</h2>
+              <h2 className="sm-detail-heading">{text("sections", "rewardPanel", "Reward Panel")}</h2>
               <div className="grid grid-cols-2 gap-3">
                 <RewardChip label="XP" value={`+${mission.rewardXp}`} />
                 <RewardChip label="Bronze" value={`+${mission.bronzeCoins}`} />
@@ -277,26 +279,32 @@ export function SpecialMissionDetailPage({ missionId }: { missionId: string }) {
                 <RewardChip label="Gold" value={`+${mission.goldCoins}`} />
               </div>
               <p className="text-xs text-purple-400/50 mt-4 leading-relaxed">
-                Rewards are granted after admin review and approval of your submitted proof.
+                {text(
+                  "messages",
+                  "rewardNote",
+                  "Rewards are granted after admin review and approval of your submitted proof."
+                )}
               </p>
             </section>
           </div>
 
           <div className="sm-detail-grid">
             <section className="sm-detail-panel">
-              <h2 className="sm-detail-heading">Required Proof</h2>
+              <h2 className="sm-detail-heading">{text("sections", "requiredProof", "Required Proof")}</h2>
               <p className="text-sm text-purple-100/85 leading-relaxed">{mission.requiredProof}</p>
             </section>
 
             <section className="sm-detail-panel">
-              <h2 className="sm-detail-heading">Submit Proof</h2>
+              <h2 className="sm-detail-heading">{text("sections", "submitProof", "Submit Proof")}</h2>
               {!canSubmit ? (
-                <p className="text-sm text-red-300/80">This mission is no longer accepting proof.</p>
+                <p className="text-sm text-red-300/80">
+                  {text("messages", "closed", "This mission is no longer accepting proof.")}
+                </p>
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div>
                     <label className="sm-field-label" htmlFor="proof-text">
-                      Proof / Description
+                      {text("forms", "proofText", "Proof / Description")}
                     </label>
                     <textarea
                       id="proof-text"
@@ -309,7 +317,7 @@ export function SpecialMissionDetailPage({ missionId }: { missionId: string }) {
                   </div>
                   <div>
                     <label className="sm-field-label" htmlFor="proof-url">
-                      Proof URL
+                      {text("forms", "proofUrl", "Proof URL")}
                     </label>
                     <input
                       id="proof-url"
@@ -322,7 +330,7 @@ export function SpecialMissionDetailPage({ missionId }: { missionId: string }) {
                   </div>
                   <div>
                     <label className="sm-field-label" htmlFor="proof-file">
-                      Proof File (optional)
+                      {text("forms", "proofFile", "Proof File (optional)")}
                     </label>
                     <input
                       id="proof-file"
@@ -334,7 +342,7 @@ export function SpecialMissionDetailPage({ missionId }: { missionId: string }) {
                   </div>
                   <div>
                     <label className="sm-field-label" htmlFor="user-note">
-                      Your Note (optional)
+                      {text("forms", "userNote", "Your Note (optional)")}
                     </label>
                     <textarea
                       id="user-note"
@@ -348,14 +356,16 @@ export function SpecialMissionDetailPage({ missionId }: { missionId: string }) {
                   {submitError && <p className="text-sm text-red-400">{submitError}</p>}
                   {success && <p className="text-sm text-emerald-400">{success}</p>}
                   <ArenaButton type="submit" variant="gold" className="w-full" disabled={submitting}>
-                    {submitting ? "Submitting…" : "Submit Proof"}
+                    {submitting
+                      ? text("buttons", "submitting", "Submitting…")
+                      : text("buttons", "submitProof", "Submit Proof")}
                   </ArenaButton>
                 </form>
               )}
 
               {payload.submissions.length > 0 && (
                 <div className="mt-10 border-t border-purple-500/15 pt-8">
-                  <h2 className="sm-detail-heading">Submission History</h2>
+                  <h2 className="sm-detail-heading">{text("sections", "history", "Submission History")}</h2>
                   <div className="space-y-3 mt-4">
                     {payload.submissions.map((row) => (
                       <SubmissionHistoryItem key={row.id} row={row} />

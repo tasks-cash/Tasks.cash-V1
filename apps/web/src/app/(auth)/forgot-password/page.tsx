@@ -6,9 +6,11 @@ import { useState } from "react";
 import { PortalButton, Input, Label } from "@tasks-cash/ui";
 import { AuthLayout } from "@/components/layout/AuthLayout";
 import { apiFetch, setToken } from "@/lib/api";
+import { useContent } from "@/hooks/useContent";
 
 export default function ForgotPasswordPage() {
   const router = useRouter();
+  const { text } = useContent("main", "forgot-password");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -38,12 +40,24 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <AuthLayout title="Reset Portal Key" subtitle="We'll send a recovery link to your email">
-      <p className="text-center text-sm mb-6"><Link href="/login" className="text-purple-400 hover:underline">Back to login</Link></p>
+    <AuthLayout
+      title={text("hero", "title", "Reset Portal Key")}
+      subtitle={text("hero", "subtitle", "We'll send a recovery link to your email")}
+    >
+      <p className="text-center text-sm mb-6">
+        <Link href="/login" className="text-purple-400 hover:underline">
+          {text("buttons", "backToLogin", "Back to login")}
+        </Link>
+      </p>
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div><Label htmlFor="email">Email</Label><Input id="email" name="email" type="email" required className="mt-1 auth-input" placeholder="warrior@portal.io" /></div>
+        <div>
+          <Label htmlFor="email">{text("forms", "emailLabel", "Email")}</Label>
+          <Input id="email" name="email" type="email" required className="mt-1 auth-input" placeholder="warrior@portal.io" />
+        </div>
         {error && <p className="text-red-400 text-sm">{error}</p>}
-        <PortalButton variant="gold" className="w-full" disabled={loading} data-sound="reset">{loading ? "Sending..." : "Send Recovery Link"}</PortalButton>
+        <PortalButton variant="gold" className="w-full" disabled={loading} data-sound="reset">
+          {loading ? text("buttons", "sending", "Sending...") : text("buttons", "sendRecovery", "Send Recovery Link")}
+        </PortalButton>
       </form>
     </AuthLayout>
   );

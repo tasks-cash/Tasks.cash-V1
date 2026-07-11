@@ -33,6 +33,7 @@ export default function AdminChallengesPage() {
 
   return (
     <AdminPageShell
+      cmsPageKey="challenges"
       title="Challenges"
       subtitle="Manage timed events and competitions"
       action={<PortalButton variant="gold" size="sm">+ Add Challenge</PortalButton>}

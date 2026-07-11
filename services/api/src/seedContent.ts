@@ -5,6 +5,12 @@ import { ContentBlock } from "./models/ContentBlock";
 import { importMissingContent } from "./lib/contentAudit";
 
 dotenv.config({ path: path.resolve(__dirname, "../../../.env") });
+if (process.env.MONGODB_URI?.includes("mongodb://mongodb:")) {
+  process.env.MONGODB_URI = process.env.MONGODB_URI.replace(
+    "mongodb://mongodb:",
+    "mongodb://127.0.0.1:"
+  );
+}
 
 const EXPECTED_UNIQUE_KEYS = ["appKey", "pageKey", "sectionKey", "contentKey", "locale"];
 

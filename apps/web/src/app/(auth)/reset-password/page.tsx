@@ -6,9 +6,11 @@ import { useState } from "react";
 import { PortalButton, Input, Label } from "@tasks-cash/ui";
 import { AuthLayout } from "@/components/layout/AuthLayout";
 import { apiFetch, setToken } from "@/lib/api";
+import { useContent } from "@/hooks/useContent";
 
 export default function ResetPasswordPage() {
   const router = useRouter();
+  const { text } = useContent("main", "reset-password");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -38,13 +40,28 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <AuthLayout title="New Portal Key" subtitle="Choose a strong password for your portal access">
+    <AuthLayout
+      title={text("hero", "title", "New Portal Key")}
+      subtitle={text("hero", "subtitle", "Choose a strong password for your portal access")}
+    >
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div><Label htmlFor="password">New Password</Label><Input id="password" name="password" type="password" required className="mt-1 auth-input" placeholder="••••••••" /></div>
-        <div><Label htmlFor="confirm">Confirm Password</Label><Input id="confirm" name="confirm" type="password" required className="mt-1 auth-input" placeholder="••••••••" /></div>
+        <div>
+          <Label htmlFor="password">{text("forms", "passwordLabel", "New Password")}</Label>
+          <Input id="password" name="password" type="password" required className="mt-1 auth-input" placeholder="••••••••" />
+        </div>
+        <div>
+          <Label htmlFor="confirm">{text("forms", "confirmLabel", "Confirm Password")}</Label>
+          <Input id="confirm" name="confirm" type="password" required className="mt-1 auth-input" placeholder="••••••••" />
+        </div>
         {error && <p className="text-red-400 text-sm">{error}</p>}
-        <PortalButton variant="gold" className="w-full" disabled={loading} pulse data-sound="reset-password">{loading ? "Updating..." : "Reset Password"}</PortalButton>
-        <p className="text-center text-sm"><Link href="/login" className="text-purple-400 hover:underline">Back to login</Link></p>
+        <PortalButton variant="gold" className="w-full" disabled={loading} pulse data-sound="reset-password">
+          {loading ? text("buttons", "updating", "Updating...") : text("buttons", "resetPassword", "Reset Password")}
+        </PortalButton>
+        <p className="text-center text-sm">
+          <Link href="/login" className="text-purple-400 hover:underline">
+            {text("buttons", "backToLogin", "Back to login")}
+          </Link>
+        </p>
       </form>
     </AuthLayout>
   );

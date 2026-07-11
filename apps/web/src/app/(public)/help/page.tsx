@@ -7,8 +7,10 @@ import { PageHero } from "@/components/layout/PageHero";
 import { PublicPageWrapper } from "@/components/premium/PublicPageWrapper";
 import { EpicCTA, SectionHeader } from "@/components/pages/PublicSections";
 import { HELP_CATEGORIES, HELP_ARTICLES } from "@/lib/page-data";
+import { useContent } from "@/hooks/useContent";
 
 export default function HelpCenterPage() {
+  const { text } = useContent("main", "help");
   const [query, setQuery] = useState("");
   const filtered = query
     ? HELP_ARTICLES.filter((a) => a.title.toLowerCase().includes(query.toLowerCase()))
@@ -16,7 +18,12 @@ export default function HelpCenterPage() {
 
   return (
     <PublicPageWrapper>
-      <PageHero eyebrow="Support" title="Help Center" subtitle="Find answers, guides, and portal support resources." variant="gold" />
+      <PageHero
+        eyebrow={text("hero", "eyebrow", "Support")}
+        title={text("hero", "title", "Help Center")}
+        subtitle={text("hero", "subtitle", "Find answers, guides, and portal support resources.")}
+        variant="gold"
+      />
 
       <div className="mx-auto max-w-3xl px-4 -mt-8 mb-12">
         <GlassCard className="p-4">

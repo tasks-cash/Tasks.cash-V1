@@ -30,6 +30,7 @@ function tri(
 }
 
 import { CONTENT_SEED_EXTENDED } from "./contentSeedExtended";
+import { CONTENT_SEED_INVENTORY } from "./contentSeedInventory";
 
 const CONTENT_SEED_BASE: ContentSeedRow[] = [
   // ── Main App: Home ──
@@ -219,9 +220,22 @@ const CONTENT_SEED_BASE: ContentSeedRow[] = [
   ...tri("challenge", "rewards", "hero", "title", "title", "Rewards", "المكافآت", "Récompenses"),
 ];
 
-export const CONTENT_SEED_ROWS: ContentSeedRow[] = [
-  ...CONTENT_SEED_BASE,
-  ...CONTENT_SEED_EXTENDED,
-];
+/** Deduplicate by composite key — later sources win for same key (inventory fills gaps). */
+function mergeSeedRows(...groups: ContentSeedRow[][]): ContentSeedRow[] {
+  const map = new Map<string, ContentSeedRow>();
+  for (const group of groups) {
+    for (const row of group) {
+      const key = `${row.appKey}::${row.pageKey}::${row.sectionKey}::${row.contentKey}::${row.locale}`;
+      if (!map.has(key)) map.set(key, row);
+    }
+  }
+  return [...map.values()];
+}
+
+export const CONTENT_SEED_ROWS: ContentSeedRow[] = mergeSeedRows(
+  CONTENT_SEED_BASE,
+  CONTENT_SEED_EXTENDED,
+  CONTENT_SEED_INVENTORY
+);
 
 export { LOCALES };

@@ -10,8 +10,10 @@ import {
 import { useGame } from "@/components/game/GameProvider";
 import { EXPLORER_RANKS } from "@tasks-cash/utils";
 import type { RPGStatType } from "@tasks-cash/types";
+import { useContent } from "@/hooks/useContent";
 
 export default function LevelPage() {
+  const { text } = useContent("main", "dashboard-level");
   const { profile } = useGame();
 
   const rpgStats =
@@ -32,20 +34,20 @@ export default function LevelPage() {
   return (
     <div>
       <PageHeader
-        title="Level & Progression"
-        subtitle="Global level, explorer rank, and all RPG stat trees."
-        badge="RPG System"
+        title={text("hero", "title", "Level & Progression")}
+        subtitle={text("hero", "subtitle", "Global level, explorer rank, and all RPG stat trees.")}
+        badge={text("hero", "badge", "RPG System")}
       />
 
       <div className="flex flex-col items-center mb-10">
         <LevelBadge level={profile?.globalLevel ?? 12} title={profile?.explorerRank ?? "Void Walker"} size="lg" />
         <p className="text-purple-300/60 text-sm mt-4 text-center max-w-md">
-          Level up to unlock new missions, worlds, achievements, and treasure chests.
+          {text("hero", "description", "Level up to unlock new missions, worlds, achievements, and treasure chests.")}
         </p>
       </div>
 
       <GlassCard glow="gold" className="p-6 mb-8">
-        <h2 className="text-lg font-bold text-amber-300 mb-4">Explorer Rank Ladder</h2>
+        <h2 className="text-lg font-bold text-amber-300 mb-4">{text("rank", "title", "Explorer Rank Ladder")}</h2>
         <div className="space-y-2">
           {EXPLORER_RANKS.map((tier) => (
             <div
@@ -63,7 +65,9 @@ export default function LevelPage() {
         </div>
       </GlassCard>
 
-      <h2 className="text-xl font-black text-white mb-4 font-[family-name:var(--font-cinzel)]">All Stats</h2>
+      <h2 className="text-xl font-black text-white mb-4 font-[family-name:var(--font-cinzel)]">
+        {text("stats", "title", "All Stats")}
+      </h2>
       <div className="grid sm:grid-cols-2 gap-4 mb-8">
         {(Object.keys(rpgStats) as RPGStatType[]).map((stat) => (
           <RPGStatBar key={stat} stat={stat} data={rpgStats[stat]} />
@@ -71,7 +75,7 @@ export default function LevelPage() {
       </div>
 
       <GameButton variant="purple" pulse data-sound="level-up">
-        Train Stats (+50 XP)
+        {text("buttons", "trainStats", "Train Stats (+50 XP)")}
       </GameButton>
     </div>
   );

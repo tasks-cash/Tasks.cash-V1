@@ -33,6 +33,7 @@ export default function AdminSupportPage() {
 
   return (
     <AdminPageShell
+      cmsPageKey="support"
       title="Support Tickets"
       subtitle="Handle user support requests"
       stats={[

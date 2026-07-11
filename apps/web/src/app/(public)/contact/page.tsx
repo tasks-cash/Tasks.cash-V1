@@ -6,35 +6,43 @@ import { PublicPageWrapper } from "@/components/premium/PublicPageWrapper";
 import { EpicCTA, SectionHeader, FeatureGrid } from "@/components/pages/PublicSections";
 import { CONTACT_INFO } from "@/lib/page-data";
 import Link from "next/link";
+import { useContent } from "@/hooks/useContent";
 
 export default function ContactPage() {
+  const { text } = useContent("main", "contact");
+
   return (
     <PublicPageWrapper>
-      <PageHero eyebrow="Support" title="Contact Us" subtitle="Reach the Tasks.cash support council — we respond within 24 hours." variant="gold" />
+      <PageHero
+        eyebrow={text("hero", "eyebrow", "Support")}
+        title={text("hero", "title", "Contact Us")}
+        subtitle={text("hero", "subtitle", "Reach the Tasks.cash support council — we respond within 24 hours.")}
+        variant="gold"
+      />
 
       <div className="mx-auto max-w-6xl px-4 py-16">
         <div className="grid lg:grid-cols-2 gap-12">
           <MotionReveal>
             <GlassCard className="p-8">
-              <h2 className="text-xl font-bold text-white mb-6">Send a Message</h2>
+              <h2 className="text-xl font-bold text-white mb-6">{text("form", "title", "Send a Message")}</h2>
               <form className="space-y-5" onSubmit={(e) => e.preventDefault()}>
                 <div>
-                  <Label htmlFor="name">Name</Label>
+                  <Label htmlFor="name">{text("forms", "nameLabel", "Name")}</Label>
                   <Input id="name" placeholder="Your name" className="mt-1 border-purple-500/20 bg-purple-950/30" />
                 </div>
                 <div>
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email">{text("forms", "emailLabel", "Email")}</Label>
                   <Input id="email" type="email" placeholder="you@email.com" className="mt-1 border-purple-500/20 bg-purple-950/30" />
                 </div>
                 <div>
-                  <Label htmlFor="subject">Subject</Label>
+                  <Label htmlFor="subject">{text("forms", "subjectLabel", "Subject")}</Label>
                   <Input id="subject" placeholder="How can we help?" className="mt-1 border-purple-500/20 bg-purple-950/30" />
                 </div>
                 <div>
-                  <Label htmlFor="message">Message</Label>
+                  <Label htmlFor="message">{text("forms", "messageLabel", "Message")}</Label>
                   <textarea id="message" rows={5} className="mt-1 w-full rounded-xl border border-purple-500/20 bg-purple-950/30 px-4 py-3 text-white text-sm resize-none focus:outline-none focus:ring-2 focus:ring-purple-500/40" placeholder="Describe your issue..." />
                 </div>
-                <PortalButton variant="gold" className="w-full">Send Message</PortalButton>
+                <PortalButton variant="gold" className="w-full">{text("buttons", "sendMessage", "Send Message")}</PortalButton>
               </form>
             </GlassCard>
           </MotionReveal>

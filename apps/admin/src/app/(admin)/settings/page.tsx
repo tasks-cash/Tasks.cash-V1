@@ -6,6 +6,7 @@ import { GlassCard, PortalButton, Input, Label, Switch } from "@tasks-cash/ui";
 export default function AdminSettingsPage() {
   return (
     <AdminPageShell
+      cmsPageKey="settings"
       title="Settings"
       subtitle="Platform configuration and system preferences"
       stats={[

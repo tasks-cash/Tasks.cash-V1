@@ -29,6 +29,7 @@ export default function AdminPermissionsPage() {
 
   return (
     <AdminPageShell
+      cmsPageKey="permissions"
       title="Permissions"
       subtitle="Granular access control for admin features"
       action={<PortalButton variant="gold" size="sm">+ Add Permission</PortalButton>}

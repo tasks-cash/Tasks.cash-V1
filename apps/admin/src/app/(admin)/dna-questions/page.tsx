@@ -300,6 +300,7 @@ export default function AdminDnaQuestionsPage() {
 
   return (
     <AdminPageShell
+      cmsPageKey="dna-questions"
       title="DNA Questions"
       subtitle="Create and manage Explorer DNA questions — database only"
       action={

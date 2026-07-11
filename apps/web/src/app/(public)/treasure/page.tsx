@@ -6,6 +6,7 @@ import { PageHero } from "@/components/layout/PageHero";
 import { PublicPageWrapper } from "@/components/premium/PublicPageWrapper";
 import { EpicCTA, SectionHeader, StatsBanner, FeatureGrid } from "@/components/pages/PublicSections";
 import { TREASURES } from "@/lib/mock-data";
+import { useContent } from "@/hooks/useContent";
 
 const RARITY_GLOW: Record<string, "gold" | "purple" | undefined> = {
   legendary: "gold",
@@ -14,9 +15,16 @@ const RARITY_GLOW: Record<string, "gold" | "purple" | undefined> = {
 };
 
 export default function TreasurePage() {
+  const { text } = useContent("main", "treasure");
+
   return (
     <PublicPageWrapper>
-      <PageHero eyebrow="Loot" title="Treasure Vault" subtitle="Legendary artifacts, rare gear, and portal keys await the worthy." variant="gold" />
+      <PageHero
+        eyebrow={text("hero", "eyebrow", "Loot")}
+        title={text("hero", "title", "Treasure Vault")}
+        subtitle={text("hero", "subtitle", "Legendary artifacts, rare gear, and portal keys await the worthy.")}
+        variant="gold"
+      />
 
       <StatsBanner stats={[
         { label: "Treasures Found", value: 128400, icon: "💎" },

@@ -3,14 +3,17 @@
 import { REWARD_POOLS } from "@/data/mock-data";
 import { SectionShell, GlowCard } from "@/components/ui/GlowCard";
 import { motion } from "framer-motion";
+import { useContent } from "@/hooks/useContent";
 
 export function RewardPoolsSection() {
+  const { text } = useContent("challenge", "rewards");
+
   return (
     <SectionShell
       id="reward-pools"
-      eyebrow="Treasure Vault"
-      title="Reward Pools"
-      subtitle="Massive coin pools distributed across daily, weekly, monthly, and seasonal cycles."
+      eyebrow={text("hero", "eyebrow", "Treasure Vault")}
+      title={text("hero", "title", "Reward Pools")}
+      subtitle={text("hero", "subtitle", "Massive coin pools distributed across daily, weekly, monthly, and seasonal cycles.")}
     >
       <div className="grid w-full grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4 xl:gap-6">
         {REWARD_POOLS.map((pool, i) => (

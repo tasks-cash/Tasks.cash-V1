@@ -36,6 +36,7 @@ export default function AdminEmployeesPage() {
 
   return (
     <AdminPageShell
+      cmsPageKey="employees"
       title="Employees"
       subtitle="Manage staff and internal team members"
       action={

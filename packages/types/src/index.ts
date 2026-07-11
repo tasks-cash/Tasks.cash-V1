@@ -38,6 +38,21 @@ export interface IUser {
   updatedAt: Date;
 }
 
+export type AdminRole = "admin" | "super_admin" | "owner";
+export type AdminStatus = "active" | "suspended";
+export type AccountType = "user" | "admin";
+
+export interface IAdmin {
+  _id: string;
+  email: string;
+  username: string;
+  passwordHash: string;
+  role: AdminRole;
+  status: AdminStatus;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export interface IMission {
   _id: string;
   title: string;

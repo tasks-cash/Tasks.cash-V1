@@ -6,11 +6,19 @@ import { PageHero } from "@/components/layout/PageHero";
 import { PublicPageWrapper } from "@/components/premium/PublicPageWrapper";
 import { EpicCTA, SectionHeader, StatsBanner, FeatureGrid } from "@/components/pages/PublicSections";
 import { PUBLIC_CHALLENGES } from "@/lib/mock-data";
+import { useContent } from "@/hooks/useContent";
 
 export default function ChallengesPage() {
+  const { text } = useContent("main", "challenges");
+
   return (
     <PublicPageWrapper>
-      <PageHero eyebrow="Compete" title="Live Challenges" subtitle="Timed events with massive XP and coin rewards. Compete against warriors worldwide." variant="gold" />
+      <PageHero
+        eyebrow={text("hero", "eyebrow", "Compete")}
+        title={text("hero", "title", "Live Challenges")}
+        subtitle={text("hero", "subtitle", "Timed events with massive XP and coin rewards. Compete against warriors worldwide.")}
+        variant="gold"
+      />
 
       <StatsBanner stats={[
         { label: "Active Events", value: 3, icon: "🎯" },

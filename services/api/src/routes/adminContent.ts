@@ -13,7 +13,7 @@ import {
   listPageKeys,
   updateContentBlock,
 } from "../lib/contentStore";
-import { auditContentBlocks, importMissingContent } from "../lib/contentAudit";
+import { auditContentBlocks, importMissingContent, syncContentDefaults } from "../lib/contentAudit";
 
 const router = Router();
 router.use(authMiddleware, adminMiddleware);
@@ -35,18 +35,25 @@ const CONTENT_TYPES = [
 
 const blockSchema = z.object({
   appKey: z.enum(["main", "challenge", "admin"]).default("main"),
-  pageKey: z.string().min(1),
-  sectionKey: z.string().min(1).default("main"),
-  contentKey: z.string().min(1),
+  pageKey: z.string().trim().min(1, "pageKey is required"),
+  sectionKey: z.string().trim().min(1, "sectionKey is required").default("main"),
+  contentKey: z.string().trim().min(1, "contentKey is required"),
   type: z.enum(CONTENT_TYPES),
-  value: z.string().min(1),
+  // Allow empty string when admin intentionally clears text
+  value: z.string(),
   defaultValue: z.string().optional(),
+  description: z.string().optional(),
   locale: z.enum(["en", "ar", "fr"]),
   isActive: z.boolean().optional(),
 });
 
 const bulkSchema = z.object({
-  blocks: z.array(blockSchema),
+  blocks: z.array(blockSchema).min(1),
+});
+
+const patchSchema = blockSchema.partial().extend({
+  resetToDefault: z.boolean().optional(),
+  value: z.string().optional(),
 });
 
 function parseFilters(req: AuthRequest) {
@@ -58,6 +65,42 @@ function parseFilters(req: AuthRequest) {
     type: req.query.type ? String(req.query.type) : undefined,
     search: req.query.search ? String(req.query.search) : undefined,
   };
+}
+
+async function upsertOneBlock(item: z.infer<typeof blockSchema>) {
+  const defaultValue = item.defaultValue ?? item.value;
+  const now = new Date();
+
+  const doc = await ContentBlock.findOneAndUpdate(
+    {
+      appKey: item.appKey,
+      pageKey: item.pageKey,
+      sectionKey: item.sectionKey,
+      contentKey: item.contentKey,
+      locale: item.locale,
+    },
+    {
+      $set: {
+        value: item.value,
+        type: item.type,
+        defaultValue,
+        description: item.description ?? "",
+        isActive: item.isActive ?? true,
+        updatedAt: now,
+      },
+      $setOnInsert: {
+        appKey: item.appKey,
+        pageKey: item.pageKey,
+        sectionKey: item.sectionKey,
+        contentKey: item.contentKey,
+        locale: item.locale,
+        createdAt: now,
+      },
+    },
+    { upsert: true, new: true, setDefaultsOnInsert: true }
+  );
+
+  return toContentBlock(doc.toObject() as unknown as ContentRowLike);
 }
 
 /** GET /api/admin/content */
@@ -72,7 +115,9 @@ router.get("/", async (req: AuthRequest, res: Response) => {
     if (filters.sectionKey) query.sectionKey = filters.sectionKey;
     if (filters.type) query.type = filters.type;
 
-    let rows = await ContentBlock.find(query).sort({ appKey: 1, pageKey: 1, sectionKey: 1, contentKey: 1, locale: 1 }).lean();
+    let rows = await ContentBlock.find(query)
+      .sort({ appKey: 1, pageKey: 1, sectionKey: 1, contentKey: 1, locale: 1 })
+      .lean();
 
     if (filters.search) {
       const q = filters.search.toLowerCase();
@@ -133,6 +178,22 @@ router.post("/import-missing", async (_req: AuthRequest, res: Response) => {
   }
 });
 
+/** POST /api/admin/content/sync-defaults — update defaultValue from seed; never overwrite admin edits */
+router.post("/sync-defaults", async (_req: AuthRequest, res: Response) => {
+  if (!isDbConnected()) {
+    res.status(503).json({ success: false, error: "Database not connected" });
+    return;
+  }
+
+  try {
+    const result = await syncContentDefaults();
+    const report = await auditContentBlocks();
+    res.json({ success: true, data: { ...result, audit: report } });
+  } catch {
+    res.status(500).json({ success: false, error: "Sync defaults failed" });
+  }
+});
+
 /** POST /api/admin/content/bulk-upsert */
 router.post("/bulk-upsert", async (req: AuthRequest, res: Response) => {
   try {
@@ -141,33 +202,28 @@ router.post("/bulk-upsert", async (req: AuthRequest, res: Response) => {
     if (isDbConnected()) {
       const upserted = [];
       for (const item of blocks) {
-        const defaultValue = item.defaultValue ?? item.value;
-        const doc = await ContentBlock.findOneAndUpdate(
-          {
-            appKey: item.appKey,
-            pageKey: item.pageKey,
-            sectionKey: item.sectionKey,
-            contentKey: item.contentKey,
-            locale: item.locale,
-          },
-          { ...item, defaultValue },
-          { upsert: true, new: true, setDefaultsOnInsert: true }
-        );
-        upserted.push(toContentBlock(doc.toObject() as unknown as ContentRowLike));
+        upserted.push(await upsertOneBlock(item));
       }
-      res.json({ success: true, data: { blocks: upserted } });
+      console.log("[CMS bulk-upsert]", { saved: upserted.length, sample: upserted[0]?.id });
+      res.json({ success: true, saved: upserted.length, data: { blocks: upserted }, blocks: upserted });
       return;
     }
 
     const result = bulkUpsertContentBlocks(
       blocks.map((b) => ({ ...b, defaultValue: b.defaultValue ?? b.value }))
     );
-    res.json({ success: true, data: { blocks: result.upserted } });
+    res.json({
+      success: true,
+      saved: result.upserted.length,
+      data: { blocks: result.upserted },
+      blocks: result.upserted,
+    });
   } catch (err) {
     if (err instanceof z.ZodError) {
       res.status(400).json({ success: false, error: err.errors[0].message });
       return;
     }
+    console.error("[CMS bulk-upsert]", err);
     res.status(500).json({ success: false, error: "Bulk upsert failed" });
   }
 });
@@ -179,9 +235,19 @@ router.post("/", async (req: AuthRequest, res: Response) => {
     const payload = { ...data, defaultValue: data.defaultValue ?? data.value };
 
     if (isDbConnected()) {
-      const created = await ContentBlock.create(payload);
-      res.status(201).json({ success: true, data: toContentBlock(created.toObject() as unknown as ContentRowLike) });
-      return;
+      try {
+        const created = await ContentBlock.create(payload);
+        res.status(201).json({ success: true, data: toContentBlock(created.toObject() as unknown as ContentRowLike) });
+        return;
+      } catch (err) {
+        // Duplicate key → upsert instead of failing
+        if ((err as { code?: number }).code === 11000) {
+          const updated = await upsertOneBlock(data);
+          res.json({ success: true, data: updated });
+          return;
+        }
+        throw err;
+      }
     }
 
     const created = createContentBlock(payload);
@@ -191,6 +257,7 @@ router.post("/", async (req: AuthRequest, res: Response) => {
       res.status(400).json({ success: false, error: err.errors[0].message });
       return;
     }
+    console.error("[CMS create]", err);
     res.status(500).json({ success: false, error: "Failed to create content block" });
   }
 });
@@ -199,8 +266,13 @@ router.post("/", async (req: AuthRequest, res: Response) => {
 router.patch("/:id", async (req: AuthRequest, res: Response) => {
   const id = String(req.params.id);
 
+  if (!id || id === "undefined" || id.startsWith("temp_")) {
+    res.status(400).json({ success: false, error: "Valid database content block id is required" });
+    return;
+  }
+
   try {
-    const data = blockSchema.partial().extend({ resetToDefault: z.boolean().optional() }).parse(req.body);
+    const data = patchSchema.parse(req.body);
 
     if (isDbConnected()) {
       const existing = await ContentBlock.findById(id);
@@ -209,13 +281,18 @@ router.patch("/:id", async (req: AuthRequest, res: Response) => {
         return;
       }
 
-      const patch = { ...data };
+      const patch: Record<string, unknown> = {};
+      if (data.value !== undefined) patch.value = data.value;
+      if (data.type !== undefined) patch.type = data.type;
+      if (data.defaultValue !== undefined) patch.defaultValue = data.defaultValue;
+      if (data.description !== undefined) patch.description = data.description;
+      if (data.isActive !== undefined) patch.isActive = data.isActive;
+
       if (data.resetToDefault) {
         patch.value = existing.defaultValue || existing.value;
-        delete (patch as { resetToDefault?: boolean }).resetToDefault;
       }
 
-      const updated = await ContentBlock.findByIdAndUpdate(id, patch, { new: true });
+      const updated = await ContentBlock.findByIdAndUpdate(id, { $set: patch }, { new: true });
       if (!updated) {
         res.status(404).json({ success: false, error: "Content block not found" });
         return;
@@ -246,6 +323,7 @@ router.patch("/:id", async (req: AuthRequest, res: Response) => {
       res.status(400).json({ success: false, error: err.errors[0].message });
       return;
     }
+    console.error("[CMS patch]", err);
     res.status(500).json({ success: false, error: "Failed to update content block" });
   }
 });

@@ -27,6 +27,7 @@ export default function AdminRolesPage() {
 
   return (
     <AdminPageShell
+      cmsPageKey="roles"
       title="Roles"
       subtitle="Manage access roles and permission groups"
       action={<PortalButton variant="gold" size="sm">+ Add Role</PortalButton>}

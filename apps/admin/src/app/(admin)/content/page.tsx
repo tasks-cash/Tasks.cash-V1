@@ -47,6 +47,9 @@ export default function AdminContentPage() {
   const [audit, setAudit] = useState<ContentAuditReport | null>(null);
   const [auditLoading, setAuditLoading] = useState(false);
   const [importing, setImporting] = useState(false);
+  const [syncingDefaults, setSyncingDefaults] = useState(false);
+  const [sectionFilter, setSectionFilter] = useState<string>("all");
+  const [missingTranslationsOnly, setMissingTranslationsOnly] = useState(false);
   const [auditOpen, setAuditOpen] = useState(true);
   const autosaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const dirty = Object.keys(drafts).length > 0;
@@ -108,6 +111,24 @@ export default function AdminContentPage() {
     }
   }
 
+  async function handleSyncDefaults() {
+    setSyncingDefaults(true);
+    setError("");
+    const res = await adminFetch<{
+      defaultsUpdated: number;
+      valuesSyncedFromDefault: number;
+      unchanged: number;
+      audit: ContentAuditReport;
+    }>("/api/admin/content/sync-defaults", { method: "POST", body: JSON.stringify({}) });
+    setSyncingDefaults(false);
+    if (res.success && res.data) {
+      setAudit(res.data.audit);
+      void loadBlocks();
+    } else {
+      setError(res.error ?? "Sync defaults failed");
+    }
+  }
+
   useEffect(() => {
     function onBeforeUnload(e: BeforeUnloadEvent) {
       if (dirty) {
@@ -158,32 +179,51 @@ export default function AdminContentPage() {
     setSaveState("saving");
     setError("");
 
-    const payload = changed.map((b) => ({
-      appKey: b.appKey,
-      pageKey: b.pageKey,
-      sectionKey: b.sectionKey,
-      contentKey: b.contentKey,
-      type: b.type,
-      locale: b.locale,
-      value: drafts[b.id] ?? b.value,
-      defaultValue: b.defaultValue,
-      isActive: b.isActive,
-    }));
+    const payload = changed.map((b) => {
+      const value = drafts[b.id] ?? b.value;
+      console.log("[CMS SAVE START]", {
+        id: b.id,
+        appKey: b.appKey,
+        pageKey: b.pageKey,
+        sectionKey: b.sectionKey,
+        contentKey: b.contentKey,
+        locale: b.locale,
+        value,
+      });
+      return {
+        appKey: b.appKey,
+        pageKey: b.pageKey,
+        sectionKey: b.sectionKey,
+        contentKey: b.contentKey,
+        type: b.type,
+        locale: b.locale,
+        value,
+        defaultValue: b.defaultValue,
+        isActive: b.isActive !== false,
+      };
+    });
 
-    const res = await adminFetch<{ blocks: IContentBlock[] }>("/api/admin/content/bulk-upsert", {
+    const res = await adminFetch<{ blocks: IContentBlock[]; saved?: number }>("/api/admin/content/bulk-upsert", {
       method: "POST",
       body: JSON.stringify({ blocks: payload }),
     });
 
+    console.log("[CMS SAVE RESPONSE]", {
+      status: res.status,
+      ok: res.success,
+      body: res,
+    });
+
     if (!res.success) {
       setSaveState("error");
-      setError(res.error ?? "Save failed");
+      setError(res.error ?? `Save failed (${res.status ?? "network"})`);
       return;
     }
 
+    const savedBlocks = res.data?.blocks ?? [];
     setBlocks((prev) =>
       prev.map((b) => {
-        const updated = res.data?.blocks.find(
+        const updated = savedBlocks.find(
           (u) =>
             u.appKey === b.appKey &&
             u.pageKey === b.pageKey &&
@@ -196,7 +236,7 @@ export default function AdminContentPage() {
     );
     setDrafts({});
     setSaveState("saved");
-    setTimeout(() => setSaveState("idle"), 2000);
+    setTimeout(() => setSaveState("idle"), 2500);
   }, [blocks, drafts]);
 
   useEffect(() => {
@@ -288,10 +328,26 @@ export default function AdminContentPage() {
               saveState === "idle" && dirty && "border-amber-400/40 text-amber-300"
             )}
           >
-            {saveState === "saving" ? "Saving…" : saveState === "saved" ? "All changes saved" : dirty ? "Unsaved changes" : "Up to date"}
+            {saveState === "saving"
+              ? "Saving…"
+              : saveState === "saved"
+                ? "Saved successfully"
+                : saveState === "error"
+                  ? "Failed"
+                  : dirty
+                    ? "Unsaved"
+                    : "Up to date"}
           </span>
-          <PortalButton variant="gold" size="sm" disabled={!dirty || saveState === "saving"} onClick={() => void saveAll()}>
-            Save All
+          <PortalButton
+            variant="gold"
+            size="sm"
+            disabled={!dirty || saveState === "saving"}
+            onClick={() => {
+              console.log("[CMS SAVE CLICK]", { dirty, draftCount: Object.keys(drafts).length });
+              void saveAll();
+            }}
+          >
+            {saveState === "saving" ? "Saving…" : "Save All"}
           </PortalButton>
         </div>
       </div>
@@ -318,12 +374,26 @@ export default function AdminContentPage() {
               <p className="text-sm text-purple-400/60">Running audit…</p>
             ) : audit ? (
               <>
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
+                  <AuditStat label="Total keys" value={audit.dbKeyCount} />
                   <AuditStat label="Seed keys" value={audit.seedKeyCount} />
-                  <AuditStat label="In database" value={audit.dbKeyCount} />
+                  <AuditStat label="Connected" value={audit.connectedPages ?? 0} />
+                  <AuditStat label="Unconnected" value={audit.unwiredPages.length} warn={audit.unwiredPages.length > 0} />
+                  <AuditStat label="Missing EN" value={audit.missingEn ?? 0} warn={(audit.missingEn ?? 0) > 0} />
+                  <AuditStat label="Missing AR" value={audit.missingAr ?? 0} warn={(audit.missingAr ?? 0) > 0} />
+                  <AuditStat label="Missing FR" value={audit.missingFr ?? 0} warn={(audit.missingFr ?? 0) > 0} />
+                  <AuditStat
+                    label="Completeness"
+                    value={`${audit.translationCompletenessPercent ?? 0}%`}
+                    warn={(audit.translationCompletenessPercent ?? 100) < 100}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   <AuditStat label="Missing keys" value={audit.missingKeys.length} warn={audit.missingKeys.length > 0} />
-                  <AuditStat label="Unwired pages" value={audit.unwiredPages.length} warn={audit.unwiredPages.length > 0} />
                   <AuditStat label="Translation gaps" value={audit.translationGaps.length} warn={audit.translationGaps.length > 0} />
+                  <AuditStat label="Needs translation" value={audit.translationRequiredCount ?? 0} warn={(audit.translationRequiredCount ?? 0) > 0} />
+                  <AuditStat label="Duplicate keys" value={(audit.duplicateKeys ?? []).length} warn={(audit.duplicateKeys ?? []).length > 0} />
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3">
@@ -334,6 +404,14 @@ export default function AdminContentPage() {
                     onClick={() => void handleImportMissing()}
                   >
                     {importing ? "Importing…" : "Import Missing Content"}
+                  </PortalButton>
+                  <PortalButton
+                    variant="ghost"
+                    size="sm"
+                    disabled={syncingDefaults}
+                    onClick={() => void handleSyncDefaults()}
+                  >
+                    {syncingDefaults ? "Syncing…" : "Sync Defaults"}
                   </PortalButton>
                   <PortalButton variant="ghost" size="sm" onClick={() => void loadAudit()}>
                     Refresh Audit
@@ -457,6 +535,31 @@ export default function AdminContentPage() {
                   ))}
                 </select>
               </div>
+              <div>
+                <Label htmlFor="section-filter">Section</Label>
+                <select
+                  id="section-filter"
+                  value={sectionFilter}
+                  onChange={(e) => setSectionFilter(e.target.value)}
+                  className="mt-1 block rounded-lg border border-purple-500/20 bg-black/40 px-3 py-2 text-sm text-white"
+                >
+                  <option value="all">All sections</option>
+                  {CMS_SECTION_ORDER.map((s) => (
+                    <option key={s} value={s}>
+                      {CMS_SECTION_LABELS[s] ?? s}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <label className="flex items-center gap-2 text-xs text-purple-300/70 pb-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={missingTranslationsOnly}
+                  onChange={(e) => setMissingTranslationsOnly(e.target.checked)}
+                  className="rounded border-purple-500/40"
+                />
+                Missing translations only
+              </label>
               <PortalButton variant="ghost" size="sm" onClick={() => void loadBlocks()}>
                 Refresh
               </PortalButton>
@@ -505,9 +608,14 @@ export default function AdminContentPage() {
           ) : (
             <div className="space-y-8">
               {orderedSections.map((sectionKey) => {
-                const sectionBlocks = (sectionGroups.get(sectionKey) ?? []).filter(
-                  (b) => typeFilter === "all" || b.type === typeFilter
-                );
+                if (sectionFilter !== "all" && sectionKey !== sectionFilter) return null;
+                const sectionBlocks = (sectionGroups.get(sectionKey) ?? []).filter((b) => {
+                  if (typeFilter !== "all" && b.type !== typeFilter) return false;
+                  if (missingTranslationsOnly && !getDraftValue(b).includes("[translation_required]")) {
+                    return false;
+                  }
+                  return true;
+                });
                 if (sectionBlocks.length === 0) return null;
 
                 return (
@@ -586,7 +694,7 @@ export default function AdminContentPage() {
   );
 }
 
-function AuditStat({ label, value, warn }: { label: string; value: number; warn?: boolean }) {
+function AuditStat({ label, value, warn }: { label: string; value: number | string; warn?: boolean }) {
   return (
     <div className={cn("rounded-lg border px-3 py-2 text-center", warn ? "border-amber-400/30 bg-amber-950/20" : "border-purple-500/20 bg-black/30")}>
       <p className={cn("text-lg font-black", warn ? "text-amber-300" : "text-white")}>{value}</p>

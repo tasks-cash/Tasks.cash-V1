@@ -4,9 +4,11 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { GlowText, GlassCard, PortalButton } from "@tasks-cash/ui";
 import { adminFetch, getToken } from "@/lib/api";
+import { useContent } from "@/hooks/useContent";
 
 export default function AdminRewardsPage() {
   const router = useRouter();
+  const { text } = useContent("admin", "rewards");
   const [showForm, setShowForm] = useState(false);
   const [rewardForm, setRewardForm] = useState({
     name: "", description: "", type: "badge", rarity: "common", value: 1, requiredLevel: 1,
@@ -26,7 +28,9 @@ export default function AdminRewardsPage() {
   return (
     <div className="mx-auto max-w-3xl">
       <div className="flex items-center justify-between mb-8">
-        <GlowText as="h1" variant="gold" className="text-3xl">Rewards Vault</GlowText>
+        <GlowText as="h1" variant="gold" className="text-3xl">
+          {text("hero", "title", "Rewards Vault")}
+        </GlowText>
         <PortalButton variant="gold" size="sm" onClick={() => setShowForm(!showForm)}>
           {showForm ? "Cancel" : "+ New Reward"}
         </PortalButton>

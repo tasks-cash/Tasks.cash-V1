@@ -37,6 +37,7 @@ export default function AdminWithdrawalsPage() {
 
   return (
     <AdminPageShell
+      cmsPageKey="withdrawals"
       title="Withdrawals"
       subtitle="Review and process withdrawal requests"
       stats={[

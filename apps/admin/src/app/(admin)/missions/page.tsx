@@ -4,9 +4,11 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { GlowText, GlassCard, PortalButton } from "@tasks-cash/ui";
 import { adminFetch, getToken } from "@/lib/api";
+import { useContent } from "@/hooks/useContent";
 
 export default function AdminMissionsPage() {
   const router = useRouter();
+  const { text } = useContent("admin", "missions");
   const [showForm, setShowForm] = useState(false);
   const [missionForm, setMissionForm] = useState({
     title: "", description: "", difficulty: "easy", coinReward: 50, xpReward: 100, category: "general",
@@ -26,7 +28,9 @@ export default function AdminMissionsPage() {
   return (
     <div className="mx-auto max-w-3xl">
       <div className="flex items-center justify-between mb-8">
-        <GlowText as="h1" variant="gold" className="text-3xl">Mission Control</GlowText>
+        <GlowText as="h1" variant="gold" className="text-3xl">
+          {text("hero", "title", "Mission Control")}
+        </GlowText>
         <PortalButton variant="gold" size="sm" onClick={() => setShowForm(!showForm)}>
           {showForm ? "Cancel" : "+ New Mission"}
         </PortalButton>

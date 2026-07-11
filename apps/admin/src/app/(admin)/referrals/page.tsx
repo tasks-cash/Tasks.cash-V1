@@ -54,6 +54,7 @@ export default function AdminReferralsPage() {
 
   return (
     <AdminPageShell
+      cmsPageKey="referrals"
       title="Referrals"
       subtitle="Track referral bonuses and ally recruitment"
       stats={[

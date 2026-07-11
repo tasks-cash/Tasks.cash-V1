@@ -8,6 +8,7 @@ import { PageHero } from "@/components/layout/PageHero";
 import { PublicPageWrapper } from "@/components/premium/PublicPageWrapper";
 import { EpicCTA, SectionHeader } from "@/components/pages/PublicSections";
 import { FAQ_ITEMS } from "@/lib/mock-data";
+import { useContent } from "@/hooks/useContent";
 
 const EXTRA_FAQ = [
   { q: "How do referrals work?", a: "Share your unique referral code. When allies register and complete their first mission, you earn 500 bonus coins per referral." },
@@ -21,11 +22,17 @@ const EXTRA_FAQ = [
 const ALL_FAQ = [...FAQ_ITEMS, ...EXTRA_FAQ];
 
 export default function FAQPage() {
+  const { text } = useContent("main", "faq");
   const [open, setOpen] = useState<number | null>(0);
 
   return (
     <PublicPageWrapper>
-      <PageHero eyebrow="Answers" title="Frequently Asked Questions" subtitle="Everything you need to know about the portal universe." variant="gold" />
+      <PageHero
+        eyebrow={text("hero", "eyebrow", "Answers")}
+        title={text("hero", "title", "Frequently Asked Questions")}
+        subtitle={text("hero", "subtitle", "Everything you need to know about the portal universe.")}
+        variant="gold"
+      />
 
       <div className="mx-auto max-w-3xl px-4 py-16">
         <SectionHeader eyebrow="General" title="Common Questions" />

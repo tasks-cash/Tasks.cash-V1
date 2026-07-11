@@ -5,8 +5,10 @@ import type { ILeaderboardEntry } from "@tasks-cash/types";
 import { GlassCard, LeaderboardRow, StatWidget } from "@tasks-cash/ui";
 import { DashboardPageShell } from "@/components/dashboard/DashboardPageShell";
 import { apiFetch } from "@/lib/api";
+import { useContent } from "@/hooks/useContent";
 
 export default function DashboardLeaderboardPage() {
+  const { text } = useContent("main", "dashboard-leaderboard");
   const [entries, setEntries] = useState<ILeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -30,7 +32,10 @@ export default function DashboardLeaderboardPage() {
   const myRank = myEntry?.rank ?? "—";
 
   return (
-    <DashboardPageShell title="Global Rank" subtitle="Your position among portal warriors">
+    <DashboardPageShell
+      title={text("hero", "title", "Global Rank")}
+      subtitle={text("hero", "subtitle", "Your position among portal warriors")}
+    >
       {loading && <p className="text-purple-400/50 text-sm mb-4">Loading leaderboard…</p>}
       {error && <p className="text-amber-400 text-sm mb-4">{error}</p>}
 

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { GlassCard, PortalButton, Input, Label, StatWidget } from "@tasks-cash/ui";
 import { DashboardPageShell } from "@/components/dashboard/DashboardPageShell";
 import { apiFetch } from "@/lib/api";
+import { useContent } from "@/hooks/useContent";
 
 type WithdrawalRow = {
   id: string;
@@ -20,6 +21,7 @@ const STATUS_COLOR: Record<string, string> = {
 };
 
 export default function WithdrawalsPage() {
+  const { text } = useContent("main", "dashboard-withdrawals");
   const [rows, setRows] = useState<WithdrawalRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -60,7 +62,10 @@ export default function WithdrawalsPage() {
   const totalWithdrawn = rows.filter((w) => w.status === "completed").reduce((s, w) => s + w.amount, 0);
 
   return (
-    <DashboardPageShell title="Withdrawals" subtitle="Transfer portal coins to external wallets">
+    <DashboardPageShell
+      title={text("hero", "title", "Withdrawals")}
+      subtitle={text("hero", "subtitle", "Transfer portal coins to external wallets")}
+    >
       {loading && <p className="text-purple-400/50 text-sm mb-4">Loading withdrawals...</p>}
       {error && <p className="text-amber-400 text-sm mb-4">{error}</p>}
 

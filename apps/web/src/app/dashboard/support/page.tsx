@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { GlassCard, PortalButton, Input, Label, StatWidget } from "@tasks-cash/ui";
 import { DashboardPageShell } from "@/components/dashboard/DashboardPageShell";
 import { apiFetch } from "@/lib/api";
+import { useContent } from "@/hooks/useContent";
 
 type TicketRow = {
   id: string;
@@ -26,6 +27,7 @@ const PRIORITY_COLOR: Record<string, string> = {
 };
 
 export default function SupportPage() {
+  const { text } = useContent("main", "dashboard-support");
   const [rows, setRows] = useState<TicketRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -69,9 +71,9 @@ export default function SupportPage() {
 
   return (
     <DashboardPageShell
-      title="Support Tickets"
-      subtitle="Get help from the portal support council"
-      action={<PortalButton variant="gold" size="sm" onClick={() => setShowForm(!showForm)}>{showForm ? "Cancel" : "New Ticket"}</PortalButton>}
+      title={text("hero", "title", "Support Tickets")}
+      subtitle={text("hero", "subtitle", "Get help from the portal support council")}
+      action={<PortalButton variant="gold" size="sm" onClick={() => setShowForm(!showForm)}>{showForm ? text("buttons", "cancel", "Cancel") : text("buttons", "newTicket", "New Ticket")}</PortalButton>}
     >
       {loading && <p className="text-purple-400/50 text-sm mb-4">Loading tickets...</p>}
       {error && <p className="text-amber-400 text-sm mb-4">{error}</p>}

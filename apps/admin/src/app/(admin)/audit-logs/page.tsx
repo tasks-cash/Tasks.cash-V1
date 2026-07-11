@@ -27,6 +27,7 @@ export default function AdminAuditLogsPage() {
 
   return (
     <AdminPageShell
+      cmsPageKey="audit-logs"
       title="Audit Logs"
       subtitle="Track all admin actions and system events"
       stats={[

@@ -17,6 +17,7 @@ import {
   MYSTERY_MISSION_TYPE_LABELS,
 } from "@tasks-cash/types";
 import { adminFetch, getToken } from "@/lib/api";
+import { useContent } from "@/hooks/useContent";
 
 const EMPTY_FORM = {
   title: "",
@@ -37,6 +38,7 @@ const EMPTY_FORM = {
 
 export default function AdminMysteryMissionsPage() {
   const router = useRouter();
+  const { text } = useContent("admin", "mystery-missions");
   const [missions, setMissions] = useState<IMysteryMission[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
@@ -103,8 +105,8 @@ export default function AdminMysteryMissionsPage() {
   return (
     <div className="mx-auto max-w-6xl">
       <PageHeader
-        title="Mystery Missions Vault"
-        subtitle="Create, schedule, and manage hidden archive missions"
+        title={text("hero", "title", "Mystery Missions Vault")}
+        subtitle={text("hero", "subtitle", "Create, schedule, and manage hidden archive missions")}
         badge="Admin · Classified"
       />
 

@@ -1,34 +1,53 @@
 "use client";
 
-import Link from "next/link";
-import { GlassCard, PortalButton, MotionStagger, MotionStaggerItem, Avatar, AvatarFallback } from "@tasks-cash/ui";
+import { GlassCard, MotionStagger, MotionStaggerItem, Avatar, AvatarFallback } from "@tasks-cash/ui";
 import { PageHero } from "@/components/layout/PageHero";
 import { PublicPageWrapper } from "@/components/premium/PublicPageWrapper";
 import { EpicCTA, FeatureGrid, SectionHeader, Timeline, PageStatsRow } from "@/components/pages/PublicSections";
 import { ABOUT_TEAM, ABOUT_MILESTONES } from "@/lib/page-data";
+import { useContent } from "@/hooks/useContent";
 
 export default function AboutPage() {
+  const { text } = useContent("main", "about");
+
   return (
     <PublicPageWrapper>
-      <PageHero eyebrow="Our Story" title="About the Portal" subtitle="Where real tasks become epic quests across the multiverse." variant="gold" />
+      <PageHero
+        eyebrow={text("hero", "eyebrow", "Our Story")}
+        title={text("hero", "title", "About the Portal")}
+        subtitle={text("hero", "subtitle", "Where real tasks become epic quests across the multiverse.")}
+        variant="gold"
+      />
 
       <div className="mx-auto max-w-6xl px-4 py-16">
         <div className="grid md:grid-cols-2 gap-8 mb-16">
           <GlassCard className="p-8">
-            <h2 className="text-xl font-bold text-white mb-4">Our Mission</h2>
-            <p className="text-purple-200/60 leading-relaxed">Tasks.cash transforms everyday productivity into an epic journey. We blend dark fantasy aesthetics with sci-fi portal mechanics to make completing real tasks feel like conquering dimensions.</p>
+            <h2 className="text-xl font-bold text-white mb-4">{text("cards", "missionTitle", "Our Mission")}</h2>
+            <p className="text-purple-200/60 leading-relaxed">
+              {text(
+                "cards",
+                "missionBody",
+                "Tasks.cash transforms everyday productivity into an epic journey. We blend dark fantasy aesthetics with sci-fi portal mechanics to make completing real tasks feel like conquering dimensions."
+              )}
+            </p>
           </GlassCard>
           <GlassCard glow="gold" className="p-8">
-            <h2 className="text-xl font-bold text-amber-300 mb-4">The Vision</h2>
-            <p className="text-purple-200/60 leading-relaxed">Build the most immersive gamified task platform — where discipline meets adventure, and every completed mission brings you closer to legendary status.</p>
+            <h2 className="text-xl font-bold text-amber-300 mb-4">{text("cards", "visionTitle", "The Vision")}</h2>
+            <p className="text-purple-200/60 leading-relaxed">
+              {text(
+                "cards",
+                "visionBody",
+                "Build the most immersive gamified task platform — where discipline meets adventure, and every completed mission brings you closer to legendary status."
+              )}
+            </p>
           </GlassCard>
         </div>
 
         <PageStatsRow stats={[
-          { label: "Explorers", value: "847K+", icon: "👥", glow: "gold" },
-          { label: "Missions Completed", value: "12.4M", icon: "⚔️" },
-          { label: "Worlds", value: "4", icon: "🌌" },
-          { label: "Team Members", value: "24", icon: "🛡️" },
+          { label: text("stats", "explorers", "Explorers"), value: "847K+", icon: "👥", glow: "gold" },
+          { label: text("stats", "missionsCompleted", "Missions Completed"), value: "12.4M", icon: "⚔️" },
+          { label: text("stats", "worlds", "Worlds"), value: "4", icon: "🌌" },
+          { label: text("stats", "team", "Team Members"), value: "24", icon: "🛡️" },
         ]} />
 
         <SectionHeader eyebrow="Timeline" title="Portal History" subtitle="From concept to multiverse conquest." />
