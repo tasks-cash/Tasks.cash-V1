@@ -1,0 +1,1 @@
+{"indexes":[{"v":{"$numberInt":"2"},"key":{"_id":{"$numberInt":"1"}},"name":"_id_"}],"uuid":"b38f825cdc4940c5b3e723a4d9b14dae","collectionName":"missionsubmissions","type":"collection"}
