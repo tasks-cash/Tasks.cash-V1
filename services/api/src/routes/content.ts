@@ -1,27 +1,36 @@
 import { Router, Response } from "express";
 import type { ContentAppKey, ContentLocale } from "@tasks-cash/types";
 import { isDbConnected } from "../config/database";
-import { ContentBlock } from "../models/ContentBlock";
-import { buildSectionsMap, mergeLocaleFallback, type ContentRowLike } from "../lib/contentService";
+import { getPageCacheConfig } from "../config/cacheConfig";
+import { cacheGet } from "../config/redis";
+import {
+  getContentPageResult,
+  UnsafeCacheKeyError,
+} from "../services/contentPageService";
+import { buildPageContentCacheKey } from "../lib/cache/cacheKeys";
+import type { ContentPagePayload } from "../lib/contentService";
 
 const router = Router();
 
 const APP_KEYS: ContentAppKey[] = ["main", "challenge", "admin"];
 
-function flattenSections(sections: Record<string, Record<string, string>>): Record<string, string> {
-  const flat: Record<string, string> = {};
-  for (const [sectionKey, fields] of Object.entries(sections)) {
-    for (const [contentKey, value] of Object.entries(fields)) {
-      flat[`${sectionKey}.${contentKey}`] = value;
-    }
-  }
-  return flat;
-}
-
 function firstQuery(value: unknown, fallback = ""): string {
   const raw = Array.isArray(value) ? value[0] : value;
-  // Proxies that double-append search can produce "en?appKey=main" — take the first segment only.
   return String(raw ?? fallback).split("?")[0].trim();
+}
+
+function applyDebugHeaders(res: Response, status: string, cacheKey: string): void {
+  const cfg = getPageCacheConfig();
+  if (!cfg.debugHeaders) return;
+  res.setHeader("X-Page-Cache", status);
+  res.setHeader("X-Page-Cache-Key", cacheKey);
+}
+
+interface CacheEnvelope {
+  payload: ContentPagePayload;
+  cachedAt: number;
+  freshTtlSeconds: number;
+  generation: number;
 }
 
 /** GET /api/content?appKey=main&pageKey=dashboard&locale=en */
@@ -45,45 +54,48 @@ router.get("/", async (req, res: Response) => {
     return;
   }
 
+  res.setHeader("Cache-Control", "no-store, max-age=0");
+
   try {
+    // Mongo healthy → normal cache/MISS/SWR path
     if (isDbConnected()) {
-      const rows = await ContentBlock.find({ appKey, pageKey, locale, isActive: true }).lean();
-      let sections = buildSectionsMap(rows as unknown as ContentRowLike[]);
-
-      if (Object.keys(sections).length === 0 && locale !== "en") {
-        const fallback = await ContentBlock.find({ appKey, pageKey, locale: "en", isActive: true }).lean();
-        sections = mergeLocaleFallback(
-          rows as unknown as ContentRowLike[],
-          fallback as unknown as ContentRowLike[]
-        );
-      }
-
-      const flat = flattenSections(sections);
-      res.setHeader("Cache-Control", "no-store, max-age=0");
-      res.json({
-        success: true,
-        data: {
-          appKey,
-          pageKey,
-          locale,
-          sections,
-          ...flat,
-        },
-        blocks: rows.map((r) => ({
-          sectionKey: r.sectionKey,
-          contentKey: r.contentKey,
-          value: r.value,
-          type: r.type,
-          locale: r.locale,
-        })),
-      });
+      const { payload, status, cacheKey } = await getContentPageResult(appKey, pageKey, locale);
+      applyDebugHeaders(res, status, cacheKey);
+      res.json(payload);
       return;
     }
 
-    res.json({ success: true, data: { appKey, pageKey, locale, sections: {} }, blocks: [] });
+    // Mongo down: serve stale Redis payload if present (policy-allowed fallback).
+    try {
+      const cacheKey = buildPageContentCacheKey({ appKey, pageKey, locale });
+      const cached = await cacheGet<CacheEnvelope>(cacheKey);
+      if (cached?.payload) {
+        applyDebugHeaders(res, "STALE", cacheKey);
+        res.json(cached.payload);
+        return;
+      }
+    } catch {
+      /* ignore cache errors */
+    }
+
+    res.status(503).json({
+      success: false,
+      error: "Database unavailable",
+      data: { appKey, pageKey, locale, sections: {} },
+      blocks: [],
+    });
   } catch (err) {
-    console.error("[content GET]", err);
-    res.json({ success: true, data: { appKey, pageKey, locale, sections: {} }, blocks: [] });
+    if (err instanceof UnsafeCacheKeyError) {
+      res.status(400).json({ success: false, error: "Invalid pageKey or locale" });
+      return;
+    }
+    console.error("[content GET]", err instanceof Error ? err.message : err);
+    res.status(503).json({
+      success: false,
+      error: "Content temporarily unavailable",
+      data: { appKey, pageKey, locale, sections: {} },
+      blocks: [],
+    });
   }
 });
 

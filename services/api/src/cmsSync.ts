@@ -153,6 +153,20 @@ async function cmsSync() {
     `[defaults] Updated defaults: ${synced.defaultsUpdated} | Values synced (untouched): ${synced.valuesSyncedFromDefault} | Unchanged: ${synced.unchanged}`
   );
 
+  try {
+    const { connectRedis } = await import("./config/redis");
+    const { invalidateAfterCmsMutation } = await import("./services/contentCacheInvalidation");
+    await connectRedis();
+    const affected = [...imported.affected, ...synced.affected];
+    if (affected.length > 0) {
+      const results = await invalidateAfterCmsMutation(affected);
+      const keys = results.reduce((n, r) => n + r.keysInvalidated, 0);
+      console.log(`[cache] Invalidated ${keys} page-cache key(s) after sync`);
+    }
+  } catch (err) {
+    console.warn("[cache] invalidation skipped:", err instanceof Error ? err.message : err);
+  }
+
   const audit = await auditContentBlocks();
   console.log(`\n── Audit Summary ──`);
   console.log(`  Seed keys:           ${audit.seedKeyCount}`);

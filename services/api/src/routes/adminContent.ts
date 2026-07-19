@@ -14,6 +14,7 @@ import {
   updateContentBlock,
 } from "../lib/contentStore";
 import { auditContentBlocks, importMissingContent, syncContentDefaults } from "../lib/contentAudit";
+import { invalidateAfterCmsMutation } from "../services/contentCacheInvalidation";
 
 const router = Router();
 router.use(authMiddleware, adminMiddleware);
@@ -55,6 +56,12 @@ const patchSchema = blockSchema.partial().extend({
   resetToDefault: z.boolean().optional(),
   value: z.string().optional(),
 });
+
+async function invalidateAffectedPages(
+  blocks: Array<{ appKey: ContentAppKey; pageKey: string; sectionKey: string; locale: ContentLocale }>
+): Promise<void> {
+  await invalidateAfterCmsMutation(blocks);
+}
 
 function parseFilters(req: AuthRequest) {
   return {
@@ -171,6 +178,9 @@ router.post("/import-missing", async (_req: AuthRequest, res: Response) => {
 
   try {
     const result = await importMissingContent();
+    if (result.affected.length > 0) {
+      await invalidateAfterCmsMutation(result.affected);
+    }
     const report = await auditContentBlocks();
     res.json({ success: true, data: { ...result, audit: report } });
   } catch {
@@ -187,6 +197,9 @@ router.post("/sync-defaults", async (_req: AuthRequest, res: Response) => {
 
   try {
     const result = await syncContentDefaults();
+    if (result.affected.length > 0) {
+      await invalidateAfterCmsMutation(result.affected);
+    }
     const report = await auditContentBlocks();
     res.json({ success: true, data: { ...result, audit: report } });
   } catch {
@@ -204,6 +217,7 @@ router.post("/bulk-upsert", async (req: AuthRequest, res: Response) => {
       for (const item of blocks) {
         upserted.push(await upsertOneBlock(item));
       }
+      await invalidateAffectedPages(blocks);
       console.log("[CMS bulk-upsert]", { saved: upserted.length, sample: upserted[0]?.id });
       res.json({ success: true, saved: upserted.length, data: { blocks: upserted }, blocks: upserted });
       return;
@@ -237,12 +251,28 @@ router.post("/", async (req: AuthRequest, res: Response) => {
     if (isDbConnected()) {
       try {
         const created = await ContentBlock.create(payload);
+        await invalidateAffectedPages([
+          {
+            appKey: data.appKey,
+            pageKey: data.pageKey,
+            sectionKey: data.sectionKey,
+            locale: data.locale,
+          },
+        ]);
         res.status(201).json({ success: true, data: toContentBlock(created.toObject() as unknown as ContentRowLike) });
         return;
       } catch (err) {
         // Duplicate key → upsert instead of failing
         if ((err as { code?: number }).code === 11000) {
           const updated = await upsertOneBlock(data);
+          await invalidateAffectedPages([
+            {
+              appKey: data.appKey,
+              pageKey: data.pageKey,
+              sectionKey: data.sectionKey,
+              locale: data.locale,
+            },
+          ]);
           res.json({ success: true, data: updated });
           return;
         }
@@ -297,6 +327,14 @@ router.patch("/:id", async (req: AuthRequest, res: Response) => {
         res.status(404).json({ success: false, error: "Content block not found" });
         return;
       }
+      await invalidateAffectedPages([
+        {
+          appKey: existing.appKey,
+          pageKey: existing.pageKey,
+          sectionKey: existing.sectionKey,
+          locale: existing.locale,
+        },
+      ]);
       res.json({ success: true, data: toContentBlock(updated.toObject() as unknown as ContentRowLike) });
       return;
     }
@@ -338,6 +376,14 @@ router.delete("/:id", async (req: AuthRequest, res: Response) => {
       res.status(404).json({ success: false, error: "Content block not found" });
       return;
     }
+    await invalidateAffectedPages([
+      {
+        appKey: deleted.appKey,
+        pageKey: deleted.pageKey,
+        sectionKey: deleted.sectionKey,
+        locale: deleted.locale,
+      },
+    ]);
     res.json({ success: true });
     return;
   }

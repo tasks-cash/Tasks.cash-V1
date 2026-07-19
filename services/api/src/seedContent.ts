@@ -41,7 +41,18 @@ async function seedContent() {
   await connectDatabase();
   await ensureContentIndexes();
 
-  const { created, skipped, failed } = await importMissingContent();
+  const { created, skipped, failed, affected } = await importMissingContent();
+
+  try {
+    const { connectRedis } = await import("./config/redis");
+    const { invalidateAfterCmsMutation } = await import("./services/contentCacheInvalidation");
+    await connectRedis();
+    if (affected.length > 0) {
+      await invalidateAfterCmsMutation(affected);
+    }
+  } catch (err) {
+    console.warn("[seed:content] cache invalidation skipped:", err instanceof Error ? err.message : err);
+  }
 
   console.log(`Content seed complete: ${created} created, ${skipped} skipped, ${failed} failed.`);
   await disconnectDatabase();

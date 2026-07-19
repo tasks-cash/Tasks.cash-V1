@@ -194,6 +194,12 @@ export async function importMissingContent(): Promise<{
   created: number;
   skipped: number;
   failed: number;
+  affected: Array<{
+    appKey: ContentAppKey;
+    pageKey: string;
+    sectionKey: string;
+    locale: ContentLocale;
+  }>;
 }> {
   const seedMap = seedFieldKeys();
   const dbRows = await ContentBlock.find({}).lean();
@@ -212,6 +218,13 @@ export async function importMissingContent(): Promise<{
   let created = 0;
   let skipped = 0;
   let failed = 0;
+  const affected: Array<{
+    appKey: ContentAppKey;
+    pageKey: string;
+    sectionKey: string;
+    locale: ContentLocale;
+  }> = [];
+  const seen = new Set<string>();
 
   for (const [key, row] of seedMap) {
     if (dbKeys.has(key)) {
@@ -232,6 +245,16 @@ export async function importMissingContent(): Promise<{
         isActive: true,
       });
       created += 1;
+      const coordKey = `${row.appKey}:${row.pageKey}:${row.sectionKey}:${row.locale}`;
+      if (!seen.has(coordKey)) {
+        seen.add(coordKey);
+        affected.push({
+          appKey: row.appKey,
+          pageKey: row.pageKey,
+          sectionKey: row.sectionKey,
+          locale: row.locale,
+        });
+      }
     } catch (err: unknown) {
       const code = (err as { code?: number })?.code;
       if (code === 11000) {
@@ -242,7 +265,7 @@ export async function importMissingContent(): Promise<{
     }
   }
 
-  return { created, skipped, failed };
+  return { created, skipped, failed, affected };
 }
 
 /**
@@ -253,6 +276,12 @@ export async function syncContentDefaults(): Promise<{
   defaultsUpdated: number;
   valuesSyncedFromDefault: number;
   unchanged: number;
+  affected: Array<{
+    appKey: ContentAppKey;
+    pageKey: string;
+    sectionKey: string;
+    locale: ContentLocale;
+  }>;
 }> {
   const seedMap = seedFieldKeys();
   const dbRows = await ContentBlock.find({}).lean();
@@ -260,6 +289,13 @@ export async function syncContentDefaults(): Promise<{
   let defaultsUpdated = 0;
   let valuesSyncedFromDefault = 0;
   let unchanged = 0;
+  const affected: Array<{
+    appKey: ContentAppKey;
+    pageKey: string;
+    sectionKey: string;
+    locale: ContentLocale;
+  }> = [];
+  const seen = new Set<string>();
 
   for (const row of dbRows) {
     const key = compositeKey({
@@ -290,8 +326,21 @@ export async function syncContentDefaults(): Promise<{
 
     if (Object.keys(updates).length > 0) {
       await ContentBlock.updateOne({ _id: row._id }, { $set: updates });
+      // Only invalidate when rendered value could change
+      if (updates.value !== undefined) {
+        const coordKey = `${row.appKey}:${row.pageKey}:${row.sectionKey}:${row.locale}`;
+        if (!seen.has(coordKey)) {
+          seen.add(coordKey);
+          affected.push({
+            appKey: row.appKey as ContentAppKey,
+            pageKey: row.pageKey,
+            sectionKey: row.sectionKey,
+            locale: row.locale as ContentLocale,
+          });
+        }
+      }
     }
   }
 
-  return { defaultsUpdated, valuesSyncedFromDefault, unchanged };
+  return { defaultsUpdated, valuesSyncedFromDefault, unchanged, affected };
 }

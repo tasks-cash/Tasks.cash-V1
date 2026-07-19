@@ -7,7 +7,8 @@ import path from "path";
 
 import { connectDatabase } from "./config/database";
 import { isDbConnected } from "./config/database";
-import { connectRedis } from "./config/redis";
+import { connectRedis, isRedisReady } from "./config/redis";
+import { getPageCacheConfig } from "./config/cacheConfig";
 import { ensureDefaultAdminAccounts } from "./services/defaultAdminAccountsService";
 import { APP_URL, ADMIN_URL, CHALLENGE_APP_URL } from "./config/env";
 import authRoutes from "./routes/auth";
@@ -59,9 +60,18 @@ app.use(cors({
 app.use(morgan("dev"));
 app.use(express.json());
 
-// Health check
+// Health check — process liveness + dependency readiness (no secrets).
 app.get("/health", (_req, res) => {
-  res.json({ status: "ok", service: "tasks-cash-api", timestamp: new Date().toISOString() });
+  const mongoOk = isDbConnected();
+  const redisOk = isRedisReady();
+  res.status(mongoOk ? 200 : 503).json({
+    status: mongoOk ? "ok" : "degraded",
+    service: "tasks-cash-api",
+    timestamp: new Date().toISOString(),
+    mongo: mongoOk ? "connected" : "unavailable",
+    redis: redisOk ? "connected" : "unavailable",
+    redisDb: getPageCacheConfig().redisDb,
+  });
 });
 
 // API routes

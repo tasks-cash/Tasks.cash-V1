@@ -21,7 +21,7 @@ services:
     container_name: tasks-cash-redis
     restart: unless-stopped
     ports:
-      - "6380:6380"
+      - "6380:6379"
     volumes:
       - redis_data:/data
     healthcheck:
@@ -49,7 +49,11 @@ services:
       PORT: 4000
       API_URL: http://api:4000
       MONGODB_URI: mongodb://mongodb:27017/taskscash
-      REDIS_URL: redis://redis:6380
+      REDIS_URL: redis://redis:6379
+      REDIS_DB: "0"
+      PAGE_CONTENT_CACHE_TTL_SECONDS: "300"
+      PAGE_CONTENT_CACHE_STALE_SECONDS: "900"
+      PAGE_CONTENT_CACHE_DEBUG_LOGS: "true"
       COOKIE_DOMAIN: ""
       COOKIE_SECURE: "false"
       AUTH_COOKIE_DOMAIN: ""

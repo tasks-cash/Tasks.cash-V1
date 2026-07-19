@@ -7,10 +7,23 @@ import {
   stopCounters,
   updateCounter,
 } from "../services/counterService";
+import { invalidateByReason } from "../services/contentCacheInvalidation";
 
 const router = Router();
 
 router.use(authMiddleware, adminMiddleware);
+
+/**
+ * Future-safe: counters are live-polled and not embedded in page payloads today.
+ * Statistics invalidation only affects pages explicitly tagged as statistics-dependent.
+ */
+async function invalidateStatisticsCaches(): Promise<void> {
+  await Promise.all([
+    invalidateByReason({ kind: "statistics", appKey: "main" }),
+    invalidateByReason({ kind: "statistics", appKey: "challenge" }),
+    invalidateByReason({ kind: "statistics", appKey: "admin" }),
+  ]);
+}
 
 /** GET /api/admin/counters */
 router.get("/", async (_req, res: Response) => {
@@ -21,12 +34,14 @@ router.get("/", async (_req, res: Response) => {
 /** POST /api/admin/counters/launch */
 router.post("/launch", async (_req, res: Response) => {
   const data = await launchCounters();
+  await invalidateStatisticsCaches();
   res.json({ success: true, data, message: "Counters launched" });
 });
 
 /** POST /api/admin/counters/stop */
 router.post("/stop", async (_req, res: Response) => {
   const data = await stopCounters();
+  await invalidateStatisticsCaches();
   res.json({ success: true, data, message: "Counters stopped" });
 });
 
@@ -49,6 +64,7 @@ router.patch("/:key", async (req: AuthRequest, res: Response) => {
     return;
   }
 
+  await invalidateStatisticsCaches();
   const data = await getAdminCounters();
   res.json({ success: true, data, counter: updated });
 });

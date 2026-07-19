@@ -21,6 +21,24 @@ export interface ContentRowLike {
   updatedAt?: Date | string;
 }
 
+export interface ContentPagePayload {
+  success: true;
+  data: {
+    appKey: ContentAppKey;
+    pageKey: string;
+    locale: ContentLocale;
+    sections: PageSectionsMap;
+    [flatKey: string]: ContentAppKey | ContentLocale | PageSectionsMap | string;
+  };
+  blocks: Array<{
+    sectionKey: string;
+    contentKey: string;
+    value: string;
+    type: IContentBlock["type"];
+    locale: ContentLocale;
+  }>;
+}
+
 export function rowId(row: ContentRowLike): string {
   if (row.id) return row.id;
   if (typeof row._id === "string") return row._id;
@@ -62,4 +80,37 @@ export function mergeLocaleFallback(
   const primaryMap = buildSectionsMap(primary);
   if (Object.keys(primaryMap).length > 0) return primaryMap;
   return buildSectionsMap(fallback);
+}
+
+export function buildContentPagePayload(
+  appKey: ContentAppKey,
+  pageKey: string,
+  locale: ContentLocale,
+  rows: ContentRowLike[],
+  sections: PageSectionsMap
+): ContentPagePayload {
+  const flat: Record<string, string> = {};
+  for (const [sectionKey, fields] of Object.entries(sections)) {
+    for (const [contentKey, value] of Object.entries(fields)) {
+      flat[`${sectionKey}.${contentKey}`] = value;
+    }
+  }
+
+  return {
+    success: true,
+    data: {
+      appKey,
+      pageKey,
+      locale,
+      sections,
+      ...flat,
+    },
+    blocks: rows.map((row) => ({
+      sectionKey: row.sectionKey,
+      contentKey: row.contentKey,
+      value: row.value,
+      type: row.type,
+      locale: row.locale,
+    })),
+  };
 }
