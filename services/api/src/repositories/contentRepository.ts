@@ -4,9 +4,28 @@ import type { ContentRowLike } from "../lib/contentService";
 import { SHARED_SECTION_KEYS, sharedContentPageKeys } from "../lib/cache/cacheKeys";
 import { shouldLogCache } from "../config/cacheConfig";
 
+const MONGO_QUERY_TIMEOUT_MS = 5_000;
+
 function logMongoQuery(fields: Record<string, unknown>): void {
   if (shouldLogCache() || process.env.NODE_ENV !== "production") {
     console.log("[ContentRepository] MONGO_QUERY", fields);
+  }
+}
+
+async function withMongoTimeout<T>(promise: Promise<T>, label: string): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<T>((_, reject) => {
+        timer = setTimeout(
+          () => reject(new Error(`MongoDB query timeout (${label})`)),
+          MONGO_QUERY_TIMEOUT_MS
+        );
+      }),
+    ]);
+  } finally {
+    if (timer) clearTimeout(timer);
   }
 }
 
@@ -26,14 +45,18 @@ export async function findActiveContentRows(
   const normalizedPage = pageKey.trim().toLowerCase();
   logMongoQuery({ appKey, pageKey: normalizedPage, locale });
 
-  const rows = await ContentBlock.find({
-    appKey,
-    pageKey: normalizedPage,
-    locale,
-    isActive: true,
-  })
-    .sort(CONTENT_SORT)
-    .lean();
+  const rows = await withMongoTimeout(
+    ContentBlock.find({
+      appKey,
+      pageKey: normalizedPage,
+      locale,
+      isActive: true,
+    })
+      .sort(CONTENT_SORT)
+      .lean()
+      .exec(),
+    "findActiveContentRows"
+  );
 
   return rows as unknown as ContentRowLike[];
 }
@@ -60,15 +83,19 @@ export async function findSharedContentRows(
     shared: true,
   });
 
-  const rows = await ContentBlock.find({
-    appKey,
-    pageKey: { $in: sharedPages },
-    sectionKey: { $in: [...SHARED_SECTION_KEYS] },
-    locale,
-    isActive: true,
-  })
-    .sort(CONTENT_SORT)
-    .lean();
+  const rows = await withMongoTimeout(
+    ContentBlock.find({
+      appKey,
+      pageKey: { $in: sharedPages },
+      sectionKey: { $in: [...SHARED_SECTION_KEYS] },
+      locale,
+      isActive: true,
+    })
+      .sort(CONTENT_SORT)
+      .lean()
+      .exec(),
+    "findSharedContentRows"
+  );
 
   return rows as unknown as ContentRowLike[];
 }

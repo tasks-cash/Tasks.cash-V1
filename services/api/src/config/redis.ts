@@ -26,10 +26,12 @@ export function getRedis(): Redis | null {
     const cfg = getPageCacheConfig();
     redis = new Redis(url, {
       db: cfg.redisDb,
-      maxRetriesPerRequest: 3,
+      maxRetriesPerRequest: 1,
       lazyConnect: true,
       // Fail soft quickly when Redis is down — page content must still load from Mongo.
       enableOfflineQueue: false,
+      connectTimeout: 2_000,
+      commandTimeout: 1_500,
       retryStrategy(times) {
         if (times > MAX_RECONNECT_ATTEMPTS) {
           console.warn(

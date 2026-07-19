@@ -8,6 +8,7 @@ import {
   UnsafeCacheKeyError,
 } from "../services/contentPageService";
 import { buildPageContentCacheKey } from "../lib/cache/cacheKeys";
+import { parseCacheRecord } from "../lib/cache/cacheEnvelope";
 import type { ContentPagePayload } from "../lib/contentService";
 
 const router = Router();
@@ -19,18 +20,19 @@ function firstQuery(value: unknown, fallback = ""): string {
   return String(raw ?? fallback).split("?")[0].trim();
 }
 
-function applyDebugHeaders(res: Response, status: string, cacheKey: string): void {
+function applyDebugHeaders(
+  res: Response,
+  status: string,
+  cacheKey: string,
+  payloadHash?: string,
+  cacheVersion?: string
+): void {
   const cfg = getPageCacheConfig();
   if (!cfg.debugHeaders) return;
   res.setHeader("X-Page-Cache", status);
   res.setHeader("X-Page-Cache-Key", cacheKey);
-}
-
-interface CacheEnvelope {
-  payload: ContentPagePayload;
-  cachedAt: number;
-  freshTtlSeconds: number;
-  generation: number;
+  if (payloadHash) res.setHeader("X-Page-Payload-Hash", payloadHash);
+  if (cacheVersion) res.setHeader("X-Page-Cache-Version", cacheVersion);
 }
 
 /** GET /api/content?appKey=main&pageKey=dashboard&locale=en */
@@ -57,25 +59,34 @@ router.get("/", async (req, res: Response) => {
   res.setHeader("Cache-Control", "no-store, max-age=0");
 
   try {
-    // Mongo healthy → normal cache/MISS/SWR path
     if (isDbConnected()) {
-      const { payload, status, cacheKey } = await getContentPageResult(appKey, pageKey, locale);
-      applyDebugHeaders(res, status, cacheKey);
+      const { payload, status, cacheKey, payloadHash, cacheVersion } = await getContentPageResult(
+        appKey,
+        pageKey,
+        locale
+      );
+      applyDebugHeaders(res, status, cacheKey, payloadHash, cacheVersion);
       res.json(payload);
       return;
     }
 
-    // Mongo down: serve stale Redis payload if present (policy-allowed fallback).
+    // Mongo down: serve stale Redis payload if present.
     try {
       const cacheKey = buildPageContentCacheKey({ appKey, pageKey, locale });
-      const cached = await cacheGet<CacheEnvelope>(cacheKey);
+      const cached = parseCacheRecord(await cacheGet(cacheKey));
       if (cached?.payload) {
-        applyDebugHeaders(res, "STALE", cacheKey);
-        res.json(cached.payload);
+        applyDebugHeaders(
+          res,
+          "STALE",
+          cacheKey,
+          cached.payloadHash,
+          getPageCacheConfig().schemaVersion
+        );
+        res.json(cached.payload as ContentPagePayload);
         return;
       }
     } catch {
-      /* ignore cache errors */
+      /* ignore */
     }
 
     res.status(503).json({

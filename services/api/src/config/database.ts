@@ -7,7 +7,11 @@ export async function connectDatabase(uri?: string): Promise<void> {
 
   mongoose.set("strictQuery", true);
 
-  await mongoose.connect(mongoUri);
+  await mongoose.connect(mongoUri, {
+    // Fail soft quickly when Mongo is unreachable — cache may still serve pages.
+    serverSelectionTimeoutMS: 3_000,
+    socketTimeoutMS: 5_000,
+  });
   dbConnected = true;
   console.log("[DB] Connected to MongoDB");
 }

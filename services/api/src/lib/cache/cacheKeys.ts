@@ -31,7 +31,10 @@ export function normalizeIdentifier(field: string, value: unknown): string {
   if (trimmed.includes("*") || trimmed.includes("?") || trimmed.includes("[")) {
     throw new UnsafeCacheKeyError(field, value);
   }
+  if (/[\x00-\x1f\x7f]/.test(trimmed)) throw new UnsafeCacheKeyError(field, value);
   if (!SAFE_IDENTIFIER.test(trimmed)) throw new UnsafeCacheKeyError(field, value);
+  const maxLen = getPageCacheConfig().maxIdentifierLength;
+  if (trimmed.length > maxLen) throw new UnsafeCacheKeyError(field, value);
   return trimmed;
 }
 
@@ -90,6 +93,14 @@ export function buildPageContentTagKey(tag: string): string {
     .map((seg, i) => (seg ? normalizeIdentifier(`tag[${i}]`, seg) : seg))
     .join(":");
   return `cache:tag:${safe}`;
+}
+
+/** Alias required by production cache hardening contract. */
+export const buildCacheTagSetKey = buildPageContentTagKey;
+
+/** Optional metadata companion key (generation / inspection). */
+export function buildCacheMetadataKey(parts: PageContentKeyParts): string {
+  return `meta:${buildPageContentCacheKey(parts)}`;
 }
 
 /**

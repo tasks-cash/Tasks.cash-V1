@@ -60,6 +60,9 @@ const PERMISSION_DEFINITIONS: Array<{ name: string; slug: string; description: s
   { name: "Notifications", slug: "notifications.manage", description: "Manage notifications" },
   { name: "Environment Settings", slug: "environment.manage", description: "Manage environment configuration" },
   { name: "API Management", slug: "api.manage", description: "Manage API keys and endpoints" },
+  { name: "Content Cache Read", slug: "content.cache.read", description: "Inspect page content cache metadata" },
+  { name: "Content Cache Invalidate", slug: "content.cache.invalidate", description: "Invalidate page content cache entries" },
+  { name: "Content Cache Rebuild", slug: "content.cache.rebuild", description: "Force-rebuild page content cache entries" },
 ];
 
 async function ensurePermissionDocuments(): Promise<void> {

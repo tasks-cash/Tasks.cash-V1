@@ -41,6 +41,7 @@ import duelRoutes from "./routes/duels";
 import vaultRoutes from "./routes/vault";
 import contentRoutes from "./routes/content";
 import adminContentRoutes from "./routes/adminContent";
+import adminContentCacheRoutes from "./routes/adminContentCache";
 
 // Load .env in local dev only — Docker injects env vars directly; never override existing vars
 const rootEnv = path.resolve(__dirname, "../../../.env");
@@ -64,13 +65,28 @@ app.use(express.json());
 app.get("/health", (_req, res) => {
   const mongoOk = isDbConnected();
   const redisOk = isRedisReady();
+  const cacheCfg = getPageCacheConfig();
+  const pageCache = !cacheCfg.enabled
+    ? "disabled"
+    : redisOk
+      ? "enabled"
+      : "degraded";
+  const overall =
+    !mongoOk && !redisOk ? "unavailable" : !mongoOk || !redisOk ? "degraded" : "ok";
   res.status(mongoOk ? 200 : 503).json({
-    status: mongoOk ? "ok" : "degraded",
+    status: overall,
     service: "tasks-cash-api",
     timestamp: new Date().toISOString(),
+    components: {
+      api: "up",
+      mongodb: mongoOk ? "up" : "down",
+      redis: redisOk ? "up" : "down",
+      pageCache,
+    },
+    // Backward-compatible fields (no URLs / credentials)
     mongo: mongoOk ? "connected" : "unavailable",
     redis: redisOk ? "connected" : "unavailable",
-    redisDb: getPageCacheConfig().redisDb,
+    redisDb: cacheCfg.redisDb,
   });
 });
 
@@ -105,6 +121,7 @@ app.use("/api/duels", duelRoutes);
 app.use("/api/vault", vaultRoutes);
 app.use("/api/content", contentRoutes);
 app.use("/api/admin/content", adminContentRoutes);
+app.use("/api/admin/content-cache", adminContentCacheRoutes);
 
 // 404 handler
 app.use((_req, res) => {

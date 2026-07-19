@@ -147,6 +147,43 @@ export function requireRole(minRole: AppRole) {
 export const authenticate = authMiddleware;
 export const requireAdmin = adminMiddleware;
 
+/**
+ * Require a permission slug for admin portal accounts.
+ * owner / super_admin always pass. Other admins must hold the slug
+ * (or system.full_access) on their Role document.
+ */
+export function requireAdminPermission(permission: string) {
+  return async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+    if (req.accountType !== "admin" || !req.admin || !isAdminPortalRole(req.admin.role)) {
+      res.status(403).json({ success: false, error: "Admin access required" });
+      return;
+    }
+
+    const role = normalizeRole(req.admin.role);
+    if (role === "owner" || role === "super_admin") {
+      next();
+      return;
+    }
+
+    try {
+      const { Role } = await import("../models/Role");
+      const roleDoc = await Role.findOne({
+        $or: [{ slug: req.admin.role }, { name: new RegExp(`^${req.admin.role}$`, "i") }],
+      })
+        .lean<{ permissions?: string[] }>()
+        .exec();
+      const perms = Array.isArray(roleDoc?.permissions) ? roleDoc.permissions : [];
+      if (perms.includes("system.full_access") || perms.includes(permission)) {
+        next();
+        return;
+      }
+      res.status(403).json({ success: false, error: "Insufficient permissions" });
+    } catch {
+      res.status(403).json({ success: false, error: "Insufficient permissions" });
+    }
+  };
+}
+
 export function signToken(
   accountId: string,
   role: string,

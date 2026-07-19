@@ -20,6 +20,9 @@ export const SUPER_ADMIN_PERMISSIONS = [
   "notifications.manage",
   "environment.manage",
   "api.manage",
+  "content.cache.read",
+  "content.cache.invalidate",
+  "content.cache.rebuild",
 ] as const;
 
 export type SuperAdminPermission = (typeof SUPER_ADMIN_PERMISSIONS)[number];

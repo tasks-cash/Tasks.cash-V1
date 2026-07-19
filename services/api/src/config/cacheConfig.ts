@@ -13,15 +13,16 @@ const DEFAULTS = {
   tenant: "public",
   ttlSeconds: 300,
   staleSeconds: 900,
-  lockTtlMs: 5000,
-  lockWaitMs: 750,
-  lockRetryDelayMs: 60,
+  lockTtlMs: 15_000,
+  lockWaitMs: 5_000,
+  lockRetryDelayMs: 100,
+  maxIdentifierLength: 64,
 } as const;
 
 function positiveInt(raw: string | undefined, fallback: number, name: string): number {
   if (raw === undefined || raw.trim() === "") return fallback;
   const parsed = Number(raw);
-  if (!Number.isInteger(parsed) || parsed <= 0) {
+  if (!Number.isFinite(parsed) || Number.isNaN(parsed) || !Number.isInteger(parsed) || parsed <= 0) {
     console.warn(`[CacheConfig] ${name} must be a positive integer — using default ${fallback}`);
     return fallback;
   }
@@ -31,16 +32,26 @@ function positiveInt(raw: string | undefined, fallback: number, name: string): n
 function nonNegInt(raw: string | undefined, fallback: number, name: string): number {
   if (raw === undefined || raw.trim() === "") return fallback;
   const parsed = Number(raw);
-  if (!Number.isInteger(parsed) || parsed < 0) {
+  if (!Number.isFinite(parsed) || Number.isNaN(parsed) || !Number.isInteger(parsed) || parsed < 0) {
     console.warn(`[CacheConfig] ${name} must be a non-negative integer — using default ${fallback}`);
     return fallback;
   }
   return parsed;
 }
 
+function safeVersion(raw: string | undefined, fallback: string): string {
+  const value = (raw ?? fallback).trim().toLowerCase();
+  if (!/^v[a-z0-9_-]{1,16}$/.test(value)) {
+    console.warn(`[CacheConfig] PAGE_CONTENT_CACHE_VERSION unsafe — using ${fallback}`);
+    return fallback;
+  }
+  return value;
+}
+
 export interface PageCacheConfig {
   schemaVersion: string;
   tenant: string;
+  enabled: boolean;
   /** Fresh window (HIT). */
   ttlSeconds: number;
   /** Stale grace window after fresh expires (STALE + background refresh). */
@@ -51,6 +62,7 @@ export interface PageCacheConfig {
   lockWaitMs: number;
   lockRetryDelayMs: number;
   tagSetTtlSeconds: number;
+  maxIdentifierLength: number;
   /** Redis logical DB index (explicit for safety). */
   redisDb: number;
   /** Expose X-Page-Cache debug headers. */
@@ -89,21 +101,31 @@ export function getPageCacheConfig(): PageCacheConfig {
     "PAGE_CONTENT_CACHE_LOCK_WAIT_MS"
   );
 
+  const lockRetryDelayMs = positiveInt(
+    process.env.PAGE_CONTENT_CACHE_LOCK_RETRY_MS,
+    DEFAULTS.lockRetryDelayMs,
+    "PAGE_CONTENT_CACHE_LOCK_RETRY_MS"
+  );
+
   const totalTtlSeconds = ttlSeconds + Math.max(staleSeconds, 0);
   const isProd = process.env.NODE_ENV === "production";
+  const enabled = process.env.PAGE_CONTENT_CACHE_ENABLED !== "false";
 
   cached = {
-    schemaVersion:
-      (process.env.PAGE_CONTENT_CACHE_SCHEMA_VERSION ?? DEFAULTS.schemaVersion).trim() ||
-      DEFAULTS.schemaVersion,
+    schemaVersion: safeVersion(
+      process.env.PAGE_CONTENT_CACHE_VERSION ?? process.env.PAGE_CONTENT_CACHE_SCHEMA_VERSION,
+      DEFAULTS.schemaVersion
+    ),
     tenant: (process.env.PAGE_CONTENT_CACHE_TENANT ?? DEFAULTS.tenant).trim() || DEFAULTS.tenant,
+    enabled,
     ttlSeconds,
     staleSeconds,
     totalTtlSeconds,
     lockTtlMs,
     lockWaitMs,
-    lockRetryDelayMs: DEFAULTS.lockRetryDelayMs,
+    lockRetryDelayMs,
     tagSetTtlSeconds: totalTtlSeconds + 300,
+    maxIdentifierLength: DEFAULTS.maxIdentifierLength,
     redisDb: nonNegInt(process.env.REDIS_DB, 0, "REDIS_DB"),
     debugHeaders: isProd
       ? process.env.PAGE_CONTENT_CACHE_DEBUG_HEADERS === "true"
