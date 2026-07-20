@@ -1,6 +1,7 @@
 import Redis from "ioredis";
 import { randomBytes } from "crypto";
 import { getPageCacheConfig } from "./cacheConfig";
+import { logRedis } from "../observability/redisEvents";
 
 let redis: Redis | null = null;
 let initFailed = false;
@@ -34,9 +35,9 @@ export function getRedis(): Redis | null {
       commandTimeout: 1_500,
       retryStrategy(times) {
         if (times > MAX_RECONNECT_ATTEMPTS) {
-          console.warn(
-            `[Redis] Giving up reconnect after ${MAX_RECONNECT_ATTEMPTS} attempts — cache disabled`
-          );
+          logRedis("reconnect", {
+            error: `Giving up after ${MAX_RECONNECT_ATTEMPTS} attempts`,
+          });
           return null;
         }
         return Math.min(times * 200, 2000);
@@ -49,7 +50,7 @@ export function getRedis(): Redis | null {
     let errorLogged = false;
     redis.on("error", (err) => {
       if (!errorLogged) {
-        console.warn("[Redis] Connection error:", err.message);
+        logRedis("error", { error: err.message });
         errorLogged = true;
       }
     });
@@ -57,12 +58,16 @@ export function getRedis(): Redis | null {
       errorLogged = false;
       getErrorLogged = false;
       setErrorLogged = false;
+      logRedis("connected", {});
+    });
+    redis.on("reconnecting", () => {
+      logRedis("reconnect", {});
     });
 
     return redis;
   } catch {
     initFailed = true;
-    console.warn("[Redis] Failed to initialize — running without cache");
+    logRedis("error", { error: "Failed to initialize — running without cache" });
     return null;
   }
 }
@@ -75,9 +80,9 @@ export async function connectRedis(): Promise<void> {
     if (client.status === "wait") {
       await client.connect();
     }
-    console.log("[Redis] Connected", { db: getPageCacheConfig().redisDb });
+    logRedis("connected", { db: getPageCacheConfig().redisDb });
   } catch {
-    console.warn("[Redis] Unavailable — cache disabled");
+    logRedis("error", { error: "Unavailable — cache disabled" });
     try {
       client.disconnect();
     } catch {
@@ -102,13 +107,23 @@ export function isRedisAvailable(): boolean {
 export async function cacheGet<T>(key: string): Promise<T | null> {
   const client = getRedis();
   if (!client) return null;
+  const started = Date.now();
   try {
     const data = await client.get(key);
     getErrorLogged = false;
-    return data ? (JSON.parse(data) as T) : null;
+    const durationMs = Date.now() - started;
+    if (data) {
+      logRedis("cache_hit", { key, durationMs });
+      return JSON.parse(data) as T;
+    }
+    logRedis("cache_miss", { key, durationMs });
+    return null;
   } catch (err) {
-    if (!getErrorLogged) {
-      console.warn("[Redis] GET failed:", err instanceof Error ? err.message : err);
+    const msg = err instanceof Error ? err.message : String(err);
+    if (/timed?\s*out|TimeoutError/i.test(msg)) {
+      logRedis("timeout", { key, error: msg, durationMs: Date.now() - started });
+    } else if (!getErrorLogged) {
+      logRedis("error", { key, error: msg, durationMs: Date.now() - started });
       getErrorLogged = true;
     }
     return null;
@@ -120,16 +135,22 @@ export async function cacheSet(key: string, value: unknown, ttlSeconds?: number)
   if (!client) return false;
   const ttl = ttlSeconds ?? getPageCacheConfig().totalTtlSeconds;
   if (!Number.isInteger(ttl) || ttl <= 0) {
-    console.warn("[Redis] SETEX refused — TTL must be a positive integer");
+    logRedis("error", { key, error: "SETEX refused — TTL must be a positive integer" });
     return false;
   }
+  const started = Date.now();
   try {
     const result = await client.setex(key, ttl, JSON.stringify(value));
     setErrorLogged = false;
+    logRedis("set", { key, durationMs: Date.now() - started, ttl });
     return result === "OK";
   } catch (err) {
     if (!setErrorLogged) {
-      console.warn("[Redis] SETEX failed:", err instanceof Error ? err.message : err);
+      logRedis("error", {
+        key,
+        error: err instanceof Error ? err.message : String(err),
+        durationMs: Date.now() - started,
+      });
       setErrorLogged = true;
     }
     return false;
@@ -140,9 +161,11 @@ export async function cacheDel(key: string): Promise<boolean> {
   const client = getRedis();
   if (!client) return false;
   try {
-    return (await client.del(key)) > 0;
+    const n = await client.del(key);
+    if (n > 0) logRedis("cache_invalidate", { key });
+    return n > 0;
   } catch (err) {
-    console.warn("[Redis] DEL failed:", err instanceof Error ? err.message : err);
+    logRedis("error", { key, error: err instanceof Error ? err.message : String(err) });
     return false;
   }
 }
@@ -151,9 +174,11 @@ export async function cacheDelMany(keys: string[]): Promise<number> {
   const client = getRedis();
   if (!client || keys.length === 0) return 0;
   try {
-    return await client.del(...keys);
+    const n = await client.del(...keys);
+    if (n > 0) logRedis("cache_invalidate", { keyCount: keys.length, deleted: n });
+    return n;
   } catch (err) {
-    console.warn("[Redis] DEL(many) failed:", err instanceof Error ? err.message : err);
+    logRedis("error", { error: err instanceof Error ? err.message : String(err) });
     return 0;
   }
 }
@@ -168,7 +193,10 @@ export async function bumpCacheGeneration(generationKey: string): Promise<number
     await client.expire(generationKey, getPageCacheConfig().tagSetTtlSeconds);
     return next;
   } catch (err) {
-    console.warn("[Redis] generation bump failed:", err instanceof Error ? err.message : err);
+    logRedis("error", {
+      key: generationKey,
+      error: err instanceof Error ? err.message : String(err),
+    });
     return 0;
   }
 }
@@ -210,11 +238,17 @@ export async function tryAcquireLock(key: string, ttlMs: number): Promise<LockRe
   const token = randomBytes(16).toString("hex");
   try {
     const result = await client.set(key, token, "PX", ttlMs, "NX");
-    return result === "OK"
-      ? { status: "acquired", handle: { key, token } }
-      : { status: "contended" };
+    if (result === "OK") {
+      logRedis("lock_acquire", { key, acquired: true });
+      return { status: "acquired", handle: { key, token } };
+    }
+    logRedis("lock_fail", { key, acquired: false });
+    return { status: "contended" };
   } catch (err) {
-    console.warn("[Redis] lock acquire failed:", err instanceof Error ? err.message : err);
+    logRedis("error", {
+      key,
+      error: err instanceof Error ? err.message : String(err),
+    });
     return { status: "unavailable" };
   }
 }
@@ -231,9 +265,14 @@ export async function releaseLock(handle: LockHandle): Promise<boolean> {
   if (!client) return false;
   try {
     const result = await client.eval(RELEASE_LOCK_LUA, 1, handle.key, handle.token);
-    return result === 1;
+    const ok = result === 1;
+    logRedis("lock_release", { key: handle.key, acquired: ok });
+    return ok;
   } catch (err) {
-    console.warn("[Redis] lock release failed:", err instanceof Error ? err.message : err);
+    logRedis("error", {
+      key: handle.key,
+      error: err instanceof Error ? err.message : String(err),
+    });
     return false;
   }
 }
@@ -258,7 +297,11 @@ export async function registerKeyTags(
     }
     await pipeline.exec();
   } catch (err) {
-    console.warn("[Redis] tag register failed:", err instanceof Error ? err.message : err);
+    logRedis("error", {
+      key: cacheKey,
+      error: err instanceof Error ? err.message : String(err),
+      tagCount: tags.length,
+    });
   }
 }
 
@@ -277,7 +320,10 @@ export async function unregisterKeyFromTags(
     }
     await pipeline.exec();
   } catch (err) {
-    console.warn("[Redis] tag unregister failed:", err instanceof Error ? err.message : err);
+    logRedis("error", {
+      key: cacheKey,
+      error: err instanceof Error ? err.message : String(err),
+    });
   }
 }
 
@@ -300,7 +346,7 @@ export async function resolveKeysForTags(
     }
     return { keys: [...keys], tagKeys };
   } catch (err) {
-    console.warn("[Redis] tag resolve failed:", err instanceof Error ? err.message : err);
+    logRedis("error", { error: err instanceof Error ? err.message : String(err) });
     return { keys: [], tagKeys: [] };
   }
 }

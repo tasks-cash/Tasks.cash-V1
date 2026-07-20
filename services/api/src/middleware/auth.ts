@@ -4,6 +4,8 @@ import { User, IUserDocument } from "../models/User";
 import { Admin, IAdminDocument } from "../models/Admin";
 import { isDbConnected } from "../config/database";
 import { isAdminPortalRole } from "../lib/passwordHash";
+import { logAuth } from "../observability/authEvents";
+import { updateContext } from "../observability/context";
 
 export type AccountType = "user" | "admin";
 
@@ -89,28 +91,45 @@ export async function authMiddleware(
     if (accountType === "admin") {
       const admin = await Admin.findById(payload.userId).select("-passwordHash");
       if (!admin) {
+        logAuth("jwt_invalid", { accountType: "admin", reason: "admin_not_found", ip: req.ip });
         res.status(401).json({ success: false, error: "Admin not found" });
         return;
       }
       if (admin.status !== "active") {
+        logAuth("account_inactive", {
+          accountType: "admin",
+          userId: admin._id.toString(),
+          ip: req.ip,
+        });
         res.status(403).json({ success: false, error: "Account is not active" });
         return;
       }
       req.admin = admin;
       req.accountType = "admin";
+      updateContext({ userId: admin._id.toString(), accountType: "admin" });
+      logAuth("jwt_valid", { accountType: "admin", userId: admin._id.toString(), role: admin.role });
       next();
       return;
     }
 
     const user = await User.findById(payload.userId).select("-passwordHash");
     if (!user) {
+      logAuth("jwt_invalid", { accountType: "user", reason: "user_not_found", ip: req.ip });
       res.status(401).json({ success: false, error: "User not found" });
       return;
     }
     req.user = user;
     req.accountType = "user";
+    updateContext({ userId: user._id.toString(), accountType: "user" });
+    logAuth("jwt_valid", { accountType: "user", userId: user._id.toString(), role: user.role });
     next();
-  } catch {
+  } catch (err) {
+    const expired =
+      err instanceof Error && (err.name === "TokenExpiredError" || /expired/i.test(err.message));
+    logAuth(expired ? "session_expired" : "jwt_invalid", {
+      reason: expired ? "token_expired" : "verify_failed",
+      ip: req.ip,
+    });
     res.status(401).json({ success: false, error: "Invalid token" });
   }
 }
@@ -155,6 +174,12 @@ export const requireAdmin = adminMiddleware;
 export function requireAdminPermission(permission: string) {
   return async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
     if (req.accountType !== "admin" || !req.admin || !isAdminPortalRole(req.admin.role)) {
+      logAuth("permission_denied", {
+        accountType: req.accountType,
+        permission,
+        reason: "admin_required",
+        ip: req.ip,
+      });
       res.status(403).json({ success: false, error: "Admin access required" });
       return;
     }
@@ -177,8 +202,21 @@ export function requireAdminPermission(permission: string) {
         next();
         return;
       }
+      logAuth("permission_denied", {
+        accountType: "admin",
+        userId: req.admin._id.toString(),
+        role: req.admin.role,
+        permission,
+        ip: req.ip,
+      });
       res.status(403).json({ success: false, error: "Insufficient permissions" });
     } catch {
+      logAuth("permission_denied", {
+        accountType: "admin",
+        permission,
+        reason: "role_lookup_failed",
+        ip: req.ip,
+      });
       res.status(403).json({ success: false, error: "Insufficient permissions" });
     }
   };

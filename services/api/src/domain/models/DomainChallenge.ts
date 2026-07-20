@@ -115,7 +115,7 @@ schema.pre("validate", function (this: IDomainChallenge, next) {
 schema.index({ tenantId: 1, challengeId: 1 }, { unique: true });
 schema.index(
   { tenantId: 1, appKey: 1, slug: 1 },
-  { unique: true, partialFilterExpression: { deletedAt: { $exists: false } } }
+  { unique: true, partialFilterExpression: { deletedAt: null }, name: "uniq_challenge_slug_active" }
 );
 schema.index({ tenantId: 1, campaignId: 1, status: 1 });
 schema.index({ tenantId: 1, status: 1, startAt: 1 });

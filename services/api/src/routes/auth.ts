@@ -10,6 +10,7 @@ import { getOrCreateUserSettings } from "../services/notificationService";
 import { createReferralOnRegister } from "../services/referralService";
 import { requireDbConnection } from "../lib/requireDb";
 import { isAdminPortalRole, resolveStoredPasswordHash } from "../lib/passwordHash";
+import { logAuth } from "../observability/authEvents";
 
 const router = Router();
 
@@ -120,27 +121,54 @@ router.post("/login", async (req, res: Response) => {
     const email = data.email.toLowerCase().trim();
     const user = await User.findOne({ email });
     if (!user) {
+      logAuth("login_failure", { accountType: "user", email, reason: "user_not_found", ip: req.ip });
       res.status(401).json({ success: false, error: "Invalid credentials" });
       return;
     }
 
     const storedHash = resolveStoredPasswordHash(user);
     if (!storedHash || !(await bcrypt.compare(data.password, storedHash))) {
+      logAuth("login_failure", {
+        accountType: "user",
+        email,
+        userId: user._id.toString(),
+        reason: "bad_password",
+        ip: req.ip,
+      });
       res.status(401).json({ success: false, error: "Invalid credentials" });
       return;
     }
 
     if (user.status && user.status !== "active") {
+      logAuth("account_inactive", {
+        accountType: "user",
+        userId: user._id.toString(),
+        email,
+        ip: req.ip,
+      });
       res.status(403).json({ success: false, error: "Account is not active" });
       return;
     }
 
     if (isAdminPortalRole(user.role)) {
+      logAuth("login_failure", {
+        accountType: "user",
+        email,
+        reason: "admin_must_use_portal",
+        ip: req.ip,
+      });
       res.status(403).json({ success: false, error: "Please use the admin portal to sign in" });
       return;
     }
 
     const token = signToken(user._id.toString(), user.role, user.email, "user");
+    logAuth("login_success", {
+      accountType: "user",
+      userId: user._id.toString(),
+      email,
+      role: user.role,
+      ip: req.ip,
+    });
     res.json({
       success: true,
       data: { accessToken: token, user: sanitizeUser(user) },
@@ -180,6 +208,12 @@ router.post("/admin/login", async (req, res: Response) => {
     }
 
     if (!admin || !passwordFieldExists || !passwordValid) {
+      logAuth("login_failure", {
+        accountType: "admin",
+        email,
+        reason: !admin ? "admin_not_found" : "bad_password",
+        ip: req.ip,
+      });
       const body: Record<string, unknown> = { success: false, error: "Invalid credentials" };
       if (debugRequested) {
         body.debug = { userFound, passwordFieldExists, passwordValid, roleAllowed };
@@ -189,6 +223,14 @@ router.post("/admin/login", async (req, res: Response) => {
     }
 
     if (!roleAllowed) {
+      logAuth("permission_denied", {
+        accountType: "admin",
+        email,
+        userId: admin._id.toString(),
+        role: admin.role,
+        reason: "role_not_allowed",
+        ip: req.ip,
+      });
       const body: Record<string, unknown> = { success: false, error: "Admin access denied" };
       if (debugRequested) {
         body.debug = { userFound, passwordFieldExists, passwordValid, roleAllowed };
@@ -198,11 +240,24 @@ router.post("/admin/login", async (req, res: Response) => {
     }
 
     if (admin.status !== "active") {
+      logAuth("account_inactive", {
+        accountType: "admin",
+        userId: admin._id.toString(),
+        email,
+        ip: req.ip,
+      });
       res.status(403).json({ success: false, error: "Account is not active" });
       return;
     }
 
     const token = signToken(admin._id.toString(), admin.role, admin.email, "admin");
+    logAuth("login_success", {
+      accountType: "admin",
+      userId: admin._id.toString(),
+      email,
+      role: admin.role,
+      ip: req.ip,
+    });
     const response: Record<string, unknown> = {
       success: true,
       data: { accessToken: token, admin: sanitizeAdmin(admin) },

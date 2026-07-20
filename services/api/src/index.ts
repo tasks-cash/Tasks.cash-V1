@@ -1,7 +1,6 @@
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
-import morgan from "morgan";
 import dotenv from "dotenv";
 import path from "path";
 
@@ -11,6 +10,15 @@ import { connectRedis, isRedisReady } from "./config/redis";
 import { getPageCacheConfig } from "./config/cacheConfig";
 import { ensureDefaultAdminAccounts } from "./services/defaultAdminAccountsService";
 import { APP_URL, ADMIN_URL, CHALLENGE_APP_URL } from "./config/env";
+import {
+  requestContextMiddleware,
+  httpAccessLogMiddleware,
+  getDiagnostics,
+  startEventLoopMonitor,
+  installProcessErrorHandlers,
+  globalErrorHandler,
+  logger,
+} from "./observability";
 import authRoutes from "./routes/auth";
 import userRoutes from "./routes/users";
 import missionRoutes from "./routes/missions";
@@ -42,6 +50,7 @@ import vaultRoutes from "./routes/vault";
 import contentRoutes from "./routes/content";
 import adminContentRoutes from "./routes/adminContent";
 import adminContentCacheRoutes from "./routes/adminContentCache";
+import adminDomainRoutes from "./routes/adminDomain";
 
 // Load .env in local dev only — Docker injects env vars directly; never override existing vars
 const rootEnv = path.resolve(__dirname, "../../../.env");
@@ -49,6 +58,9 @@ if (process.env.NODE_ENV !== "production") {
   dotenv.config({ path: rootEnv, override: false });
   dotenv.config({ override: false });
 }
+
+installProcessErrorHandlers();
+startEventLoopMonitor();
 
 const app = express();
 const PORT = Number(process.env.PORT ?? process.env.API_PORT ?? 4000);
@@ -58,8 +70,9 @@ app.use(cors({
   origin: [APP_URL, ADMIN_URL, CHALLENGE_APP_URL],
   credentials: true,
 }));
-app.use(morgan("dev"));
-app.use(express.json());
+app.use(requestContextMiddleware);
+app.use(httpAccessLogMiddleware);
+app.use(express.json({ limit: "1mb" }));
 
 // Health check — process liveness + dependency readiness (no secrets).
 app.get("/health", (_req, res) => {
@@ -88,6 +101,12 @@ app.get("/health", (_req, res) => {
     redis: redisOk ? "connected" : "unavailable",
     redisDb: cacheCfg.redisDb,
   });
+});
+
+/** Extended diagnostics — memory, CPU load, event-loop lag, logging config. */
+app.get("/health/diagnostics", (_req, res) => {
+  const diag = getDiagnostics();
+  res.status(diag.status === "unavailable" ? 503 : 200).json(diag);
 });
 
 // API routes
@@ -122,11 +141,20 @@ app.use("/api/vault", vaultRoutes);
 app.use("/api/content", contentRoutes);
 app.use("/api/admin/content", adminContentRoutes);
 app.use("/api/admin/content-cache", adminContentCacheRoutes);
+app.use("/api/admin", adminDomainRoutes);
 
 // 404 handler
-app.use((_req, res) => {
+app.use((req, res) => {
+  logger.warn("Route not found", {
+    category: "http",
+    module: "http",
+    operation: `${req.method} ${req.path}`,
+    status: 404,
+  });
   res.status(404).json({ success: false, error: "Route not found" });
 });
+
+app.use(globalErrorHandler);
 
 async function bootstrap() {
   try {
@@ -135,26 +163,53 @@ async function bootstrap() {
       try {
         await ensureDefaultAdminAccounts();
       } catch (err) {
-        console.warn("[AdminBootstrap] Failed to ensure default admin accounts:", err);
+        logger.warn("Failed to ensure default admin accounts", {
+          category: "app",
+          module: "AdminBootstrap",
+          operation: "ensureDefaultAdminAccounts",
+          error: err instanceof Error ? err.message : "unknown",
+        });
       }
     }
-  } catch (err) {
-    console.warn("[DB] MongoDB unavailable — API will return 503 for database routes");
+  } catch {
+    logger.warn("MongoDB unavailable — API will return 503 for database routes", {
+      category: "mongo",
+      module: "mongodb",
+      operation: "connect",
+      status: "down",
+    });
   }
 
   try {
     await connectRedis();
   } catch {
-    console.warn("[Redis] unavailable — continuing without cache");
+    logger.warn("Redis unavailable — continuing without cache", {
+      category: "redis",
+      module: "redis",
+      operation: "connect",
+      status: "down",
+    });
   }
 
   app.listen(PORT, "0.0.0.0", () => {
-    console.log(`[API] Tasks.cash API running on http://0.0.0.0:${PORT}`);
+    logger.info(`Tasks.cash API running on http://0.0.0.0:${PORT}`, {
+      category: "app",
+      module: "api",
+      operation: "listen",
+      status: "ok",
+      port: PORT,
+    });
   });
 }
 
 bootstrap().catch((err) => {
-  console.error("[API] Failed to start:", err);
+  logger.fatal("Failed to start API", {
+    category: "error",
+    module: "api",
+    operation: "bootstrap",
+    error: err instanceof Error ? err.message : "unknown",
+    stack: err instanceof Error ? err.stack : undefined,
+  });
   process.exit(1);
 });
 

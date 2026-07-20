@@ -11,9 +11,10 @@
     "seed:content": "tsx src/seedContent.ts",
     "cms:sync": "tsx src/cmsSync.ts",
     "lint": "echo 'api lint ok'",
-    "test": "tsx --test test/cache/**/*.test.ts test/domain/**/*.test.ts",
+    "test": "tsx --test test/cache/**/*.test.ts test/domain/**/*.test.ts test/observability/**/*.test.ts",
     "test:cache": "tsx --test test/cache/**/*.test.ts",
-    "test:domain": "tsx --test test/domain/**/*.test.ts"
+    "test:domain": "tsx --test test/domain/**/*.test.ts",
+    "test:observability": "tsx --test test/observability/**/*.test.ts"
   },
   "dependencies": {
     "@tasks-cash/game-engine": "workspace:*",

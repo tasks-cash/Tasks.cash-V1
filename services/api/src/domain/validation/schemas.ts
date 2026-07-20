@@ -180,39 +180,41 @@ export const campaignStatusTransitionSchema = z.object({
 
 /* ─────────────── Challenge ─────────────── */
 
-export const createChallengeSchema = z
-  .object({
-    appKey: appKeySchema.default("main"),
-    campaignId: publicIdSchema("campaign").optional(),
-    templateId: publicIdSchema("challengeTemplate").optional(),
-    name: z.string().trim().min(1).max(200),
-    slug: slugSchema,
-    description: z.string().trim().max(10_000).optional(),
-    instructions: z.string().trim().max(20_000).optional(),
-    challengeType: z.enum(CHALLENGE_TYPES),
-    status: z.enum(CHALLENGE_STATUSES).default("draft"),
-    difficulty: z.enum(CHALLENGE_DIFFICULTIES).default("easy"),
-    visibility: z.enum(VISIBILITIES).default("private"),
-    startAt: z.coerce.date().optional(),
-    endAt: z.coerce.date().optional(),
-    timezone: z.string().trim().max(64).default("UTC"),
-    recurrence: rulesSchema,
-    cooldown: rulesSchema,
-    participationRules: rulesSchema,
-    eligibilityRules: rulesSchema,
-    validationRules: rulesSchema,
-    scoringRules: rulesSchema,
-    rewardRules: rulesSchema,
-    participantLimit: z.number().int().min(1).optional(),
-    tags: tagsSchema.default([]),
-    media: metadataSchema,
-    metadata: metadataSchema,
-  })
-  .superRefine((data, ctx) => {
-    if (data.startAt && data.endAt && data.endAt <= data.startAt) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "endAt must be after startAt", path: ["endAt"] });
-    }
-  });
+const createChallengeObjectSchema = z.object({
+  appKey: appKeySchema.default("main"),
+  campaignId: publicIdSchema("campaign").optional(),
+  templateId: publicIdSchema("challengeTemplate").optional(),
+  name: z.string().trim().min(1).max(200),
+  slug: slugSchema,
+  description: z.string().trim().max(10_000).optional(),
+  instructions: z.string().trim().max(20_000).optional(),
+  challengeType: z.enum(CHALLENGE_TYPES),
+  status: z.enum(CHALLENGE_STATUSES).default("draft"),
+  difficulty: z.enum(CHALLENGE_DIFFICULTIES).default("easy"),
+  visibility: z.enum(VISIBILITIES).default("private"),
+  startAt: z.coerce.date().optional(),
+  endAt: z.coerce.date().optional(),
+  timezone: z.string().trim().max(64).default("UTC"),
+  recurrence: rulesSchema,
+  cooldown: rulesSchema,
+  participationRules: rulesSchema,
+  eligibilityRules: rulesSchema,
+  validationRules: rulesSchema,
+  scoringRules: rulesSchema,
+  rewardRules: rulesSchema,
+  participantLimit: z.number().int().min(1).optional(),
+  tags: tagsSchema.default([]),
+  media: metadataSchema,
+  metadata: metadataSchema,
+});
+
+export const createChallengeSchema = createChallengeObjectSchema.superRefine((data, ctx) => {
+  if (data.startAt && data.endAt && data.endAt <= data.startAt) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: "endAt must be after startAt", path: ["endAt"] });
+  }
+});
+
+export const updateChallengeSchema = createChallengeObjectSchema.partial().omit({ status: true });
 
 /* ─────────────── Mission / Submission / Reward ─────────────── */
 
@@ -240,6 +242,8 @@ export const createMissionSchema = z.object({
   tags: tagsSchema.default([]),
   metadata: metadataSchema,
 });
+
+export const updateMissionSchema = createMissionSchema.partial().omit({ status: true });
 
 export const createSubmissionSchema = z.object({
   appKey: appKeySchema.default("main"),
@@ -354,24 +358,26 @@ export const createReferralProgramSchema = z.object({
   metadata: metadataSchema,
 });
 
-export const createSeasonSchema = z
-  .object({
-    appKey: appKeySchema.default("main"),
-    name: z.string().trim().min(1).max(200),
-    description: z.string().trim().max(5_000).optional(),
-    status: z.enum(SEASON_STATUSES).default("draft"),
-    startAt: z.coerce.date().optional(),
-    endAt: z.coerce.date().optional(),
-    timezone: z.string().trim().max(64).default("UTC"),
-    scoringRules: rulesSchema,
-    rewardRules: rulesSchema,
-    metadata: metadataSchema,
-  })
-  .superRefine((data, ctx) => {
-    if (data.startAt && data.endAt && data.endAt <= data.startAt) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "endAt must be after startAt", path: ["endAt"] });
-    }
-  });
+const createSeasonObjectSchema = z.object({
+  appKey: appKeySchema.default("main"),
+  name: z.string().trim().min(1).max(200),
+  description: z.string().trim().max(5_000).optional(),
+  status: z.enum(SEASON_STATUSES).default("draft"),
+  startAt: z.coerce.date().optional(),
+  endAt: z.coerce.date().optional(),
+  timezone: z.string().trim().max(64).default("UTC"),
+  scoringRules: rulesSchema,
+  rewardRules: rulesSchema,
+  metadata: metadataSchema,
+});
+
+export const createSeasonSchema = createSeasonObjectSchema.superRefine((data, ctx) => {
+  if (data.startAt && data.endAt && data.endAt <= data.startAt) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: "endAt must be after startAt", path: ["endAt"] });
+  }
+});
+
+export const updateSeasonSchema = createSeasonObjectSchema.partial().omit({ status: true });
 
 export const createLeaderboardDefinitionSchema = z.object({
   appKey: appKeySchema.default("main"),

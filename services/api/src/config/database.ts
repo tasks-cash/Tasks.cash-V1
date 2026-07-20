@@ -1,4 +1,6 @@
 import mongoose from "mongoose";
+import { logger } from "../observability/logger";
+import { installMongoInstrumentation } from "../observability/mongoInstrumentation";
 
 export let dbConnected = false;
 
@@ -11,9 +13,18 @@ export async function connectDatabase(uri?: string): Promise<void> {
     // Fail soft quickly when Mongo is unreachable — cache may still serve pages.
     serverSelectionTimeoutMS: 3_000,
     socketTimeoutMS: 5_000,
-  });
+    // Enable driver command monitoring for observability (no query shape change).
+    monitorCommands: true,
+  } as mongoose.ConnectOptions);
+
   dbConnected = true;
-  console.log("[DB] Connected to MongoDB");
+  installMongoInstrumentation();
+  logger.info("Connected to MongoDB", {
+    category: "mongo",
+    module: "mongodb",
+    operation: "connect",
+    status: "ok",
+  });
 }
 
 export function isDbConnected(): boolean {
@@ -22,5 +33,11 @@ export function isDbConnected(): boolean {
 
 export async function disconnectDatabase(): Promise<void> {
   await mongoose.disconnect();
-  console.log("[DB] Disconnected from MongoDB");
+  dbConnected = false;
+  logger.info("Disconnected from MongoDB", {
+    category: "mongo",
+    module: "mongodb",
+    operation: "disconnect",
+    status: "ok",
+  });
 }

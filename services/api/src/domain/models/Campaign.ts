@@ -119,10 +119,10 @@ schema.pre("validate", function (this: ICampaign, next) {
 
 // Public ID lookup (unique per tenant)
 schema.index({ tenantId: 1, campaignId: 1 }, { unique: true });
-// Slug uniqueness per tenant+app (soft-deleted docs excluded so slugs can be reused)
+// Slug uniqueness per tenant+app (soft-deleted docs excluded — use null match for older Mongo)
 schema.index(
   { tenantId: 1, appKey: 1, slug: 1 },
-  { unique: true, partialFilterExpression: { deletedAt: { $exists: false } } }
+  { unique: true, partialFilterExpression: { deletedAt: null }, name: "uniq_campaign_slug_active" }
 );
 // Status dashboards / lifecycle queries
 schema.index({ tenantId: 1, status: 1 });
