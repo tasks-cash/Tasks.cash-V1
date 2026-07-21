@@ -224,6 +224,31 @@ export function registerBuiltinJobHandlers(): void {
   });
 
   registerJobHandler({
+    jobName: JOB_NAMES.CAMPAIGN_INTELLIGENCE_GENERATE,
+    version: "1",
+    description: "Campaign Intelligence strategy/package generation pipeline",
+    timeoutMs: 600_000,
+    handler: async (envelope, ctx) => {
+      const campaignId = String(envelope.payload.campaignId ?? "");
+      const generationRunId = String(envelope.payload.generationRunId ?? "");
+      if (!campaignId || !generationRunId) {
+        throw new JobPermanentError("campaignId and generationRunId required");
+      }
+      const { runCampaignIntelligencePipeline } = await import(
+        "../../campaignIntelligence/pipeline/runner"
+      );
+      return runCampaignIntelligencePipeline({
+        tenantId: envelope.tenantId,
+        campaignId,
+        generationRunId,
+        jobId: envelope.jobId,
+        correlationId: envelope.correlationId,
+        signal: ctx.signal,
+      });
+    },
+  });
+
+  registerJobHandler({
     jobName: JOB_NAMES.SYSTEM_TEST_ALWAYS_FAIL,
     version: "1",
     description: "Test-only always-fail job for Retry/DLQ acceptance (gated)",

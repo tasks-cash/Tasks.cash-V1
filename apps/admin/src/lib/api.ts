@@ -52,3 +52,11 @@ export async function adminFetch<T>(
     return { success: false, error: "Network error — is the API running?" };
   }
 }
+
+/** Authenticated application API client used by admin-hosted product surfaces. */
+export function apiFetch<T>(
+  path: string,
+  options: RequestInit = {}
+): Promise<{ success: boolean; data?: T; error?: string; status?: number; saved?: number }> {
+  return adminFetch<T>(path, options);
+}

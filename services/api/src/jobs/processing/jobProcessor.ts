@@ -188,6 +188,12 @@ export async function processBullJob(job: Job<JobEnvelope>): Promise<Record<stri
           },
         });
         let timer: NodeJS.Timeout | undefined;
+        const cancellationPoll = setInterval(() => {
+          void isCancelled(envelope.jobId).then((cancelled) => {
+            if (cancelled) controller.abort();
+          }).catch(() => undefined);
+        }, 500);
+        cancellationPoll.unref();
         try {
           return await Promise.race([
             work,
@@ -200,6 +206,7 @@ export async function processBullJob(job: Job<JobEnvelope>): Promise<Record<stri
           ]);
         } finally {
           if (timer) clearTimeout(timer);
+          clearInterval(cancellationPoll);
         }
       }
     );

@@ -13,6 +13,7 @@ export interface AuthRequest extends Request {
   user?: IUserDocument;
   admin?: IAdminDocument;
   accountType?: AccountType;
+  authorizedTenantId?: string;
 }
 
 interface JwtPayload {
@@ -144,6 +145,45 @@ export function adminMiddleware(
     res.status(403).json({ success: false, error: "Admin access required" });
     return;
   }
+  next();
+}
+
+/**
+ * Resolve a tenant only after proving that the authenticated administrator is
+ * authorized for it. Ordinary admins are limited to Admin.tenantIds; owners
+ * and super-admins are trusted platform operators and may explicitly select a
+ * tenant. Query-string tenant selection is intentionally rejected.
+ */
+export function requireAuthorizedTenant(
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+): void {
+  if (!req.admin || req.accountType !== "admin") {
+    res.status(403).json({ success: false, error: "Admin access required" });
+    return;
+  }
+  const requested = req.header("x-tenant-id")?.trim();
+  if (!requested || !/^[a-zA-Z0-9][a-zA-Z0-9_-]{0,127}$/.test(requested)) {
+    res.status(400).json({ success: false, error: "A valid x-tenant-id header is required" });
+    return;
+  }
+  const role = normalizeRole(req.admin.role);
+  const allowed = Array.isArray(req.admin.tenantIds) ? req.admin.tenantIds : [];
+  if (role !== "owner" && role !== "super_admin" && !allowed.includes(requested)) {
+    logAuth("permission_denied", {
+      accountType: "admin",
+      userId: req.admin._id.toString(),
+      role: req.admin.role,
+      permission: "tenant.access",
+      reason: "tenant_not_authorized",
+      ip: req.ip,
+    });
+    res.status(403).json({ success: false, error: "Tenant access denied" });
+    return;
+  }
+  req.authorizedTenantId = requested;
+  updateContext({ tenantId: requested });
   next();
 }
 

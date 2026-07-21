@@ -43,6 +43,13 @@ export const PUBLIC_ID_PREFIXES = {
   jobDeadLetter: "jdl",
   jobSchedule: "jsc",
   jobCancellation: "jcl",
+  intelCampaign: "icm",
+  brandProfile: "bpf",
+  audienceProfile: "aud",
+  strategyVersion: "csv",
+  packageVersion: "cpv",
+  campaignAsset: "cas",
+  generationRun: "cgr",
 } as const;
 
 export type PublicIdKind = keyof typeof PUBLIC_ID_PREFIXES;

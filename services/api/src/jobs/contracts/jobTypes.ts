@@ -19,6 +19,8 @@ export const JOB_NAMES = {
   SYSTEM_HEALTH_PING: "system.health.ping",
   SYSTEM_CLEANUP: "system.jobs.cleanup",
   EVENT_RETENTION_CLEANUP: "events.retention.cleanup",
+  /** Campaign Intelligence multilingual package / strategy pipeline */
+  CAMPAIGN_INTELLIGENCE_GENERATE: "campaign.intel.generate",
   /** Acceptance / fixture only — handler registered when JOBS_ENABLE_TEST_HANDLERS=true or NODE_ENV=test */
   SYSTEM_TEST_ALWAYS_FAIL: "system.test.always_fail",
 } as const;
@@ -40,6 +42,7 @@ export const JOB_QUEUE_MAP: Record<JobName, QueueName> = {
   [JOB_NAMES.SYSTEM_HEALTH_PING]: "system",
   [JOB_NAMES.SYSTEM_CLEANUP]: "system",
   [JOB_NAMES.EVENT_RETENTION_CLEANUP]: "schedules",
+  [JOB_NAMES.CAMPAIGN_INTELLIGENCE_GENERATE]: "ai",
   [JOB_NAMES.SYSTEM_TEST_ALWAYS_FAIL]: "system",
 };
 

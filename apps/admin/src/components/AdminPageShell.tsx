@@ -2,22 +2,28 @@
 
 import { GlowText, GlassCard, StatWidget, PortalButton } from "@tasks-cash/ui";
 import { MotionReveal } from "@tasks-cash/ui";
+import { useContent } from "@/hooks/useContent";
 
 interface AdminPageShellProps {
   title: string;
   subtitle?: string;
+  /** Optional CMS page whose hero content overrides the supplied fallbacks. */
+  cmsPageKey?: string;
   action?: React.ReactNode;
   stats?: { label: string; value: string | number; icon: string; glow?: "gold" | "purple" }[];
   children: React.ReactNode;
 }
 
-export function AdminPageShell({ title, subtitle, action, stats, children }: AdminPageShellProps) {
+export function AdminPageShell({ title, subtitle, cmsPageKey, action, stats, children }: AdminPageShellProps) {
+  const { text } = useContent("admin", cmsPageKey ?? "__none__");
+  const resolvedTitle = cmsPageKey ? text("hero", "title", title) : title;
+  const resolvedSubtitle = cmsPageKey ? text("hero", "subtitle", subtitle ?? "") : subtitle;
   return (
     <div>
       <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <GlowText as="h1" variant="gold" className="text-3xl">{title}</GlowText>
-          {subtitle && <p className="text-purple-300/60 text-sm mt-1">{subtitle}</p>}
+          <GlowText as="h1" variant="gold" className="text-3xl">{resolvedTitle}</GlowText>
+          {resolvedSubtitle && <p className="text-purple-300/60 text-sm mt-1">{resolvedSubtitle}</p>}
         </div>
         {action}
       </div>

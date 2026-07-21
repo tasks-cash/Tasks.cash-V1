@@ -28,6 +28,12 @@
     --brand-violet: #a855f7;
     --brand-gold: #d4af37;
     --brand-gold-bright: #fbbf24;
+
+    /* Build-independent font stacks; no production build-time network fetches. */
+    --font-inter: "Inter", system-ui, sans-serif;
+    --font-cinzel: "Cinzel", Georgia, serif;
+    --font-orbitron: "Orbitron", ui-monospace, monospace;
+    --font-rajdhani: "Rajdhani", system-ui, sans-serif;
   }
 
   *,

@@ -47,6 +47,14 @@ export const SUPER_ADMIN_PERMISSIONS = [
   "job.retry",
   "job.dead_letter.manage",
   "system.job.read_all",
+  "campaigns.read",
+  "campaigns.create",
+  "campaigns.update",
+  "campaigns.archive",
+  "campaigns.generate",
+  "campaigns.cancel",
+  "campaigns.manage_profiles",
+  "campaigns.read_generation_runs",
 ] as const;
 
 export type SuperAdminPermission = (typeof SUPER_ADMIN_PERMISSIONS)[number];

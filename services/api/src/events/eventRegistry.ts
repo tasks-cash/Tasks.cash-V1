@@ -4,7 +4,8 @@
 
 import { z } from "zod";
 import { EventRegistrationError, EventValidationError } from "./eventErrors";
-import { EVENT_TYPES, type RegisteredEventType } from "./eventTypes";
+import { EVENT_TYPES } from "./eventTypes";
+import { EVENT_TYPES_CI } from "../campaignIntelligence/events";
 
 export interface EventTypeDefinition<T extends z.ZodTypeAny = z.ZodTypeAny> {
   eventType: string;
@@ -25,7 +26,7 @@ const entityRef = z.object({
 }).passthrough();
 
 function def<T extends z.ZodTypeAny>(
-  eventType: RegisteredEventType,
+  eventType: string,
   aggregateType: string,
   description: string,
   payloadSchema: T
@@ -366,6 +367,45 @@ export function bootstrapEventRegistry(): void {
       errorCode: optionalStr,
     }).passthrough())
   );
+
+  // Campaign Intelligence (Phase 8) — parallel to reward Campaign events
+  const ciPayload = z
+    .object({
+      campaignId: id,
+      generationRunId: optionalStr,
+      strategyVersionId: optionalStr,
+      packageVersionId: optionalStr,
+      jobId: optionalStr,
+      runType: optionalStr,
+      status: optionalStr,
+      name: optionalStr,
+      objective: optionalStr,
+      funnelStage: optionalStr,
+      assetCount: z.number().optional(),
+      version: z.number().optional(),
+      errorCategory: optionalStr,
+    })
+    .passthrough();
+
+  for (const [type, desc] of [
+    [EVENT_TYPES_CI.CAMPAIGN_CREATED, "Intel campaign created"],
+    [EVENT_TYPES_CI.CAMPAIGN_UPDATED, "Intel campaign updated"],
+    [EVENT_TYPES_CI.CAMPAIGN_ARCHIVED, "Intel campaign archived"],
+    [EVENT_TYPES_CI.STRATEGY_GENERATION_REQUESTED, "Strategy generation requested"],
+    [EVENT_TYPES_CI.STRATEGY_GENERATION_STARTED, "Strategy generation started"],
+    [EVENT_TYPES_CI.STRATEGY_GENERATED, "Strategy generated"],
+    [EVENT_TYPES_CI.PACKAGE_GENERATION_REQUESTED, "Package generation requested"],
+    [EVENT_TYPES_CI.PACKAGE_GENERATION_STARTED, "Package generation started"],
+    [EVENT_TYPES_CI.PACKAGE_GENERATED, "Package generated"],
+    [EVENT_TYPES_CI.GENERATION_PROGRESSED, "Generation progressed"],
+    [EVENT_TYPES_CI.GENERATION_CANCEL_REQUESTED, "Generation cancel requested"],
+    [EVENT_TYPES_CI.GENERATION_CANCELLED, "Generation cancelled"],
+    [EVENT_TYPES_CI.GENERATION_FAILED, "Generation failed"],
+    [EVENT_TYPES_CI.VALIDATION_FAILED, "Validation failed"],
+    [EVENT_TYPES_CI.ASSET_GENERATED, "Asset generated"],
+  ] as const) {
+    registerEventType(def(type, "intel_campaign", desc, ciPayload));
+  }
 }
 
 /** Test helper: clear and re-bootstrap. */

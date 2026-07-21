@@ -6,10 +6,12 @@ import type { ActorContext } from "../services/serviceTypes";
 import { toPublicDto } from "../validation/schemas";
 
 export function actorContext(req: AuthRequest): ActorContext {
-  const headerTenant = req.header("x-tenant-id") ?? req.query.tenantId;
-  const parsed = tenantIdSchema.safeParse(headerTenant ?? "public");
+  const parsed = tenantIdSchema.safeParse(req.authorizedTenantId);
+  if (!parsed.success) {
+    throw new Error("Authorized tenant context is required");
+  }
   return {
-    tenantId: parsed.success ? parsed.data : "public",
+    tenantId: parsed.data,
     actorId: req.admin?._id?.toString?.() ?? req.user?._id?.toString?.() ?? "unknown",
     ip: req.ip,
     userAgent: req.get("user-agent") ?? undefined,

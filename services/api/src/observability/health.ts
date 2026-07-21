@@ -18,6 +18,7 @@ import { getJobsConfig } from "../jobs/config/jobConfig";
 import { getJobsDiagnostics } from "../jobs/bootstrap";
 import { isJobsRedisReady } from "../jobs/queues/jobsRedis";
 import { getWorkersStatus } from "../jobs/workers/workerManager";
+import { getCampaignIntelligenceDiagnostics } from "../campaignIntelligence/metrics";
 
 const startedAt = Date.now();
 
@@ -175,6 +176,7 @@ export function getDiagnostics() {
       concurrency: jobsCfg.concurrency,
       retentionDays: jobsCfg.retentionDays,
     },
+    campaignIntelligence: getCampaignIntelligenceDiagnostics(),
   };
 }
 

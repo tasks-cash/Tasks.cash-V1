@@ -10,7 +10,18 @@ export default function leaderboardsPage() {
     <div>
       <PageHero eyebrow="Rankings" title="Global Leaderboards" subtitle="The greatest portal warriors ranked by XP." variant="gold" />
       <div className="mx-auto max-w-6xl px-4 pb-24">
-        <GlassCard className="p-6">{LEADERBOARD_MOCK.map((e) => (<LeaderboardRow key={e.rank} entry={{ ...e, userId: String(e.rank), completedMissions: 10 + e.rank }} highlight={e.rank <= 3} />))}</GlassCard>
+        <GlassCard className="p-6">
+          {LEADERBOARD_MOCK.map((entry) => (
+            <LeaderboardRow
+              key={entry.rank}
+              rank={entry.rank}
+              username={entry.username}
+              level={entry.level}
+              coins={entry.coins}
+              xp={entry.xp}
+            />
+          ))}
+        </GlassCard>
       </div>
     </div>
   );

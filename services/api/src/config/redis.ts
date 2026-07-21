@@ -97,6 +97,18 @@ export function isRedisReady(): boolean {
   return Boolean(redis && redis.status === "ready");
 }
 
+/** Gracefully close the shared Redis client (shutdown and test teardown). */
+export async function disconnectRedis(): Promise<void> {
+  if (!redis) return;
+  const client = redis;
+  redis = null;
+  try {
+    await client.quit();
+  } catch {
+    client.disconnect();
+  }
+}
+
 /** True when a Redis client exists and is not known-failed (may still be connecting). */
 export function isRedisAvailable(): boolean {
   if (initFailed) return false;

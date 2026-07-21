@@ -3,11 +3,52 @@
 import { useEffect, useMemo, useState } from "react";
 import { AdminPageShell } from "@/components/AdminPageShell";
 import { GlassCard, PortalButton, Input, Label } from "@tasks-cash/ui";
-import type { DNAQuestionType, IDNAModule, IDNAQuestion } from "@tasks-cash/types";
+import type { DNAQuestionType } from "@tasks-cash/types";
 import { adminFetch } from "@/lib/api";
 import { DNA_CATEGORY_LABELS, DNA_DIFFICULTY_LABELS, DNA_QUESTION_TYPE_LABELS } from "@/data/explorer-dna-data";
 
 type Tab = "modules" | "questions" | "import";
+
+type DNADifficulty = keyof typeof DNA_DIFFICULTY_LABELS;
+
+interface AdminDNAModule {
+  id: string;
+  title: string;
+  description: string;
+  icon: string;
+  order: number;
+  color: string;
+  requiredLevel: number;
+  isActive: boolean;
+  xpReward: number;
+  bronzeReward: number;
+  silverReward: number;
+  goldReward: number;
+  diamondReward: number;
+}
+
+interface AdminDNAQuestion {
+  id: string;
+  moduleId: string;
+  title: string;
+  prompt?: string;
+  questionType: DNAQuestionType;
+  answerType?: DNAQuestionType;
+  choices?: string[];
+  options?: string[];
+  required: boolean;
+  difficulty: DNADifficulty;
+  requiredLevel: number;
+  intelligenceReward: number;
+  displayOrder: number;
+  isActive: boolean;
+  enabled?: boolean;
+  xpReward: number;
+  bronzeReward: number;
+  silverReward: number;
+  goldReward: number;
+  diamondReward: number;
+}
 
 const QUESTION_TYPES: DNAQuestionType[] = [
   "text", "textarea", "single_choice", "multiple_choice", "checkbox", "dropdown",
@@ -16,12 +57,12 @@ const QUESTION_TYPES: DNAQuestionType[] = [
 
 export default function AdminExplorerDnaPage() {
   const [tab, setTab] = useState<Tab>("questions");
-  const [modules, setModules] = useState<IDNAModule[]>([]);
-  const [questions, setQuestions] = useState<IDNAQuestion[]>([]);
+  const [modules, setModules] = useState<AdminDNAModule[]>([]);
+  const [questions, setQuestions] = useState<AdminDNAQuestion[]>([]);
   const [search, setSearch] = useState("");
   const [moduleFilter, setModuleFilter] = useState("");
-  const [editingQ, setEditingQ] = useState<IDNAQuestion | null>(null);
-  const [editingM, setEditingM] = useState<IDNAModule | null>(null);
+  const [editingQ, setEditingQ] = useState<AdminDNAQuestion | null>(null);
+  const [editingM, setEditingM] = useState<AdminDNAModule | null>(null);
   const [importText, setImportText] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -31,8 +72,8 @@ export default function AdminExplorerDnaPage() {
     setLoading(true);
     setError("");
     const [modRes, qRes] = await Promise.all([
-      adminFetch<IDNAModule[]>("/api/admin/explorer-dna/modules"),
-      adminFetch<IDNAQuestion[]>("/api/admin/explorer-dna/questions"),
+      adminFetch<AdminDNAModule[]>("/api/admin/explorer-dna/modules"),
+      adminFetch<AdminDNAQuestion[]>("/api/admin/explorer-dna/questions"),
     ]);
     if (modRes.success && modRes.data) setModules(modRes.data);
     if (qRes.success && qRes.data) setQuestions(qRes.data);
@@ -66,8 +107,8 @@ export default function AdminExplorerDnaPage() {
     const payload = { ...editingQ, title: editingQ.title ?? editingQ.prompt };
     const exists = questions.some((q) => q.id === editingQ.id);
     const res = exists
-      ? await adminFetch<IDNAQuestion>(`/api/admin/explorer-dna/questions/${editingQ.id}`, { method: "PUT", body: JSON.stringify(payload) })
-      : await adminFetch<IDNAQuestion>("/api/admin/explorer-dna/questions", { method: "POST", body: JSON.stringify(payload) });
+      ? await adminFetch<AdminDNAQuestion>(`/api/admin/explorer-dna/questions/${editingQ.id}`, { method: "PUT", body: JSON.stringify(payload) })
+      : await adminFetch<AdminDNAQuestion>("/api/admin/explorer-dna/questions", { method: "POST", body: JSON.stringify(payload) });
     if (res.success && res.data) {
       setMessage("Question saved");
       setEditingQ(null);
@@ -76,11 +117,11 @@ export default function AdminExplorerDnaPage() {
   }
 
   async function saveModule() {
-    if (!editingM?.name?.trim()) return;
+    if (!editingM?.title?.trim()) return;
     const exists = modules.some((m) => m.id === editingM.id);
     const res = exists
-      ? await adminFetch<IDNAModule>(`/api/admin/explorer-dna/modules/${editingM.id}`, { method: "PUT", body: JSON.stringify(editingM) })
-      : await adminFetch<IDNAModule>("/api/admin/explorer-dna/modules", { method: "POST", body: JSON.stringify(editingM) });
+      ? await adminFetch<AdminDNAModule>(`/api/admin/explorer-dna/modules/${editingM.id}`, { method: "PUT", body: JSON.stringify(editingM) })
+      : await adminFetch<AdminDNAModule>("/api/admin/explorer-dna/modules", { method: "POST", body: JSON.stringify(editingM) });
     if (res.success && res.data) {
       setMessage("Module saved");
       setEditingM(null);
@@ -91,7 +132,7 @@ export default function AdminExplorerDnaPage() {
   async function runImport() {
     try {
       const rows = JSON.parse(importText);
-      const res = await adminFetch<IDNAQuestion[]>("/api/admin/explorer-dna/questions/import", {
+      const res = await adminFetch<AdminDNAQuestion[]>("/api/admin/explorer-dna/questions/import", {
         method: "POST",
         body: JSON.stringify({ rows, format: "json" }),
       });
@@ -106,7 +147,7 @@ export default function AdminExplorerDnaPage() {
   }
 
   async function exportJson() {
-    const res = await adminFetch<IDNAQuestion[]>("/api/admin/explorer-dna/questions/export?format=json");
+    const res = await adminFetch<AdminDNAQuestion[]>("/api/admin/explorer-dna/questions/export?format=json");
     if (res.success && res.data) {
       const blob = new Blob([JSON.stringify(res.data, null, 2)], { type: "application/json" });
       const url = URL.createObjectURL(blob);
@@ -185,7 +226,7 @@ export default function AdminExplorerDnaPage() {
                 <div><Label>Module</Label><select className="auth-input mt-1 w-full" value={editingQ.moduleId} onChange={(e) => setEditingQ({ ...editingQ, moduleId: e.target.value })}>{modules.map((m) => <option key={m.id} value={m.id}>{m.title}</option>)}</select></div>
                 <div><Label>Type</Label><select className="auth-input mt-1 w-full" value={editingQ.questionType ?? editingQ.answerType} onChange={(e) => setEditingQ({ ...editingQ, questionType: e.target.value as DNAQuestionType })}>{QUESTION_TYPES.map((t) => <option key={t} value={t}>{DNA_QUESTION_TYPE_LABELS[t]}</option>)}</select></div>
                 <div><Label>Choices (pipe-separated)</Label><Input className="mt-1" value={(editingQ.choices ?? editingQ.options ?? []).join("|")} onChange={(e) => setEditingQ({ ...editingQ, choices: e.target.value.split("|").map((c) => c.trim()).filter(Boolean) })} /></div>
-                <div><Label>Difficulty</Label><select className="auth-input mt-1 w-full" value={editingQ.difficulty} onChange={(e) => setEditingQ({ ...editingQ, difficulty: e.target.value as IDNAQuestion["difficulty"] })}>{Object.keys(DNA_DIFFICULTY_LABELS).map((d) => <option key={d} value={d}>{DNA_DIFFICULTY_LABELS[d]}</option>)}</select></div>
+                <div><Label>Difficulty</Label><select className="auth-input mt-1 w-full" value={editingQ.difficulty} onChange={(e) => setEditingQ({ ...editingQ, difficulty: e.target.value as DNADifficulty })}>{(Object.keys(DNA_DIFFICULTY_LABELS) as DNADifficulty[]).map((d) => <option key={d} value={d}>{DNA_DIFFICULTY_LABELS[d]}</option>)}</select></div>
                 <div className="grid grid-cols-2 gap-2">
                   <div><Label>XP</Label><Input type="number" className="mt-1" value={editingQ.xpReward} onChange={(e) => setEditingQ({ ...editingQ, xpReward: Number(e.target.value) })} /></div>
                   <div><Label>Bronze</Label><Input type="number" className="mt-1" value={editingQ.bronzeReward} onChange={(e) => setEditingQ({ ...editingQ, bronzeReward: Number(e.target.value) })} /></div>

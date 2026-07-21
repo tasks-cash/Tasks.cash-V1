@@ -4,9 +4,9 @@ import helmet from "helmet";
 import dotenv from "dotenv";
 import path from "path";
 
-import { connectDatabase } from "./config/database";
+import { connectDatabase, disconnectDatabase } from "./config/database";
 import { isDbConnected } from "./config/database";
-import { connectRedis, isRedisReady } from "./config/redis";
+import { connectRedis, disconnectRedis, isRedisReady } from "./config/redis";
 import { getPageCacheConfig } from "./config/cacheConfig";
 import { ensureDefaultAdminAccounts } from "./services/defaultAdminAccountsService";
 import { APP_URL, ADMIN_URL, CHALLENGE_APP_URL } from "./config/env";
@@ -53,6 +53,7 @@ import adminContentCacheRoutes from "./routes/adminContentCache";
 import adminDomainRoutes from "./routes/adminDomain";
 import adminEventsRoutes from "./routes/adminEvents";
 import adminJobsRoutes from "./routes/adminJobs";
+import campaignIntelligenceRoutes from "./routes/campaignIntelligence";
 import { bootstrapEventSystem, shutdownEventSystem } from "./events";
 import { bootstrapJobsSystem, shutdownJobsSystem } from "./jobs";
 import { analyticsPublicRoutes, analyticsAdminRoutes } from "./analytics";
@@ -151,6 +152,7 @@ app.use("/api/admin/analytics", analyticsAdminRoutes);
 app.use("/api/admin", adminEventsRoutes);
 app.use("/api/admin", adminJobsRoutes);
 app.use("/api/admin", adminDomainRoutes);
+app.use("/api/campaigns", campaignIntelligenceRoutes);
 
 // 404 handler
 app.use((req, res) => {
@@ -236,7 +238,9 @@ async function bootstrap() {
     void (async () => {
       shutdownEventSystem();
       await shutdownJobsSystem();
-      server.close(() => process.exit(0));
+      await new Promise<void>((resolve) => server.close(() => resolve()));
+      await Promise.allSettled([disconnectRedis(), disconnectDatabase()]);
+      process.exit(0);
     })();
   };
   process.on("SIGTERM", shutdown);

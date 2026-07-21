@@ -1,5 +1,12 @@
 /** Admin dashboard mock data */
 
+export const ADMIN_STATS = [
+  { label: "Total Users", value: "12,847", change: "+12%" },
+  { label: "Active Missions", value: "156", change: "+3" },
+  { label: "Pending Withdrawals", value: "23", change: "⚠" },
+  { label: "Revenue (Coins)", value: "2.4M", change: "+8%" },
+];
+
 export const ADMIN_USERS = [
   { id: "U1001", username: "VoidKing", email: "void@example.com", level: 42, coins: 12400, status: "active" },
   { id: "U1002", username: "NovaBlade", email: "nova@example.com", level: 38, coins: 9800, status: "active" },

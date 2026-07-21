@@ -5,6 +5,7 @@
 import { emitDomainEvent } from "../../events/eventPublisher";
 import type { ActorContext } from "./serviceTypes";
 import type { EventMetadata, ActorType, EventSource } from "../../events/eventEnvelope";
+import type { ClientSession } from "mongoose";
 
 export async function publishDomainServiceEvent(input: {
   ctx: ActorContext;
@@ -18,6 +19,7 @@ export async function publishDomainServiceEvent(input: {
   source?: EventSource;
   financial?: boolean;
   appKey?: string;
+  session?: ClientSession;
 }): Promise<void> {
   await emitDomainEvent(
     {
@@ -33,6 +35,6 @@ export async function publishDomainServiceEvent(input: {
       metadata: input.metadata,
       idempotencyKey: input.idempotencyKey,
     },
-    { financial: input.financial }
+    { financial: input.financial, session: input.session }
   );
 }
