@@ -1,8 +1,5 @@
 import type { Metadata } from "next";
-import { CHALLENGE_APP_URL } from "@/config/env";
 import { Cinzel, Inter } from "next/font/google";
-import { I18nProvider } from "@/i18n/I18nProvider";
-import { LocaleHtmlAttributes } from "@/i18n/LocaleHtmlAttributes";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
@@ -11,19 +8,14 @@ const cinzel = Cinzel({ subsets: ["latin"], variable: "--font-cinzel", weight: [
 export const metadata: Metadata = {
   title: "Tasks.cash Mystery Challenges — Enter The Arena",
   description: "Join timed raids. Submit viral videos. Invite friends. Complete secret missions. Climb the rankings.",
-  metadataBase: new URL(CHALLENGE_APP_URL),
+  metadataBase: new URL("https://challenge.tasks.cash"),
   icons: { icon: "/image/main_logo.png", apple: "/image/main_logo.png" },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className="dark" suppressHydrationWarning>
-      <body className={`${inter.variable} ${cinzel.variable} font-sans`} suppressHydrationWarning>
-        <I18nProvider>
-          <LocaleHtmlAttributes />
-          {children}
-        </I18nProvider>
-      </body>
+    <html lang="en" className="dark">
+      <body className={`${inter.variable} ${cinzel.variable} font-sans`}>{children}</body>
     </html>
   );
 }

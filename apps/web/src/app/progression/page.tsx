@@ -1,3 +1,5 @@
-import { challengeRedirect } from "@/lib/i18n/challenge-redirect-page";
+import { redirectToChallenge } from "@/i18n/challenge-redirect";
 
-export default challengeRedirect("progression");
+export default async function ProgressionRedirectPage() {
+  await redirectToChallenge("progression");
+}

@@ -1,11 +1,10 @@
 import { ChallengeShell } from "@/components/layout/ChallengeShell";
-import { SpecialMissionsPage } from "@/components/pages/SpecialMissionsPage";
-import "@/styles/special-missions.css";
+import { SpecialMissionsSection } from "@/components/arena/SpecialMissionsSection";
 
-export default function SpecialMissionsRoute() {
+export default function SpecialMissionsPage() {
   return (
     <ChallengeShell>
-      <SpecialMissionsPage />
+      <SpecialMissionsSection />
     </ChallengeShell>
   );
 }

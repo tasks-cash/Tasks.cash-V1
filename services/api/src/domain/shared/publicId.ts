@@ -28,6 +28,21 @@ export const PUBLIC_ID_PREFIXES = {
   userProgress: "upr",
   levelDefinition: "lvl",
   analyticsEvent: "evt",
+  analyticsIdentity: "aid",
+  analyticsSession: "asn",
+  analyticsAttribution: "atr",
+  analyticsConsent: "acn",
+  analyticsJourney: "ajy",
+  domainEvent: "dme",
+  outboxEvent: "obx",
+  handlerExecution: "ehx",
+  workflowDefinition: "wfd",
+  workflowRun: "wfr",
+  workflowStepExecution: "wfs",
+  jobExecution: "jex",
+  jobDeadLetter: "jdl",
+  jobSchedule: "jsc",
+  jobCancellation: "jcl",
 } as const;
 
 export type PublicIdKind = keyof typeof PUBLIC_ID_PREFIXES;

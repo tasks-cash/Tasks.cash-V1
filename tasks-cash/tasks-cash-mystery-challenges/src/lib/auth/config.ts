@@ -8,7 +8,6 @@ export const PROTECTED_PREFIXES = [
   "/settings",
   "/identity-challenge",
   "/referral-arena",
-  "/special-missions",
 ];
 
 export function isProtectedPath(pathname: string): boolean {

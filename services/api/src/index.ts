@@ -51,6 +51,11 @@ import contentRoutes from "./routes/content";
 import adminContentRoutes from "./routes/adminContent";
 import adminContentCacheRoutes from "./routes/adminContentCache";
 import adminDomainRoutes from "./routes/adminDomain";
+import adminEventsRoutes from "./routes/adminEvents";
+import adminJobsRoutes from "./routes/adminJobs";
+import { bootstrapEventSystem, shutdownEventSystem } from "./events";
+import { bootstrapJobsSystem, shutdownJobsSystem } from "./jobs";
+import { analyticsPublicRoutes, analyticsAdminRoutes } from "./analytics";
 
 // Load .env in local dev only — Docker injects env vars directly; never override existing vars
 const rootEnv = path.resolve(__dirname, "../../../.env");
@@ -141,6 +146,10 @@ app.use("/api/vault", vaultRoutes);
 app.use("/api/content", contentRoutes);
 app.use("/api/admin/content", adminContentRoutes);
 app.use("/api/admin/content-cache", adminContentCacheRoutes);
+app.use("/api/analytics", analyticsPublicRoutes);
+app.use("/api/admin/analytics", analyticsAdminRoutes);
+app.use("/api/admin", adminEventsRoutes);
+app.use("/api/admin", adminJobsRoutes);
 app.use("/api/admin", adminDomainRoutes);
 
 // 404 handler
@@ -191,7 +200,29 @@ async function bootstrap() {
     });
   }
 
-  app.listen(PORT, "0.0.0.0", () => {
+  try {
+    bootstrapEventSystem();
+  } catch (err) {
+    logger.warn("Event system bootstrap failed", {
+      category: "app",
+      module: "events",
+      operation: "bootstrap",
+      error: err instanceof Error ? err.message : "unknown",
+    });
+  }
+
+  try {
+    await bootstrapJobsSystem();
+  } catch (err) {
+    logger.warn("Jobs system bootstrap failed", {
+      category: "app",
+      module: "jobs",
+      operation: "bootstrap",
+      error: err instanceof Error ? err.message : "unknown",
+    });
+  }
+
+  const server = app.listen(PORT, "0.0.0.0", () => {
     logger.info(`Tasks.cash API running on http://0.0.0.0:${PORT}`, {
       category: "app",
       module: "api",
@@ -200,6 +231,16 @@ async function bootstrap() {
       port: PORT,
     });
   });
+
+  const shutdown = () => {
+    void (async () => {
+      shutdownEventSystem();
+      await shutdownJobsSystem();
+      server.close(() => process.exit(0));
+    })();
+  };
+  process.on("SIGTERM", shutdown);
+  process.on("SIGINT", shutdown);
 }
 
 bootstrap().catch((err) => {

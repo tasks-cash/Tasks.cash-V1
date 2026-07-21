@@ -2,14 +2,13 @@
 
 import { motion } from "framer-motion";
 import { PLAYER_PROGRESSION, getRankById, RANK_COLOR_CLASS } from "@/data/player-progression-data";
-import type { PlayerProgressionData } from "@/types/player-progression";
 import { GlassCard } from "@tasks-cash/ui";
 import { AnimatedProgressBar } from "./AnimatedProgressBar";
 import { ProgressionSection } from "./ProgressionSection";
 import { cn } from "@/lib/utils";
 
-export function ExplorerRankPanel({ data = PLAYER_PROGRESSION }: { data?: PlayerProgressionData }) {
-  const { profile, ranks } = data;
+export function ExplorerRankPanel() {
+  const { profile, ranks } = PLAYER_PROGRESSION;
   const current = getRankById(profile.currentRankId);
   const next = getRankById(profile.nextRankId);
   const currentIdx = ranks.findIndex((r) => r.id === profile.currentRankId);

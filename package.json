@@ -26,8 +26,6 @@
     "build": "pnpm -r build",
     "lint": "pnpm -r lint",
     "seed": "pnpm --filter @tasks-cash/api seed",
-    "seed:content": "pnpm --filter @tasks-cash/api seed:content",
-    "cms:sync": "pnpm --filter @tasks-cash/api cms:sync",
     "docker:up": "docker compose up -d",
     "docker:down": "docker compose down",
     "docker:build": "docker compose build",

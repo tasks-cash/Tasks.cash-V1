@@ -22,7 +22,7 @@ const I18nContext = createContext<I18nContextValue | null>(null);
 
 export function I18nProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname() ?? "/";
-  const locale = getLocaleFromPathname(pathname);
+  const locale = getLocaleFromPathname(pathname) ?? defaultLocale;
   const dir = getDirection(locale);
 
   const t = useCallback((key: string) => translate(locale, key), [locale]);

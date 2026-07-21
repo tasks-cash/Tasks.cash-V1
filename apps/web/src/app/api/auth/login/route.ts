@@ -1,23 +1,13 @@
 import { NextResponse } from "next/server";
-import { SESSION_COOKIE } from "@/lib/auth/config";
+import { SESSION_COOKIE_NAME, getSessionCookieOptions } from "@/lib/auth/session";
+
 import { API_URL } from "@/config/env";
 
-const SESSION_MAX_AGE = 60 * 60 * 24 * 7;
-
-function sessionCookieOptions() {
-  const isProd = process.env.NODE_ENV === "production";
-  const mainUrl = process.env.NEXT_PUBLIC_MAIN_APP_URL ?? "";
-  return {
-    httpOnly: true,
-    secure: isProd && mainUrl.startsWith("https://"),
-    sameSite: "lax" as const,
-    path: "/",
-    maxAge: SESSION_MAX_AGE,
-  };
-}
-
-function normalizeJwt(raw: string): string {
-  return raw.replace(/^Bearer\s+/i, "").trim();
+function attachSessionCookie(response: NextResponse, accessToken?: string) {
+  if (accessToken) {
+    response.cookies.set(SESSION_COOKIE_NAME, accessToken, getSessionCookieOptions());
+  }
+  return response;
 }
 
 /** POST /api/auth/login — authenticate and set shared session cookie */
@@ -32,13 +22,9 @@ export async function POST(request: Request) {
     });
     const data = await res.json().catch(() => ({ success: false, error: "Invalid API response" }));
     const response = NextResponse.json(data, { status: res.status });
-
     if (data.success && data.data?.accessToken) {
-      const token = normalizeJwt(String(data.data.accessToken));
-      console.log("[login] cookieName", SESSION_COOKIE, "tokenStartsWithEyJ", token.startsWith("eyJ"));
-      response.cookies.set(SESSION_COOKIE, token, sessionCookieOptions());
+      attachSessionCookie(response, data.data.accessToken);
     }
-
     return response;
   } catch {
     return NextResponse.json({ success: false, error: "API unavailable" }, { status: 503 });

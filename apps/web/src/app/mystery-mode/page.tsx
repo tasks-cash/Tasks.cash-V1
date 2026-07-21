@@ -1,3 +1,5 @@
-import { challengeRedirect } from "@/lib/i18n/challenge-redirect-page";
+import { redirectToChallenge } from "@/i18n/challenge-redirect";
 
-export default challengeRedirect("hub");
+export default async function MysteryModeRedirectPage() {
+  await redirectToChallenge("hub");
+}

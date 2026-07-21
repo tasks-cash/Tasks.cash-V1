@@ -7,7 +7,6 @@ import { ArenaButton } from "@/components/ui/ArenaButton";
 import { apiFetch } from "@/lib/api/client";
 import type { SpecialMission, SpecialMissionsPayload } from "@/types/special-mission";
 import { useLocale } from "@/i18n/I18nProvider";
-import { useContent } from "@/hooks/useContent";
 import { withLocalePrefix } from "@/i18n/locale-path";
 import { cn } from "@/lib/utils";
 
@@ -113,7 +112,6 @@ function MissionListCard({ mission }: { mission: SpecialMission }) {
 }
 
 export function SpecialMissionsPage() {
-  const { getText } = useContent("challenge", "special-missions");
   const [state, setState] = useState<PageState>("loading");
   const [missions, setMissions] = useState<SpecialMission[]>([]);
   const [error, setError] = useState("");
@@ -152,14 +150,10 @@ export function SpecialMissionsPage() {
       <header className="special-missions-hero relative z-10">
         <p className="arena-subheading mb-3 relative z-10">Elite Operations</p>
         <h1 className="arena-heading text-3xl sm:text-4xl md:text-5xl lg:text-6xl mb-4 relative z-10">
-          {getText("hero", "title", "Special Missions")}
+          Special Missions
         </h1>
         <p className="text-purple-200/60 text-base md:text-lg max-w-4xl leading-relaxed relative z-10">
-          {getText(
-            "hero",
-            "subtitle",
-            "Manual elite tasks assigned by portal command. Select a mission to read full details and submit proof."
-          )}
+          Manual elite tasks assigned by portal command. Select a mission to read full details and submit proof.
         </p>
         <div className="portal-divider max-w-3xl mt-6 relative z-10" />
       </header>

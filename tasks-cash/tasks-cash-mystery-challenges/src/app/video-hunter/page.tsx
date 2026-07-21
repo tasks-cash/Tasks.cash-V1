@@ -1,10 +1,10 @@
 import { ChallengeShell } from "@/components/layout/ChallengeShell";
-import { VideoHunterPage } from "@/components/video-hunter/VideoHunterPage";
+import { VideoHunterSection } from "@/components/arena/VideoHunterSection";
 
-export default function VideoHunterRoute() {
+export default function VideoHunterPage() {
   return (
     <ChallengeShell>
-      <VideoHunterPage />
+      <VideoHunterSection />
     </ChallengeShell>
   );
 }

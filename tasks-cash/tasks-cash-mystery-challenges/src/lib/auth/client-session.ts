@@ -1,20 +1,10 @@
 "use client";
 
+import { ROUTES } from "@/config/routes";
 import { buildChallengeAppLoginUrl } from "@/lib/auth/redirect";
-import { LOCALE_STORAGE_KEY, defaultLocale, isLocale, type Locale } from "@/i18n/config";
-import { getLocaleFromPathname } from "@/i18n/locale-path";
 
 let cachedSession: boolean | null = null;
 let sessionCheck: Promise<boolean> | null = null;
-
-function getClientLocale(): Locale {
-  if (typeof window === "undefined") return defaultLocale;
-  const fromPath = getLocaleFromPathname(window.location.pathname);
-  if (fromPath !== defaultLocale) return fromPath;
-  const stored = localStorage.getItem(LOCALE_STORAGE_KEY);
-  if (stored && isLocale(stored)) return stored;
-  return defaultLocale;
-}
 
 /** Lightweight client session probe — uses /api/auth/session (no main API spam). */
 export async function hasAuthSession(): Promise<boolean> {
@@ -48,9 +38,9 @@ export function redirectToLoginOnce(): void {
   if (typeof window === "undefined") return;
   if (sessionStorage.getItem(LOGIN_REDIRECT_KEY)) return;
   sessionStorage.setItem(LOGIN_REDIRECT_KEY, "1");
-  window.location.href = buildChallengeAppLoginUrl(getClientLocale());
+  window.location.href = buildChallengeAppLoginUrl();
 }
 
 export function getChallengeLoginUrl(): string {
-  return buildChallengeAppLoginUrl(getClientLocale());
+  return buildChallengeAppLoginUrl();
 }

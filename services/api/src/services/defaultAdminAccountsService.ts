@@ -81,6 +81,12 @@ const PERMISSION_DEFINITIONS: Array<{ name: string; slug: string; description: s
   { name: "Season Manage", slug: "season.manage", description: "Manage seasons" },
   { name: "Notification Manage", slug: "notification.manage", description: "Manage domain notifications" },
   { name: "Analytics Read", slug: "analytics.read", description: "Read analytics events and counters" },
+  { name: "Job Read", slug: "job.read", description: "View job queues and executions" },
+  { name: "Job Enqueue", slug: "job.enqueue", description: "Enqueue registered jobs" },
+  { name: "Job Cancel", slug: "job.cancel", description: "Cancel jobs" },
+  { name: "Job Retry", slug: "job.retry", description: "Retry failed jobs" },
+  { name: "Job Dead Letter", slug: "job.dead_letter.manage", description: "Manage job dead letters" },
+  { name: "System Job Read All", slug: "system.job.read_all", description: "Cross-tenant job read (platform)" },
 ];
 
 async function ensurePermissionDocuments(): Promise<void> {

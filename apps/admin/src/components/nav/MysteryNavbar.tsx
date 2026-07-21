@@ -6,23 +6,31 @@ import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { BrandLogo } from "@tasks-cash/ui";
 import { MAIN_APP_DASHBOARD_URL } from "@/lib/constants";
-import { ROUTES } from "@/config/routes";
-import { getUserToken, userApiFetch } from "@/lib/userApi";
+import { apiFetch, getToken } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 const BASE_MYSTERY_NAV_LINKS = [
-  { href: ROUTES.challenge.explorerDna, label: "Explorer DNA", external: true, badgeKey: "dna" as const },
-  { href: ROUTES.challenge.hub, label: "Hub", external: true, badge: 0 },
-  { href: ROUTES.challenge.videoHunter, label: "Video Hunter", external: true, badge: 2 },
-  { href: ROUTES.challenge.raidArena, label: "Raid Arena", external: true, badge: 1 },
-  { href: ROUTES.challenge.duelArena, label: "Duel Arena", external: true, badge: 0 },
-  { href: ROUTES.challenge.mysteryVault, label: "Mystery Vault", external: true, badge: 1 },
-  { href: ROUTES.challenge.leaderboards, label: "Leaderboards", external: true, badge: 0 },
-  { href: ROUTES.challenge.rewards, label: "Rewards", external: true, badge: 3 },
-  { href: ROUTES.challenge.progression, label: "Progression", external: true, badge: 0 },
+  { href: "/explorer-dna", label: "Explorer DNA", badgeKey: "dna" as const },
+  { href: "/challenges-arena", label: "Hub", badge: 0 },
+  { href: "/video-hunter", label: "Video Hunter", badge: 2 },
+  { href: "/raid-arena", label: "Raid Arena", badge: 1 },
+  { href: "/duel-arena", label: "Duel Arena", badge: 0 },
+  { href: "/mystery-vault", label: "Mystery Vault", badge: 1 },
+  { href: "/leaderboards", label: "Leaderboards", badge: 0 },
+  { href: "/rewards", label: "Rewards", badge: 3 },
+  { href: "/progression", label: "Progression", badge: 0 },
 ] as const;
 
-const ARENA_HREF = ROUTES.challenge.hub;
+const ARENA_HREF = "/challenges-arena";
+
+function isLinkActive(pathname: string, href: string) {
+  if (href === "/challenges-arena") return pathname === href || pathname.startsWith(`${href}/`);
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
+function isArenaActive(pathname: string) {
+  return pathname === ARENA_HREF || pathname === "/mystery-challenges" || pathname.startsWith(`${ARENA_HREF}/`);
+}
 
 interface MysteryNavbarProps {
   subNav?: React.ReactNode;
@@ -47,7 +55,6 @@ function NavLinkItem({
   label,
   badge,
   active,
-  external,
   onClick,
   className,
 }: {
@@ -55,12 +62,15 @@ function NavLinkItem({
   label: string;
   badge: number;
   active: boolean;
-  external?: boolean;
   onClick?: () => void;
   className?: string;
 }) {
-  const content = (
-    <>
+  return (
+    <Link
+      href={href}
+      onClick={onClick}
+      className={cn("group relative px-3 py-2", className)}
+    >
       <motion.span
         className={cn(
           "relative z-10 block text-[11px] font-bold uppercase tracking-[0.14em] transition-colors duration-200",
@@ -89,20 +99,6 @@ function NavLinkItem({
         )}
         aria-hidden
       />
-    </>
-  );
-
-  if (external) {
-    return (
-      <a href={href} onClick={onClick} className={cn("group relative px-3 py-2", className)}>
-        {content}
-      </a>
-    );
-  }
-
-  return (
-    <Link href={href} onClick={onClick} className={cn("group relative px-3 py-2", className)}>
-      {content}
     </Link>
   );
 }
@@ -111,10 +107,11 @@ export function MysteryNavbar({ subNav, className }: MysteryNavbarProps) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [dnaPending, setDnaPending] = useState(3);
+  const arenaActive = isArenaActive(pathname);
 
   useEffect(() => {
-    if (!getUserToken()) return;
-    userApiFetch<{ profile: { pendingQuestions: number } }>("/api/explorer-dna/me").then((res) => {
+    if (!getToken()) return;
+    apiFetch<{ profile: { pendingQuestions: number } }>("/api/explorer-dna/me").then((res) => {
       if (res.success && res.data?.profile) setDnaPending(res.data.profile.pendingQuestions);
     });
   }, [pathname]);
@@ -122,17 +119,24 @@ export function MysteryNavbar({ subNav, className }: MysteryNavbarProps) {
   const navLinks = BASE_MYSTERY_NAV_LINKS.map((link) => ({
     href: link.href,
     label: link.label,
-    external: true,
     badge: "badgeKey" in link && link.badgeKey === "dna" ? dnaPending : ("badge" in link ? link.badge : 0),
-    active: false,
   }));
 
   return (
     <header className={cn("mystery-navbar sticky top-0 z-50 w-full", className)}>
       <div className="relative border-b border-purple-500/20 bg-black/55 backdrop-blur-2xl">
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-purple-950/30 via-transparent to-amber-950/20" aria-hidden />
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-purple-400/40 to-transparent" aria-hidden />
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-amber-400/25 to-transparent" aria-hidden />
+        <div
+          className="pointer-events-none absolute inset-0 bg-gradient-to-r from-purple-950/30 via-transparent to-amber-950/20"
+          aria-hidden
+        />
+        <div
+          className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-purple-400/40 to-transparent"
+          aria-hidden
+        />
+        <div
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-amber-400/25 to-transparent"
+          aria-hidden
+        />
 
         <div className="relative mx-auto flex w-full max-w-[100vw] items-center gap-3 px-4 py-3 md:px-6 lg:px-8 xl:px-10">
           <div className="flex shrink-0 items-center gap-3">
@@ -152,8 +156,7 @@ export function MysteryNavbar({ subNav, className }: MysteryNavbarProps) {
                 href={link.href}
                 label={link.label}
                 badge={link.badge}
-                active={link.active}
-                external={link.external}
+                active={isLinkActive(pathname, link.href)}
               />
             ))}
           </nav>
@@ -166,21 +169,28 @@ export function MysteryNavbar({ subNav, className }: MysteryNavbarProps) {
               Dashboard
             </a>
 
-            <a href={ARENA_HREF} className="hidden md:inline-flex">
+            <Link href={ARENA_HREF} className="hidden md:inline-flex">
               <motion.span
                 className={cn(
                   "relative inline-flex items-center justify-center overflow-hidden rounded-xl px-4 py-2.5",
                   "text-[10px] font-black uppercase tracking-[0.2em]",
                   "border border-amber-400/45 bg-gradient-to-r from-amber-600/90 via-yellow-500/90 to-amber-500/90 text-black",
-                  "shadow-[0_0_24px_rgba(212,175,55,0.35)]"
+                  "shadow-[0_0_24px_rgba(212,175,55,0.35)]",
+                  arenaActive && "ring-2 ring-amber-300/50"
                 )}
                 whileHover={{ scale: 1.03, boxShadow: "0 0 32px rgba(212,175,55,0.55)" }}
                 whileTap={{ scale: 0.98 }}
                 transition={{ type: "spring", stiffness: 420, damping: 24 }}
               >
                 <span className="relative z-10">Enter Arena</span>
+                <motion.span
+                  className="pointer-events-none absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent"
+                  animate={{ x: ["-120%", "120%"] }}
+                  transition={{ duration: 2.8, repeat: Infinity, ease: "linear", repeatDelay: 1.2 }}
+                  aria-hidden
+                />
               </motion.span>
-            </a>
+            </Link>
 
             <button
               type="button"
@@ -189,6 +199,7 @@ export function MysteryNavbar({ subNav, className }: MysteryNavbarProps) {
               aria-label={mobileOpen ? "Close menu" : "Open menu"}
               onClick={() => setMobileOpen((open) => !open)}
             >
+              <span className="sr-only">Menu</span>
               <div className="flex flex-col gap-1.5">
                 <span className={cn("block h-0.5 w-5 bg-current transition-transform", mobileOpen && "translate-y-2 rotate-45")} />
                 <span className={cn("block h-0.5 w-5 bg-current transition-opacity", mobileOpen && "opacity-0")} />
@@ -232,14 +243,17 @@ export function MysteryNavbar({ subNav, className }: MysteryNavbarProps) {
                     href={link.href}
                     label={link.label}
                     badge={link.badge}
-                    active={link.active}
-                    external={link.external}
+                    active={isLinkActive(pathname, link.href)}
                     onClick={() => setMobileOpen(false)}
                     className="rounded-xl border border-transparent hover:border-purple-500/20 hover:bg-purple-950/30 px-4 py-3"
                   />
                 ))}
 
-                <a href={ARENA_HREF} onClick={() => setMobileOpen(false)} className="mt-3">
+                <Link
+                  href={ARENA_HREF}
+                  onClick={() => setMobileOpen(false)}
+                  className="mt-3"
+                >
                   <motion.span
                     className={cn(
                       "flex w-full items-center justify-center rounded-xl px-4 py-3.5",
@@ -251,7 +265,7 @@ export function MysteryNavbar({ subNav, className }: MysteryNavbarProps) {
                   >
                     Enter Arena
                   </motion.span>
-                </a>
+                </Link>
 
                 <a
                   href={MAIN_APP_DASHBOARD_URL}

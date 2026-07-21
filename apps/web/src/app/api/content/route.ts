@@ -29,3 +29,4 @@ export async function GET(request: Request) {
     return NextResponse.json({ success: false, error: "API unavailable" }, { status: 503 });
   }
 }
+// cms-fix 2026-07-11T18:40:09-05:00

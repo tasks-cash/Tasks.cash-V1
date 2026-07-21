@@ -6,10 +6,8 @@ export const CMS_APPS: { key: ContentAppKey; label: string; icon: string }[] = [
   { key: "admin", label: "Admin App", icon: "🛡️" },
 ];
 
-/** Keep in sync with services/api/src/data/contentPagesRegistry.ts */
 export const CMS_PAGES: Record<ContentAppKey, { key: string; label: string }[]> = {
   main: [
-    { key: "global", label: "Global / Shared" },
     { key: "home", label: "Home" },
     { key: "dashboard", label: "Dashboard" },
     { key: "login", label: "Login" },
@@ -35,12 +33,6 @@ export const CMS_PAGES: Record<ContentAppKey, { key: string; label: string }[]> 
     { key: "leaderboards", label: "Leaderboards" },
     { key: "rewards", label: "Rewards" },
     { key: "challenges", label: "Challenges" },
-    { key: "blog", label: "Blog" },
-    { key: "privacy", label: "Privacy" },
-    { key: "terms", label: "Terms" },
-    { key: "cookies", label: "Cookies" },
-    { key: "refund", label: "Refund" },
-    { key: "not-found", label: "404 Not Found" },
     { key: "dashboard-missions", label: "Dashboard Missions" },
     { key: "dashboard-rewards", label: "Dashboard Rewards" },
     { key: "dashboard-withdrawals", label: "Withdrawals" },
@@ -50,13 +42,11 @@ export const CMS_PAGES: Record<ContentAppKey, { key: string; label: string }[]> 
     { key: "dashboard-leaderboard", label: "Rank" },
   ],
   challenge: [
-    { key: "global", label: "Global / Shared" },
     { key: "home", label: "Home / Arena" },
     { key: "video-hunter", label: "Video Hunter" },
     { key: "referral-arena", label: "Referral Arena" },
     { key: "identity-challenge", label: "Identity Challenge" },
     { key: "special-missions", label: "Special Missions" },
-    { key: "special-mission-detail", label: "Mission Details" },
     { key: "raid-arena", label: "Raid Arena" },
     { key: "duel-arena", label: "Duel Arena" },
     { key: "mystery-vault", label: "Mystery Vault" },
@@ -66,8 +56,6 @@ export const CMS_PAGES: Record<ContentAppKey, { key: string; label: string }[]> 
     { key: "nav", label: "Navigation" },
   ],
   admin: [
-    { key: "global", label: "Global / Shared" },
-    { key: "login", label: "Login" },
     { key: "dashboard", label: "Dashboard" },
     { key: "content", label: "Content CMS" },
     { key: "settings", label: "Settings" },
@@ -78,19 +66,6 @@ export const CMS_PAGES: Record<ContentAppKey, { key: string; label: string }[]> 
     { key: "video-submissions", label: "Video Submissions" },
     { key: "explorer-dna", label: "Explorer DNA" },
     { key: "mystery-missions", label: "Mystery Missions" },
-    { key: "dna-questions", label: "DNA Questions" },
-    { key: "notifications", label: "Notifications" },
-    { key: "roles", label: "Roles" },
-    { key: "permissions", label: "Permissions" },
-    { key: "audit-logs", label: "Audit Logs" },
-    { key: "support", label: "Support" },
-    { key: "withdrawals", label: "Withdrawals" },
-    { key: "employees", label: "Employees" },
-    { key: "levels", label: "Levels" },
-    { key: "challenges", label: "Challenges" },
-    { key: "treasures", label: "Treasures" },
-    { key: "leaderboards", label: "Leaderboards" },
-    { key: "counters", label: "Counters" },
   ],
 };
 
@@ -105,11 +80,6 @@ export const CMS_SECTION_ORDER = [
   "empty_states",
   "errors",
   "nav",
-  "navigation",
-  "sidebar",
-  "footer",
-  "validation",
-  "accessibility",
   "main",
 ] as const;
 
@@ -124,11 +94,6 @@ export const CMS_SECTION_LABELS: Record<string, string> = {
   empty_states: "Empty States",
   errors: "Errors",
   nav: "Navigation",
-  navigation: "Navigation",
-  sidebar: "Sidebar",
-  footer: "Footer",
-  validation: "Validation",
-  accessibility: "Accessibility",
   main: "General",
 };
 

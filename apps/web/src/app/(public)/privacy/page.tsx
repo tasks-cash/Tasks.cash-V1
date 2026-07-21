@@ -1,18 +1,17 @@
 "use client";
 
-import { LegalPage } from "@/components/pages/LegalPage";
-import { LEGAL_SECTIONS } from "@/lib/page-data";
-import { useContent } from "@/hooks/useContent";
+import Link from "next/link";
+import { GlassCard, GlowText, PortalButton, MotionStagger, MotionStaggerItem, LeaderboardRow, MissionCard } from "@tasks-cash/ui";
+import { PageHero } from "@/components/layout/PageHero";
+import { WORLDS, PUBLIC_CHALLENGES, TREASURES, STORE_ITEMS, FAQ_ITEMS, LEADERBOARD_MOCK } from "@/lib/mock-data";
 
-export default function PrivacyPage() {
-  const { text } = useContent("main", "privacy");
-
+export default function privacyPage() {
   return (
-    <LegalPage
-      eyebrow={text("hero", "eyebrow", "Legal")}
-      title={text("hero", "title", "Privacy Policy")}
-      subtitle={text("hero", "subtitle", "How we collect, use, and protect your data across dimensions.")}
-      sections={LEGAL_SECTIONS.privacy}
-    />
+    <div>
+      <PageHero eyebrow="Legal" title="Privacy Policy" subtitle="How we protect your data across dimensions." variant="gold" />
+      <div className="mx-auto max-w-6xl px-4 pb-24">
+        <GlassCard className="p-8 max-w-3xl mx-auto"><h2 className="text-white font-bold mb-4">Data Collection</h2><p className="text-purple-200/60 mb-6">We collect account information, mission activity, and usage analytics to improve the platform.</p><h2 className="text-white font-bold mb-4">Your Rights</h2><p className="text-purple-200/60">You may request data export or deletion through support tickets.</p></GlassCard>
+      </div>
+    </div>
   );
 }

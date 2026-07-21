@@ -41,6 +41,12 @@ export const SUPER_ADMIN_PERMISSIONS = [
   "season.manage",
   "notification.manage",
   "analytics.read",
+  "job.read",
+  "job.enqueue",
+  "job.cancel",
+  "job.retry",
+  "job.dead_letter.manage",
+  "system.job.read_all",
 ] as const;
 
 export type SuperAdminPermission = (typeof SUPER_ADMIN_PERMISSIONS)[number];

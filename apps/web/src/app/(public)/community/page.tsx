@@ -1,65 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { GlassCard, PortalButton, MotionStagger, MotionStaggerItem } from "@tasks-cash/ui";
+import { GlassCard, GlowText, PortalButton, MotionStagger, MotionStaggerItem, LeaderboardRow, MissionCard } from "@tasks-cash/ui";
 import { PageHero } from "@/components/layout/PageHero";
-import { PublicPageWrapper } from "@/components/premium/PublicPageWrapper";
-import { EpicCTA, SectionHeader, StatsBanner, FeatureGrid } from "@/components/pages/PublicSections";
-import { COMMUNITY_STATS } from "@/lib/page-data";
-import { useContent } from "@/hooks/useContent";
+import { WORLDS, PUBLIC_CHALLENGES, TREASURES, STORE_ITEMS, FAQ_ITEMS, LEADERBOARD_MOCK } from "@/lib/mock-data";
 
-export default function CommunityPage() {
-  const { text } = useContent("main", "community");
-
+export default function communityPage() {
   return (
-    <PublicPageWrapper>
-      <PageHero
-        eyebrow={text("hero", "eyebrow", "Connect")}
-        title={text("hero", "title", "Portal Community")}
-        subtitle={text("hero", "subtitle", "Join guilds, events, and conversations across the multiverse.")}
-        variant="gold"
-      />
-
-      <StatsBanner stats={COMMUNITY_STATS.map((s) => ({
-        label: s.label,
-        value: parseInt(s.value.replace(/[^0-9]/g, "")) || 0,
-        suffix: s.value.includes("+") ? "+" : s.value.includes("K") ? "K" : "",
-        icon: s.icon,
-        live: s.label === "Discord Online",
-      }))} />
-
-      <div className="mx-auto max-w-6xl px-4 py-16">
-        <SectionHeader eyebrow="Hubs" title="Community Spaces" subtitle="Connect with fellow explorers across platforms." />
-        <MotionStagger className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {[
-            { name: "Discord", icon: "💬", members: "45K+", desc: "Live chat, events, and support" },
-            { name: "Reddit", icon: "🔴", members: "12K+", desc: "Guides, memes, and discussions" },
-            { name: "Twitter/X", icon: "🐦", members: "28K+", desc: "Updates and announcements" },
-            { name: "YouTube", icon: "▶️", members: "8K+", desc: "Tutorials and showcases" },
-          ].map((hub) => (
-            <MotionStaggerItem key={hub.name}>
-              <GlassCard className="p-6 text-center h-full" hover>
-                <span className="text-4xl">{hub.icon}</span>
-                <h3 className="font-bold text-white mt-3">{hub.name}</h3>
-                <p className="text-amber-400 text-sm">{hub.members}</p>
-                <p className="text-purple-200/50 text-xs mt-2">{hub.desc}</p>
-                <PortalButton variant="ghost" size="sm" className="mt-4">Join</PortalButton>
-              </GlassCard>
-            </MotionStaggerItem>
-          ))}
-        </MotionStagger>
+    <div>
+      <PageHero eyebrow="Allies" title="Portal Community" subtitle="Connect with warriors, guilds, and dimensional allies." variant="gold" />
+      <div className="mx-auto max-w-6xl px-4 pb-24">
+        <div className="grid md:grid-cols-3 gap-6">{["Discord Guilds", "Portal Forums", "Live Events"].map((name) => (<GlassCard key={name} className="p-6 text-center"><span className="text-4xl">👥</span><h3 className="text-lg font-bold text-white mt-4">{name}</h3><p className="text-purple-200/60 text-sm mt-2">Connect with thousands of portal warriors.</p><PortalButton variant="secondary" size="sm" className="mt-4">Coming Soon</PortalButton></GlassCard>))}</div>
       </div>
-
-      <div className="mx-auto max-w-6xl px-4 pb-16">
-        <SectionHeader eyebrow="Events" title="Upcoming Gatherings" />
-        <FeatureGrid items={[
-          { icon: "🏟️", title: "Portal Tournament", desc: "Monthly PvP challenge with 10,000 coin prize pool.", glow: "gold" },
-          { icon: "🎤", title: "Dev AMA", desc: "Live Q&A with the Void Council — every Friday.", glow: "purple" },
-          { icon: "🎉", title: "Season Launch Party", desc: "Celebrate Season 4 with double XP weekend.", glow: "gold" },
-        ]} />
-      </div>
-
-      <EpicCTA title="Join the Multiverse" subtitle="Connect with 847K+ explorers and grow together." primaryLabel="Enter the Portal" />
-    </PublicPageWrapper>
+    </div>
   );
 }

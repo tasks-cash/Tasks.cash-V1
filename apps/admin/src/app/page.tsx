@@ -3,20 +3,13 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { BrandLogo, PortalButton, GlassCard, ParticleField } from "@tasks-cash/ui";
-import { hasMinRole } from "@/lib/auth/config";
-import { API_URL } from "@/config/env";
 
-type AdminLoginDebug = {
-  userFound?: boolean;
-  passwordFieldExists?: boolean;
-  passwordValid?: boolean;
-  roleAllowed?: boolean;
-};
+import { API_URL } from "@/config/env";
 
 export default function AdminLoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("admin@tasks.cash");
-  const [password, setPassword] = useState("");
+  const [password, setPassword] = useState("admin123");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -25,43 +18,19 @@ export default function AdminLoginPage() {
     setLoading(true);
     setError("");
 
-    try {
-      const res = await fetch(`${API_URL}/api/auth/admin/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "X-Tc-Admin-Login-Debug": "1" },
-        body: JSON.stringify({ email: email.toLowerCase().trim(), password }),
-      });
-      const data = (await res.json()) as {
-        success?: boolean;
-        error?: string;
-        debug?: AdminLoginDebug;
-        data?: { accessToken?: string; admin?: { role?: string } };
-      };
+    const res = await fetch(`${API_URL}/api/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
+    const data = await res.json();
 
-      const debug = data.debug ?? {};
-      const userFound = debug.userFound ?? Boolean(data.data?.admin);
-      const passwordFieldExists = debug.passwordFieldExists ?? userFound;
-      const passwordValid = debug.passwordValid ?? Boolean(data.success);
-      const roleAllowed =
-        debug.roleAllowed ??
-        Boolean(data.data?.admin?.role && hasMinRole(data.data.admin.role, "admin"));
-
-      console.log("[AdminLogin] user found:", userFound);
-      console.log("[AdminLogin] password field exists:", passwordFieldExists);
-      console.log("[AdminLogin] password valid:", passwordValid);
-      console.log("[AdminLogin] role allowed:", roleAllowed);
-
-      if (data.success && data.data?.accessToken && data.data.admin?.role && hasMinRole(data.data.admin.role, "admin")) {
-        localStorage.setItem("tc_admin_token", data.data.accessToken);
-        router.push("/dashboard");
-      } else {
-        setError(data.error ?? "Admin access denied");
-      }
-    } catch (err) {
-      console.error("[AdminLogin] request failed:", err);
-      setError("Login failed — please try again");
+    if (data.success && data.data?.user?.role === "admin") {
+      localStorage.setItem("tc_admin_token", data.data.accessToken);
+      router.push("/dashboard");
+    } else {
+      setError(data.error ?? "Admin access denied");
     }
-
     setLoading(false);
   }
 

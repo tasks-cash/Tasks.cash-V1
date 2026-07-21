@@ -14,7 +14,6 @@ import {
   parseViewsInput,
 } from "@/lib/video-hunter/platform";
 import { cn } from "@/lib/utils";
-import { useContent } from "@/hooks/useContent";
 
 type LoadState = "loading" | "ready" | "error";
 
@@ -130,7 +129,6 @@ function VideoSection({
 }
 
 export function VideoHunterPage() {
-  const { getText } = useContent("challenge", "video-hunter");
   const [loadState, setLoadState] = useState<LoadState>("loading");
   const [error, setError] = useState("");
   const [submissions, setSubmissions] = useState<VideoSubmission[]>([]);
@@ -229,14 +227,10 @@ export function VideoHunterPage() {
         animate={{ opacity: 1, y: 0 }}
         className="mb-10 md:mb-14 text-center max-w-4xl mx-auto"
       >
-        <p className="arena-subheading mb-3">{getText("hero", "eyebrow", "Submit · Track · Earn")}</p>
-        <h1 className="arena-heading text-4xl md:text-5xl lg:text-6xl mb-4">{getText("hero", "title", "VIDEO HUNTER")}</h1>
+        <p className="arena-subheading mb-3">Video Hunter Command</p>
+        <h1 className="arena-heading text-4xl md:text-5xl lg:text-6xl mb-4">Video Hunter</h1>
         <p className="text-purple-300/60 text-sm md:text-base leading-relaxed">
-          {getText(
-            "hero",
-            "subtitle",
-            "Submit viral video links, track admin review, and earn XP plus coins when your ideas are approved."
-          )}
+          Submit viral video links, track admin review, and earn XP plus coins when your ideas are approved.
         </p>
       </motion.header>
 

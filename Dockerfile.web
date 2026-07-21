@@ -38,7 +38,7 @@ RUN pnpm --filter @tasks-cash/web build
 
 FROM node:20-alpine AS runner
 WORKDIR /app
-# NODE_ENV set at runtime via docker-compose (development for local, production for deploy)
+ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
 RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 nextjs

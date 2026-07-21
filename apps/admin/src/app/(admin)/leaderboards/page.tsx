@@ -1,62 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { AdminPageShell, AdminTable } from "@/components/AdminPageShell";
-import { adminFetch } from "@/lib/api";
+import { GlassCard, GlowText, PortalButton, Input, Label, StatWidget } from "@tasks-cash/ui";
+import { ADMIN_STATS } from "@/lib/mock-data";
 
-const STATUS_BADGE: Record<string, string> = {
-  active: "text-green-400",
-  completed: "text-purple-400",
-};
-
-type LeaderboardRow = {
-  id: string;
-  season: string;
-  leader: string;
-  participants: number;
-  status: string;
-};
-
-export default function AdminLeaderboardsPage() {
-  const [rows, setRows] = useState<LeaderboardRow[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    adminFetch<LeaderboardRow[]>("/api/admin/leaderboards").then((res) => {
-      if (res.success && res.data) setRows(res.data);
-      else setError(res.error ?? "Failed to load leaderboards");
-      setLoading(false);
-    });
-  }, []);
-
-  const active = rows.find((lb) => lb.status === "active");
-
+export default function AdminPage() {
   return (
-    <AdminPageShell
-      cmsPageKey="leaderboards"
-      title="Leaderboards"
-      subtitle="Manage seasons and ranking competitions"
-      stats={[
-        { label: "Active Season", value: active?.season ?? "—", icon: "🏆", glow: "gold" },
-        { label: "Total Seasons", value: rows.length, icon: "👥" },
-        { label: "Completed", value: rows.filter((lb) => lb.status === "completed").length, icon: "📅" },
-      ]}
-    >
-      {loading && <p className="text-purple-400/50 text-sm mb-4">Loading leaderboards...</p>}
-      {error && <p className="text-amber-400 text-sm mb-4">{error}</p>}
-      {!loading && rows.length === 0 && !error && <p className="text-purple-400/60 text-sm mb-4">No leaderboard seasons in database.</p>}
-
-      <AdminTable
-        headers={["ID", "Season", "Leader", "Participants", "Status"]}
-        rows={rows.map((lb) => [
-          lb.id.slice(-6),
-          lb.season,
-          lb.leader,
-          lb.participants.toLocaleString(),
-          <span key={lb.id} className={STATUS_BADGE[lb.status] ?? "text-purple-300"}>{lb.status}</span>,
-        ])}
-      />
-    </AdminPageShell>
+    <div>
+      <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
+        <div><GlowText as="h1" className="text-3xl">Leaderboards Management</GlowText><p className="text-purple-300/60 mt-1">Admin control panel</p></div>
+        <PortalButton variant="gold" size="sm">+ Add New</PortalButton>
+      </div>
+      
+      <GlassCard className="p-6 overflow-x-auto"><table className="w-full text-sm"><thead><tr className="text-left text-purple-400/60 border-b border-purple-500/20"><th className="pb-3 pr-4">ID</th><th className="pb-3 pr-4">Name</th><th className="pb-3 pr-4">Status</th><th className="pb-3">Actions</th></tr></thead><tbody>{[1,2,3,4,5].map((i) => (<tr key={i} className="border-b border-purple-500/10"><td className="py-3 pr-4 text-purple-300">#LEA{1000+i}</td><td className="py-3 pr-4 text-white">Sample Entry {i}</td><td className="py-3 pr-4 text-green-400">Active</td><td className="py-3"><PortalButton variant="ghost" size="sm">Edit</PortalButton></td></tr>))}</tbody></table></GlassCard>
+    </div>
   );
 }

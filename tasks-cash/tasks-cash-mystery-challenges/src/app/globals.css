@@ -119,21 +119,3 @@
 [dir="rtl"] .text-right {
   text-align: left;
 }
-
-[dir="rtl"] input[type="search"],
-[dir="rtl"] input[type="email"],
-[dir="rtl"] input[type="password"],
-[dir="rtl"] input[type="text"],
-[dir="rtl"] textarea {
-  text-align: right;
-}
-
-[dir="rtl"] .ml-auto {
-  margin-left: 0;
-  margin-right: auto;
-}
-
-[dir="rtl"] .mr-auto {
-  margin-right: 0;
-  margin-left: auto;
-}

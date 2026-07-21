@@ -4,68 +4,84 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Navbar, PortalButton, BrandLogo, ParticleField } from "@tasks-cash/ui";
 import { motion } from "framer-motion";
+import type { Locale } from "@/i18n/config";
 import { challengeRoutes } from "@/config/routes";
 import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
 import { useLocale } from "@/i18n/I18nProvider";
 import { stripLocalePrefix, withLocalePrefix } from "@/i18n/locale-path";
 
+const PUBLIC_LINK_DEFS = [
+  { href: "/worlds", label: "Worlds" },
+  { href: "/missions", label: "Missions" },
+  { href: "/mystery-missions", label: "Mystery" },
+  { route: "hub" as const, label: "Challenges", external: true },
+  { href: "/treasure", label: "Treasure" },
+  { route: "rewards" as const, label: "Rewards", external: true },
+  { route: "leaderboards" as const, label: "Leaderboards", external: true },
+  { href: "/marketplace", label: "Marketplace" },
+  { href: "/community", label: "Community" },
+] as const;
+
+const FOOTER_SECTION_DEFS = [
+  {
+    title: "Explore",
+    links: [
+      { href: "/worlds", label: "Worlds" },
+      { href: "/missions", label: "Missions" },
+      { href: "/mystery-missions", label: "Mystery Missions" },
+      { route: "hub" as const, label: "Challenges", external: true },
+      { href: "/treasure", label: "Treasure" },
+      { route: "rewards" as const, label: "Rewards", external: true },
+      { route: "leaderboards" as const, label: "Leaderboards", external: true },
+    ],
+  },
+  {
+    title: "Platform",
+    links: [
+      { href: "/marketplace", label: "Marketplace" },
+      { href: "/community", label: "Community" },
+      { href: "/blog", label: "Blog" },
+      { href: "/about", label: "About Us" },
+      { href: "/faq", label: "FAQ" },
+      { href: "/help", label: "Help Center" },
+    ],
+  },
+  {
+    title: "Legal",
+    links: [
+      { href: "/terms", label: "Terms of Service" },
+      { href: "/privacy", label: "Privacy Policy" },
+      { href: "/refund", label: "Refund Policy" },
+      { href: "/cookies", label: "Cookie Policy" },
+      { href: "/contact", label: "Contact" },
+    ],
+  },
+] as const;
+
+function resolveLink(
+  link: { href?: string; route?: keyof ReturnType<typeof challengeRoutes>; label: string; external?: boolean },
+  locale: Locale
+) {
+  if ("route" in link && link.route) {
+    return { href: challengeRoutes(locale)[link.route], label: link.label, external: true as const };
+  }
+  return { href: withLocalePrefix(link.href!, locale), label: link.label, external: false as const };
+}
+
 export function PublicLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() ?? "/";
   const locale = useLocale();
-  const challenge = challengeRoutes(locale);
   const { pathname: bare } = stripLocalePrefix(pathname);
-
-  const publicLinks = [
-    { href: withLocalePrefix("/worlds", locale), label: "Worlds" },
-    { href: withLocalePrefix("/missions", locale), label: "Missions" },
-    { href: withLocalePrefix("/mystery-missions", locale), label: "Mystery" },
-    { href: challenge.hub, label: "Challenges", external: true },
-    { href: withLocalePrefix("/treasure", locale), label: "Treasure" },
-    { href: challenge.rewards, label: "Rewards", external: true },
-    { href: challenge.leaderboards, label: "Leaderboards", external: true },
-    { href: withLocalePrefix("/marketplace", locale), label: "Marketplace" },
-    { href: withLocalePrefix("/community", locale), label: "Community" },
-  ];
-
-  const footerSections = [
-    {
-      title: "Explore",
-      links: [
-        { href: withLocalePrefix("/worlds", locale), label: "Worlds" },
-        { href: withLocalePrefix("/missions", locale), label: "Missions" },
-        { href: withLocalePrefix("/mystery-missions", locale), label: "Mystery Missions" },
-        { href: challenge.hub, label: "Challenges", external: true },
-        { href: withLocalePrefix("/treasure", locale), label: "Treasure" },
-        { href: challenge.rewards, label: "Rewards", external: true },
-        { href: challenge.leaderboards, label: "Leaderboards", external: true },
-      ],
-    },
-    {
-      title: "Platform",
-      links: [
-        { href: withLocalePrefix("/marketplace", locale), label: "Marketplace" },
-        { href: withLocalePrefix("/community", locale), label: "Community" },
-        { href: withLocalePrefix("/blog", locale), label: "Blog" },
-        { href: withLocalePrefix("/about", locale), label: "About Us" },
-        { href: withLocalePrefix("/faq", locale), label: "FAQ" },
-        { href: withLocalePrefix("/help", locale), label: "Help Center" },
-      ],
-    },
-    {
-      title: "Legal",
-      links: [
-        { href: withLocalePrefix("/terms", locale), label: "Terms of Service" },
-        { href: withLocalePrefix("/privacy", locale), label: "Privacy Policy" },
-        { href: withLocalePrefix("/refund", locale), label: "Refund Policy" },
-        { href: withLocalePrefix("/cookies", locale), label: "Cookie Policy" },
-        { href: withLocalePrefix("/contact", locale), label: "Contact" },
-      ],
-    },
-  ];
 
   if (bare === "/") {
     return <>{children}</>;
   }
+
+  const publicLinks = PUBLIC_LINK_DEFS.map((link) => resolveLink(link, locale));
+  const footerSections = FOOTER_SECTION_DEFS.map((section) => ({
+    title: section.title,
+    links: section.links.map((link) => resolveLink(link, locale)),
+  }));
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -105,7 +121,7 @@ export function PublicLayout({ children }: { children: React.ReactNode }) {
                 <ul className="space-y-2">
                   {section.links.map((l) => (
                     <li key={l.href}>
-                      {"external" in l && l.external ? (
+                      {l.external ? (
                         <a href={l.href} className="text-sm text-purple-300/60 hover:text-amber-300 transition-colors">
                           {l.label}
                         </a>

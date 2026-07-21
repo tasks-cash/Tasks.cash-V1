@@ -33,7 +33,7 @@ RUN node -e "const fs=require('fs'); for (const p of ['packages/types/package.js
 
 FROM node:20-alpine AS runner
 WORKDIR /app
-# NODE_ENV set at runtime via docker-compose (development for local, production for deploy)
+ENV NODE_ENV=production
 
 RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 apiuser
 

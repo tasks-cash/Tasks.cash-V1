@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { GlassCard, StatCard, PortalButton, PageHeader } from "@tasks-cash/ui";
 import { adminFetch, getToken } from "@/lib/api";
-import { useContent } from "@/hooks/useContent";
 
 interface AdminStats {
   userCount: number;
@@ -18,7 +17,6 @@ interface AdminStats {
 
 export default function AdminDashboard() {
   const router = useRouter();
-  const { text } = useContent("admin", "dashboard");
   const [stats, setStats] = useState<AdminStats | null>(null);
 
   useEffect(() => {
@@ -39,9 +37,9 @@ export default function AdminDashboard() {
   return (
     <div className="mx-auto max-w-7xl">
       <PageHeader
-        title={text("hero", "title", "Command Center")}
-        subtitle={text("hero", "subtitle", "Real-time platform metrics and system health")}
-        badge={text("hero", "badge", "Admin Control")}
+        title="Command Center"
+        subtitle="Real-time platform metrics and system health"
+        badge="Admin Control"
       />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
