@@ -93,6 +93,16 @@ export interface IJobDeadLetter extends Document {
   bullJobId?: string;
   correlationId?: string;
   deadLetteredAt: Date;
+  recoveredAt?: Date;
+  recoveredBy?: string;
+  recoveryJobId?: string;
+  recoveryStatus: "dead_letter" | "recovery_claimed" | "recovery_enqueued" | "recovery_failed";
+  recoveryClaimedAt?: Date;
+  recoveryClaimedBy?: string;
+  recoveryClaimToken?: string;
+  recoveryAttemptCount: number;
+  recoveryLastError?: string;
+  recoveryReason?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -111,11 +121,22 @@ const dlSchema = new Schema<IJobDeadLetter>(
     bullJobId: { type: String },
     correlationId: { type: String, index: true },
     deadLetteredAt: { type: Date, required: true, default: () => new Date() },
+    recoveredAt: { type: Date },
+    recoveredBy: { type: String, maxlength: 128 },
+    recoveryJobId: { type: String, maxlength: 128 },
+    recoveryStatus: { type: String, enum: ["dead_letter", "recovery_claimed", "recovery_enqueued", "recovery_failed"], default: "dead_letter", index: true },
+    recoveryClaimedAt: { type: Date },
+    recoveryClaimedBy: { type: String, maxlength: 128 },
+    recoveryClaimToken: { type: String, maxlength: 128 },
+    recoveryAttemptCount: { type: Number, default: 0, min: 0 },
+    recoveryLastError: { type: String, maxlength: 2000 },
+    recoveryReason: { type: String, maxlength: 500 },
   },
   domainSchemaOptions("job_dead_letters")
 );
 
 dlSchema.index({ tenantId: 1, deadLetteredAt: -1 });
+dlSchema.index({ tenantId: 1, recoveryStatus: 1, deadLetteredAt: -1 });
 
 export const JobDeadLetter: Model<IJobDeadLetter> =
   (mongoose.models.JobDeadLetter as Model<IJobDeadLetter>) ||
