@@ -218,6 +218,7 @@ export async function runCampaignIntelligencePipeline(input: {
 
       const brief = (run.inputSnapshot?.brief as Record<string, unknown>) ?? {};
       const strategyOut = strategyOutputSchema.parse(await provider.generateStrategy({
+        tenantId: input.tenantId,
         signal: input.signal,
         campaign: campaign.toObject() as unknown as Record<string, unknown>,
         brand: brand ? (brand.toObject() as unknown as Record<string, unknown>) : null,
@@ -410,6 +411,7 @@ export async function runCampaignIntelligencePipeline(input: {
         let sourceContent;
         if (!existingKeys.has(sourceKey)) {
           const gen = contentOutputSchema.parse(await provider.generateAsset({
+            tenantId: input.tenantId,
             signal: input.signal,
             campaign: campaign.toObject() as unknown as Record<string, unknown>,
             strategy: strategyDoc.toObject() as unknown as Record<string, unknown>,
@@ -435,6 +437,7 @@ export async function runCampaignIntelligencePipeline(input: {
               : undefined,
           });
           const quality = qualityOutputSchema.parse(await provider.evaluateQuality({
+            tenantId: input.tenantId,
             signal: input.signal,
             content: sourceContent,
             language: primary,
@@ -443,6 +446,7 @@ export async function runCampaignIntelligencePipeline(input: {
           }));
           addUsage(quality.usage);
           const compliance = complianceOutputSchema.parse(await provider.evaluateCompliance({
+            tenantId: input.tenantId,
             signal: input.signal,
             content: sourceContent,
             brand: brand ? (brand.toObject() as unknown as Record<string, unknown>) : null,
@@ -519,6 +523,7 @@ export async function runCampaignIntelligencePipeline(input: {
           if (!sourceAsset) continue;
 
           const loc = localizationOutputSchema.parse(await provider.localize({
+            tenantId: input.tenantId,
             signal: input.signal,
             sourceLanguage: primary,
             targetLanguage: lang,
@@ -551,6 +556,7 @@ export async function runCampaignIntelligencePipeline(input: {
               : undefined,
           });
           const quality = qualityOutputSchema.parse(await provider.evaluateQuality({
+            tenantId: input.tenantId,
             signal: input.signal,
             content: loc.content,
             language: lang,
@@ -559,6 +565,7 @@ export async function runCampaignIntelligencePipeline(input: {
           }));
           addUsage(quality.usage);
           const compliance = complianceOutputSchema.parse(await provider.evaluateCompliance({
+            tenantId: input.tenantId,
             signal: input.signal,
             content: loc.content,
             brand: brand ? (brand.toObject() as unknown as Record<string, unknown>) : null,

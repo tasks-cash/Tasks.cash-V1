@@ -45,16 +45,13 @@ describe("campaign route tenant authorization", () => {
 });
 
 describe("immutable campaign output protections", () => {
-  it("blocks all asset and strategy mutations", () => {
-    const assetHooks = CampaignAsset.schema.s.hooks._pres.get("updateOne") ?? [];
-    const strategyHooks = CampaignStrategyVersion.schema.s.hooks._pres.get("updateOne") ?? [];
-    assert.ok(assetHooks.length > 0);
-    assert.ok(strategyHooks.length > 0);
+  it("blocks all asset and strategy mutations", async () => {
+    await assert.rejects(CampaignAsset.updateOne({}, { $set: { status: "valid" } }).exec(), /immutable/);
+    await assert.rejects(CampaignStrategyVersion.updateOne({}, { $set: { status: "ready" } }).exec(), /immutable/);
   });
 
-  it("allows package finalization only from generating state", () => {
-    const hooks = CampaignPackageVersion.schema.s.hooks._pres.get("updateOne") ?? [];
-    assert.ok(hooks.length > 0);
+  it("allows package finalization only from generating state", async () => {
+    await assert.rejects(CampaignPackageVersion.updateOne({ status: "ready" }, { $set: { status: "failed" } }).exec(), /immutable/);
     const generatedIndex = CampaignPackageVersion.schema.indexes().find(
       ([fields]) => fields.generatedByJobId === 1
     );

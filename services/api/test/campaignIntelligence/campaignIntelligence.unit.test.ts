@@ -127,6 +127,7 @@ describe("fake provider", () => {
   it("returns structured strategy and localized Arabic without silent empty output", async () => {
     const p = new FakeCampaignIntelligenceProvider();
     const strategy = await p.generateStrategy({
+      tenantId: "test",
       campaign: { name: "Demo", funnelStage: "awareness", marketCountries: ["SA"] },
       brand: null,
       audience: null,
@@ -139,6 +140,7 @@ describe("fake provider", () => {
     assert.equal(strategy.usage.provider, "fake");
 
     const asset = await p.generateAsset({
+      tenantId: "test",
       campaign: { name: "Demo" },
       strategy: {},
       language: "en",
@@ -151,6 +153,7 @@ describe("fake provider", () => {
     assert.ok(asset.content.callToAction);
 
     const loc = await p.localize({
+      tenantId: "test",
       sourceLanguage: "en",
       targetLanguage: "ar",
       targetLocale: "ar-SA",
@@ -178,7 +181,7 @@ describe("status enums and cache keys", () => {
   it("uses controlled campaign statuses", () => {
     assert.ok(INTEL_CAMPAIGN_STATUSES.includes("draft"));
     assert.ok(INTEL_CAMPAIGN_STATUSES.includes("partially_ready"));
-    assert.ok(!INTEL_CAMPAIGN_STATUSES.includes("whatever"));
+    assert.ok(!INTEL_CAMPAIGN_STATUSES.some((status: string) => status === "whatever"));
   });
 
   it("builds tenant-scoped cache keys", () => {

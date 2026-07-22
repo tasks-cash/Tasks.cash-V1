@@ -15,6 +15,7 @@ export interface ProviderUsage {
 }
 
 export interface StrategyGenerationInput {
+  tenantId: string;
   signal?: AbortSignal;
   campaign: Record<string, unknown>;
   brand?: Record<string, unknown> | null;
@@ -48,6 +49,7 @@ export interface StrategyGenerationOutput {
 }
 
 export interface ContentGenerationInput {
+  tenantId: string;
   signal?: AbortSignal;
   campaign: Record<string, unknown>;
   strategy: Record<string, unknown>;
@@ -88,6 +90,7 @@ export interface ContentGenerationOutput {
 }
 
 export interface LocalizationInput {
+  tenantId: string;
   signal?: AbortSignal;
   sourceLanguage: string;
   targetLanguage: string;
@@ -106,6 +109,7 @@ export interface LocalizationOutput {
 }
 
 export interface QualityEvaluationInput {
+  tenantId: string;
   signal?: AbortSignal;
   content: GeneratedAssetContent;
   language: string;
@@ -130,6 +134,7 @@ export interface QualityEvaluationOutput {
 }
 
 export interface ComplianceEvaluationInput {
+  tenantId: string;
   signal?: AbortSignal;
   content: GeneratedAssetContent;
   brand?: Record<string, unknown> | null;

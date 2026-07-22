@@ -70,7 +70,7 @@ Interfaces: strategy, content, localization, quality, compliance.
 | Env | Behavior |
 |---|---|
 | `NODE_ENV=test` | Deterministic fake provider (test runtime only) |
-| `CAMPAIGN_AI_PROVIDER=openai` | Real OpenAI-compatible provider using runtime credentials |
+| `CAMPAIGN_AI_PROVIDER=miraaj` | Provider-neutral external Miraaj AI API integration |
 | unset / `none` in production | Clear `ProviderNotConfiguredError` — no fabricated silent output |
 
 Never put provider secrets in Mongo documents or logs.
@@ -115,9 +115,9 @@ Audit actions: `campaigns.create|update|archive|generate|cancel_generation`, bra
 cp .env.example .env   # or services/api/.env.example
 # set:
 CAMPAIGN_INTELLIGENCE_ENABLED=true
-CAMPAIGN_AI_PROVIDER=openai
+CAMPAIGN_AI_PROVIDER=miraaj
 CAMPAIGN_CACHE_TTL_SECONDS=300
-# configure CAMPAIGN_OPENAI_API_KEY in the runtime secret store
+# configure server-only MIRAAJ_AI_* credentials in the runtime secret store
 
 docker compose up
 # or pnpm --filter @tasks-cash/api dev
@@ -137,6 +137,6 @@ pnpm --filter @tasks-cash/api test:campaign-intelligence
 
 ## Production configuration remaining
 
-- Configure a real AI provider adapter (not shipped as silent default).  
+- Configure the external Miraaj AI API; Tasks.cash must not configure downstream providers.
 - Set cost/token accounting currency policy if billing later requires it.  
 - Ensure Super Admin permissions include the new `campaigns.*` slugs (seed/owner refresh).

@@ -4,7 +4,7 @@
 
 import { getCampaignIntelligenceConfig } from "../config";
 import { FakeCampaignIntelligenceProvider } from "./fakeProvider";
-import { OpenAiCampaignIntelligenceProvider } from "./openAiProvider";
+import { MiraajCampaignIntelligenceProvider } from "./miraajProvider";
 import {
   ProviderNotConfiguredError,
   type CampaignIntelligenceProvider,
@@ -19,13 +19,12 @@ export function getCampaignIntelligenceProvider(): CampaignIntelligenceProvider 
     cached = new FakeCampaignIntelligenceProvider();
     return cached;
   }
-  if (cfg.provider === "openai") {
-    if (!cfg.openAiApiKey) throw new ProviderNotConfiguredError("CAMPAIGN_OPENAI_API_KEY is required when CAMPAIGN_AI_PROVIDER=openai");
-    cached = new OpenAiCampaignIntelligenceProvider();
+  if (cfg.provider === "miraaj") {
+    cached = new MiraajCampaignIntelligenceProvider();
     return cached;
   }
   throw new ProviderNotConfiguredError(
-    "Configure CAMPAIGN_AI_PROVIDER=openai and its runtime credentials; the fake provider is test-only"
+    "Configure CAMPAIGN_AI_PROVIDER=miraaj and the server-side Miraaj API connection; the fake provider is test-only"
   );
 }
 
