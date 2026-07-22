@@ -6,6 +6,7 @@ import { z } from "zod";
 import { EventRegistrationError, EventValidationError } from "./eventErrors";
 import { EVENT_TYPES } from "./eventTypes";
 import { EVENT_TYPES_CI } from "../campaignIntelligence/events";
+import { MIRAAJ_EVENTS } from "../miraaj/events";
 
 export interface EventTypeDefinition<T extends z.ZodTypeAny = z.ZodTypeAny> {
   eventType: string;
@@ -405,6 +406,17 @@ export function bootstrapEventRegistry(): void {
     [EVENT_TYPES_CI.ASSET_GENERATED, "Asset generated"],
   ] as const) {
     registerEventType(def(type, "intel_campaign", desc, ciPayload));
+  }
+
+  const miraajPayload = z.object({
+    executionId: id,
+    capability: z.string().min(1).max(128).optional(),
+    status: z.string().min(1).max(64).optional(),
+    errorCode: z.string().max(128).optional(),
+    eventId: z.string().max(128).optional(),
+  }).strict();
+  for (const type of Object.values(MIRAAJ_EVENTS)) {
+    registerEventType(def(type, "miraaj_execution", "Miraaj integration lifecycle event", miraajPayload));
   }
 }
 

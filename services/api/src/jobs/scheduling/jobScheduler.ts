@@ -23,6 +23,12 @@ const DEFAULT_RECURRING = [
     everyMs: 300_000,
     payload: { source: "scheduler" },
   },
+  {
+    name: "miraaj.execution.reconcile.1m",
+    jobName: JOB_NAMES.MIRAAJ_RECONCILE,
+    everyMs: 60_000,
+    payload: {},
+  },
 ] as const;
 
 export async function ensureRecurringJobs(): Promise<number> {

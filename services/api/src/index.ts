@@ -54,6 +54,9 @@ import adminDomainRoutes from "./routes/adminDomain";
 import adminEventsRoutes from "./routes/adminEvents";
 import adminJobsRoutes from "./routes/adminJobs";
 import campaignIntelligenceRoutes from "./routes/campaignIntelligence";
+import adminMiraajRoutes from "./routes/adminMiraaj";
+import miraajInternalRoutes from "./routes/miraajInternal";
+import { getMiraajConfig } from "./miraaj/config";
 import { bootstrapEventSystem, shutdownEventSystem } from "./events";
 import { bootstrapJobsSystem, shutdownJobsSystem } from "./jobs";
 import { analyticsPublicRoutes, analyticsAdminRoutes } from "./analytics";
@@ -78,6 +81,8 @@ app.use(cors({
 }));
 app.use(requestContextMiddleware);
 app.use(httpAccessLogMiddleware);
+app.use("/api/internal/miraaj", express.raw({ type: "application/json", limit: getMiraajConfig().maxRequestBytes }));
+app.use("/api/internal/miraaj", miraajInternalRoutes);
 app.use(express.json({ limit: "1mb" }));
 
 // Health check — process liveness + dependency readiness (no secrets).
@@ -153,6 +158,7 @@ app.use("/api/admin", adminEventsRoutes);
 app.use("/api/admin", adminJobsRoutes);
 app.use("/api/admin", adminDomainRoutes);
 app.use("/api/campaigns", campaignIntelligenceRoutes);
+app.use("/api/admin/miraaj", adminMiraajRoutes);
 
 // 404 handler
 app.use((req, res) => {

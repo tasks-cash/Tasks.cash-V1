@@ -55,6 +55,10 @@ export const SUPER_ADMIN_PERMISSIONS = [
   "campaigns.cancel",
   "campaigns.manage_profiles",
   "campaigns.read_generation_runs",
+  "miraaj.read",
+  "miraaj.execute",
+  "miraaj.manage",
+  "miraaj.cancel",
 ] as const;
 
 export type SuperAdminPermission = (typeof SUPER_ADMIN_PERMISSIONS)[number];

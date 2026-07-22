@@ -21,6 +21,10 @@ export const JOB_NAMES = {
   EVENT_RETENTION_CLEANUP: "events.retention.cleanup",
   /** Campaign Intelligence multilingual package / strategy pipeline */
   CAMPAIGN_INTELLIGENCE_GENERATE: "campaign.intel.generate",
+  MIRAAJ_SUBMIT: "miraaj.execution.submit",
+  MIRAAJ_SYNCHRONIZE: "miraaj.execution.synchronize",
+  MIRAAJ_CANCEL: "miraaj.execution.cancel",
+  MIRAAJ_RECONCILE: "miraaj.execution.reconcile",
   /** Acceptance / fixture only — handler registered when JOBS_ENABLE_TEST_HANDLERS=true or NODE_ENV=test */
   SYSTEM_TEST_ALWAYS_FAIL: "system.test.always_fail",
 } as const;
@@ -43,6 +47,10 @@ export const JOB_QUEUE_MAP: Record<JobName, QueueName> = {
   [JOB_NAMES.SYSTEM_CLEANUP]: "system",
   [JOB_NAMES.EVENT_RETENTION_CLEANUP]: "schedules",
   [JOB_NAMES.CAMPAIGN_INTELLIGENCE_GENERATE]: "ai",
+  [JOB_NAMES.MIRAAJ_SUBMIT]: "ai",
+  [JOB_NAMES.MIRAAJ_SYNCHRONIZE]: "ai",
+  [JOB_NAMES.MIRAAJ_CANCEL]: "ai",
+  [JOB_NAMES.MIRAAJ_RECONCILE]: "schedules",
   [JOB_NAMES.SYSTEM_TEST_ALWAYS_FAIL]: "system",
 };
 

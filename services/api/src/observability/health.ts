@@ -19,6 +19,7 @@ import { getJobsDiagnostics } from "../jobs/bootstrap";
 import { isJobsRedisReady } from "../jobs/queues/jobsRedis";
 import { getWorkersStatus } from "../jobs/workers/workerManager";
 import { getCampaignIntelligenceDiagnostics } from "../campaignIntelligence/metrics";
+import { getMiraajConfig } from "../miraaj/config";
 
 const startedAt = Date.now();
 
@@ -58,6 +59,13 @@ export function getDiagnostics() {
   const jobsCfg = getJobsConfig();
   const jobsDiag = getJobsDiagnostics();
   const workers = getWorkersStatus();
+  let miraaj: Record<string, unknown>;
+  try {
+    const cfg = getMiraajConfig();
+    miraaj = { enabled: cfg.enabled, status: cfg.enabled ? (cfg.maintenanceMode ? "degraded" : "configured") : "disabled", apiVersion: cfg.apiVersion, maintenanceMode: cfg.maintenanceMode, submitEnabled: cfg.submitEnabled, synchronizationEnabled: cfg.synchronizationEnabled, circuitBreaker: "shared_redis" };
+  } catch (err) {
+    miraaj = { enabled: true, status: "misconfigured", error: err instanceof Error ? err.message : "Invalid configuration" };
+  }
 
   const pageCache = !cacheCfg.enabled
     ? "disabled"
@@ -93,6 +101,7 @@ export function getDiagnostics() {
       eventBus: eventCfg.enabled ? "enabled" : "disabled",
       eventDispatcher: dispatcher.enabled ? (dispatcher.running ? "running" : "stopped") : "disabled",
       productAnalytics: getAnalyticsConfig().enabled ? "enabled" : "disabled",
+      miraaj: String(miraaj.status),
     },
     memory: {
       rssBytes: mem.rss,
@@ -177,6 +186,7 @@ export function getDiagnostics() {
       retentionDays: jobsCfg.retentionDays,
     },
     campaignIntelligence: getCampaignIntelligenceDiagnostics(),
+    miraaj,
   };
 }
 
