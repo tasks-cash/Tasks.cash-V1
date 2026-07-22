@@ -1,0 +1,23 @@
+import assert from "node:assert/strict";
+import { createHmac } from "node:crypto";
+import { afterEach,describe,it } from "node:test";
+import { createExecutionRequestSchema,executionResponseSchema,webhookEventSchema } from "../../src/miraaj/contracts";
+import { fingerprint,MiraajAiClient } from "../../src/miraaj/client";
+import { assertTransition } from "../../src/miraaj/stateMachine";
+import { verifyWebhookSignature } from "../../src/miraaj/service";
+import { MiraajIntegrationError } from "../../src/miraaj/errors";
+
+const originalFetch=globalThis.fetch;
+afterEach(()=>{globalThis.fetch=originalFetch;for(const key of ["MIRAAJ_AI_ENABLED","MIRAAJ_AI_BASE_URL","MIRAAJ_AI_SERVICE_TOKEN","MIRAAJ_AI_CALLBACK_SECRET","MIRAAJ_AI_MAX_RETRIES","MIRAAJ_AI_CONNECT_TIMEOUT_MS","MIRAAJ_AI_REQUEST_TIMEOUT_MS"])delete process.env[key];});
+describe("Miraaj v1 contracts",()=>{
+  it("accepts provider-neutral execution requests",()=>{const value=createExecutionRequestSchema.parse({capability:"campaign.strategy.generate",input:{brief:{name:"x"}},policy:{quality:"high"}});assert.equal(value.capability,"campaign.strategy.generate");});
+  it("rejects provider and model leakage",()=>{assert.equal(createExecutionRequestSchema.safeParse({capability:"campaign.strategy.generate",input:{},provider:"openai"}).success,false);});
+  it("validates execution and webhook envelopes",()=>{const execution=executionResponseSchema.parse({executionId:"mx-1",status:"succeeded",result:{output:{ok:true},outputSchemaVersion:"v1"}});assert.equal(webhookEventSchema.safeParse({eventId:"evt-1",eventType:"execution.completed",occurredAt:new Date().toISOString(),tenantId:"tenant-a",execution}).success,true);});
+});
+describe("Miraaj integration safety",()=>{
+  it("fingerprints nested objects deterministically",()=>{assert.equal(fingerprint({b:{y:2,x:1},a:1}),fingerprint({a:1,b:{x:1,y:2}}));assert.notEqual(fingerprint({a:{x:1}}),fingerprint({a:{x:2}}));});
+  it("rejects invalid terminal state transitions",()=>{assert.throws(()=>assertTransition("succeeded","running"),/Invalid Miraaj/);assert.doesNotThrow(()=>assertTransition("queued","running"));});
+  it("verifies timestamped webhook signatures",()=>{process.env.MIRAAJ_AI_CALLBACK_SECRET="test-secret-long";const raw=Buffer.from("{\"ok\":true}");const timestamp=String(Math.floor(Date.now()/1000));const signature=createHmac("sha256","test-secret-long").update(`${timestamp}.${raw.toString("utf8")}`).digest("hex");assert.doesNotThrow(()=>verifyWebhookSignature(raw,{timestamp,signature}));assert.throws(()=>verifyWebhookSignature(raw,{timestamp,signature:"bad"}),/Invalid webhook/);});
+  it("adds server authentication and validates responses",async()=>{process.env.MIRAAJ_AI_ENABLED="true";process.env.MIRAAJ_AI_BASE_URL="http://127.0.0.1:9999";process.env.MIRAAJ_AI_SERVICE_TOKEN="service-secret";process.env.MIRAAJ_AI_CALLBACK_SECRET="callback-secret";process.env.MIRAAJ_AI_MAX_RETRIES="0";let authorization="";globalThis.fetch=async(_url,init)=>{authorization=new Headers(init?.headers).get("authorization")??"";return new Response(JSON.stringify({executionId:"external-1",status:"accepted"}),{status:200,headers:{"content-type":"application/json"}});};const result=await new MiraajAiClient(async()=>undefined).create({capability:"content.summarize",input:{text:"safe"}},{tenantId:"tenant-a",correlationId:"corr-a",idempotencyKey:"idem-a"});assert.equal(result.status,"accepted");assert.equal(authorization,"Bearer service-secret");});
+  it("distinguishes connection establishment timeout from total timeout",async()=>{process.env.MIRAAJ_AI_ENABLED="true";process.env.MIRAAJ_AI_BASE_URL="http://127.0.0.1:9999";process.env.MIRAAJ_AI_SERVICE_TOKEN="service-secret";process.env.MIRAAJ_AI_CALLBACK_SECRET="callback-secret";process.env.MIRAAJ_AI_MAX_RETRIES="0";process.env.MIRAAJ_AI_CONNECT_TIMEOUT_MS="100";process.env.MIRAAJ_AI_REQUEST_TIMEOUT_MS="1000";const connectionClient=new MiraajAiClient(async()=>{throw new MiraajIntegrationError("connection_error","Miraaj connection timed out",true,503);});await assert.rejects(connectionClient.health({tenantId:"tenant-a",correlationId:"connection-timeout"},true),(error:unknown)=>error instanceof MiraajIntegrationError&&error.code==="connection_error");globalThis.fetch=async(_url,init)=>new Promise((_resolve,reject)=>{init?.signal?.addEventListener("abort",()=>reject(new DOMException("aborted","AbortError")),{once:true});});const totalClient=new MiraajAiClient(async()=>undefined);await assert.rejects(totalClient.health({tenantId:"tenant-a",correlationId:"total-timeout"},true),(error:unknown)=>error instanceof MiraajIntegrationError&&error.code==="timeout");});
+});

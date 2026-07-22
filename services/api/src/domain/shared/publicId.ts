@@ -50,6 +50,7 @@ export const PUBLIC_ID_PREFIXES = {
   packageVersion: "cpv",
   campaignAsset: "cas",
   generationRun: "cgr",
+  miraajExecution: "mxe",
 } as const;
 
 export type PublicIdKind = keyof typeof PUBLIC_ID_PREFIXES;

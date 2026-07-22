@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose, { type ClientSession } from "mongoose";
 import { AuditLog } from "../../models/AuditLog";
 import { isDbConnected } from "../../config/database";
 
@@ -13,6 +13,8 @@ export interface DomainAuditInput {
   ip?: string;
   userAgent?: string;
   metadata?: Record<string, unknown>;
+  session?: ClientSession;
+  required?: boolean;
 }
 
 /**
@@ -22,7 +24,7 @@ export interface DomainAuditInput {
 export async function writeDomainAudit(input: DomainAuditInput): Promise<void> {
   if (!isDbConnected() && mongoose.connection.readyState !== 1) return;
   try {
-    await AuditLog.create({
+    await AuditLog.create([{
       actorId: input.actorId || "system",
       action: input.action,
       resource: `${input.entity}:${input.entityId}`,
@@ -37,8 +39,9 @@ export async function writeDomainAudit(input: DomainAuditInput): Promise<void> {
         timestamp: new Date().toISOString(),
         ...(input.metadata ?? {}),
       },
-    });
+    }], input.session ? { session: input.session } : undefined);
   } catch (err) {
+    if (input.required) throw err;
     console.warn(
       "[AuditLog] domain audit write failed",
       err instanceof Error ? err.message : err

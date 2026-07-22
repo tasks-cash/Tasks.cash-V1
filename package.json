@@ -25,6 +25,7 @@
     "clean": "rm -rf apps/web/.next apps/admin/.next services/api/dist services/worker/dist packages/types/dist packages/utils/dist",
     "build": "pnpm -r build",
     "lint": "pnpm -r lint",
+    "typecheck": "pnpm -r --if-present typecheck",
     "test": "pnpm -r --if-present test",
     "seed": "pnpm --filter @tasks-cash/api seed",
     "docker:up": "docker compose up -d",
