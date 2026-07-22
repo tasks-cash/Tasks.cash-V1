@@ -10,6 +10,8 @@
     --accent: 43 74% 52%;
     --border: 270 40% 18%;
     --radius: 0.75rem;
+    --font-inter: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --font-cinzel: Georgia, "Times New Roman", serif;
   }
 
   html {
