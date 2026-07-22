@@ -1,0 +1,4 @@
+import { NextResponse } from "next/server";
+import { API_URL } from "@/config/env";
+async function forward(request:Request,context:{params:Promise<{path:string[]}>}){const {path}=await context.params;const url=new URL(request.url);const headers:Record<string,string>={authorization:request.headers.get("authorization")??"","x-tenant-id":request.headers.get("x-tenant-id")??"public"};let body:string|undefined;if(!["GET","HEAD"].includes(request.method)){headers["content-type"]="application/json";body=await request.text();}try{const upstream=await fetch(`${API_URL}/api/admin/miraaj/${path.map(encodeURIComponent).join("/")}${url.search}`,{method:request.method,headers,body,cache:"no-store"});return NextResponse.json(await upstream.json(),{status:upstream.status});}catch{return NextResponse.json({success:false,error:"API unavailable"},{status:503});}}
+export const GET=forward;export const POST=forward;export const PATCH=forward;

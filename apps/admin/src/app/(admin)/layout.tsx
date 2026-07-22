@@ -29,6 +29,7 @@ const ADMIN_NAV = [
   { href: "/challenges", label: "Challenges", icon: "🎯" },
   { href: "/content", label: "Content", icon: "📄" },
   { href: "/content-cache", label: "Content Cache", icon: "🗄️" },
+  { href: "/miraaj", label: "Miraaj AI", icon: "🤖" },
   { href: "/notifications", label: "Notifications", icon: "🔔" },
   { href: "/support", label: "Support", icon: "💬" },
   { href: "/settings", label: "Settings", icon: "⚙️" },
