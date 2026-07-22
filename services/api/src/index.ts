@@ -83,6 +83,10 @@ app.use(requestContextMiddleware);
 app.use(httpAccessLogMiddleware);
 app.use("/api/internal/miraaj", express.raw({ type: "application/json", limit: getMiraajConfig().maxRequestBytes }));
 app.use("/api/internal/miraaj", miraajInternalRoutes);
+app.use("/api/internal/miraaj", (err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  const status = err && typeof err === "object" && "type" in err && err.type === "entity.too.large" ? 413 : 400;
+  res.status(status).json({ success: false, error: status === 413 ? "Invalid webhook payload size" : "Invalid webhook payload" });
+});
 app.use(express.json({ limit: "1mb" }));
 
 // Health check — process liveness + dependency readiness (no secrets).

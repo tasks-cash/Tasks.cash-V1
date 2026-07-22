@@ -1,6 +1,6 @@
 import { createHash, createHmac, timingSafeEqual } from "crypto";
 import mongoose, { type ClientSession } from "mongoose";
-import { MiraajExecution, MiraajWebhookInbox, MiraajIntegrationSettings, type MiraajExecutionDocument, type MiraajLocalStatus } from "./models";
+import { assignMiraajExecutionId, MiraajExecution, MiraajWebhookInbox, MiraajIntegrationSettings, type MiraajExecutionDocument, type MiraajLocalStatus } from "./models";
 import { createExecutionRequestSchema, type CreateExecutionRequest, type MiraajExecutionResponse, type MiraajWebhookEvent } from "./contracts";
 import { assertTransition } from "./stateMachine";
 import { fingerprint, miraajAiClient } from "./client";
@@ -94,7 +94,8 @@ export async function submitExecution(tenantId: string, executionId: string, sig
   const found = await MiraajExecution.findOne({ tenantId, executionId }); if (!found) throw new MiraajIntegrationError("validation_error", "Execution not found", false, 404); if (found.miraajExecutionId) return found;
   const doc = await transitionExecution(found, "submitting", { attemptCount: found.attemptCount + 1, submittedAt: new Date() });
   const response = await miraajAiClient.create(doc.inputReference as CreateExecutionRequest, { tenantId, correlationId: doc.correlationId, causationId: doc.causationId, idempotencyKey: doc.idempotencyKey, signal });
-  return transitionExecution(doc, localStatus(response.status), { miraajExecutionId: response.executionId, acknowledgedAt: new Date(), resultReference: response.result, errorCode: response.error?.code, errorMessageSafe: response.error?.message, externalTraceId: response.error?.externalTraceId, lastSynchronizedAt: new Date() });
+  const assigned = await assignMiraajExecutionId(tenantId, executionId, response.executionId);
+  return transitionExecution(assigned, localStatus(response.status), { acknowledgedAt: new Date(), resultReference: response.result, errorCode: response.error?.code, errorMessageSafe: response.error?.message, externalTraceId: response.error?.externalTraceId, lastSynchronizedAt: new Date() });
 }
 
 export async function synchronizeExecution(tenantId: string, executionId: string, signal?: AbortSignal) {
@@ -122,12 +123,24 @@ export function verifyWebhookSignature(raw: Buffer, headers: { signature?: strin
 }
 
 export async function processWebhook(event: MiraajWebhookEvent, raw: Buffer) {
-  const hash = createHash("sha256").update(raw).digest("hex"); const replayIdentity = `${event.eventId}:${hash}`; const replay = await miraajRedis.reserveReplay(replayIdentity);
-  if (replay === "duplicate") return { duplicate: true, replay: true };
+  const hash = createHash("sha256").update(raw).digest("hex"); const replayIdentity = event.eventId; const replay = await miraajRedis.reserveReplay(replayIdentity);
+  const duplicate = await MiraajWebhookInbox.findOne({ eventId: event.eventId }).lean();
+  if (duplicate) {
+    if (duplicate.payloadHash !== hash || duplicate.tenantId !== event.tenantId || duplicate.eventType !== event.eventType) throw new MiraajIntegrationError("replay_detected", "Conflicting webhook replay", false, 409);
+    return { duplicate: true, replay: replay === "duplicate" };
+  }
   try {
     return await inTransaction(async (session) => {
-      try { await MiraajWebhookInbox.create([{ eventId: event.eventId, tenantId: event.tenantId, eventType: event.eventType, payloadHash: hash }], session ? { session } : undefined); }
-      catch (error) { if (error && typeof error === "object" && "code" in error && (error as { code: number }).code === 11000) return { duplicate: true, replay: false }; throw error; }
+      const reservation = await MiraajWebhookInbox.updateOne(
+        { eventId: event.eventId },
+        { $setOnInsert: { eventId: event.eventId, tenantId: event.tenantId, eventType: event.eventType, payloadHash: hash, status: "received" } },
+        { upsert: true, session },
+      );
+      if (reservation.upsertedCount === 0) {
+        const existing = await MiraajWebhookInbox.findOne({ eventId: event.eventId }).session(session ?? null).lean();
+        if (!existing || existing.payloadHash !== hash || existing.tenantId !== event.tenantId || existing.eventType !== event.eventType) throw new MiraajIntegrationError("replay_detected", "Conflicting webhook replay", false, 409);
+        return { duplicate: true, replay: false };
+      }
       const doc = await MiraajExecution.findOne({ tenantId: event.tenantId, miraajExecutionId: event.execution.executionId }).session(session ?? null);
       if (!doc) throw new MiraajIntegrationError("validation_error", "Unknown webhook execution", false, 404);
       if (["succeeded", "failed", "cancelled"].includes(doc.localStatus)) { await MiraajWebhookInbox.updateOne({ eventId: event.eventId }, { $set: { status: "processed", processedAt: new Date() } }, { session }); return { duplicate: false, ignored: true }; }
@@ -139,7 +152,8 @@ export async function processWebhook(event: MiraajWebhookEvent, raw: Buffer) {
     });
   } catch (error) {
     if (replay === "reserved") await miraajRedis.releaseReplay(replayIdentity);
-    await MiraajWebhookInbox.updateOne({ eventId: event.eventId }, { $set: { status: "rejected", processedAt: new Date() } }).catch(() => undefined); throw error;
+    if (!(error instanceof MiraajIntegrationError && error.code === "replay_detected")) await MiraajWebhookInbox.updateOne({ eventId: event.eventId }, { $set: { status: "rejected", processedAt: new Date() } }).catch(() => undefined);
+    throw error;
   }
 }
 

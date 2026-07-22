@@ -18,7 +18,7 @@ const executionSchema = new Schema<IMiraajExecution>({
   userId: String, campaignId: { type: String, index: true }, generationRunId: { type: String, index: true },
   capability: { type: String, required: true, index: true }, idempotencyKey: { type: String, required: true },
   localStatus: { type: String, enum: LOCAL_STATUSES, default: "pending", index: true },
-  miraajExecutionId: { type: String, immutable: true, sparse: true }, requestVersion: { type: String, required: true, default: "v1" },
+  miraajExecutionId: { type: String, sparse: true, immutable: true }, requestVersion: { type: String, required: true, default: "v1" },
   requestFingerprint: { type: String, required: true }, inputReference: Schema.Types.Mixed, resultReference: Schema.Types.Mixed,
   errorCode: String, errorMessageSafe: String, externalTraceId: String, attemptCount: { type: Number, default: 0, min: 0 },
   correlationId: { type: String, required: true }, causationId: String, submittedAt: Date, acknowledgedAt: Date,
@@ -28,7 +28,31 @@ executionSchema.index({ tenantId: 1, executionId: 1 }, { unique: true });
 executionSchema.index({ tenantId: 1, idempotencyKey: 1 }, { unique: true });
 executionSchema.index({ tenantId: 1, miraajExecutionId: 1 }, { unique: true, partialFilterExpression: { miraajExecutionId: { $type: "string" } } });
 executionSchema.index({ localStatus: 1, updatedAt: 1 });
+executionSchema.pre("save", function () {
+  if (!this.isNew && this.isModified("miraajExecutionId")) throw new Error("Use atomic external execution ID assignment");
+});
+for (const operation of ["findOneAndUpdate", "updateOne", "updateMany", "replaceOne"] as const) {
+  executionSchema.pre(operation, function () {
+    const update = this.getUpdate() as Record<string, unknown> | null;
+    const set = update?.$set as Record<string, unknown> | undefined;
+    if (update && ("miraajExecutionId" in update || Boolean(set && "miraajExecutionId" in set))) {
+      throw new Error("Use atomic external execution ID assignment");
+    }
+  });
+}
 export const MiraajExecution = (mongoose.models.MiraajExecution as mongoose.Model<IMiraajExecution>) ?? mongoose.model<IMiraajExecution>("MiraajExecution", executionSchema);
+
+export async function assignMiraajExecutionId(tenantId: string, executionId: string, externalExecutionId: string): Promise<MiraajExecutionDocument> {
+  const assigned = await MiraajExecution.collection.findOneAndUpdate(
+    { tenantId, executionId, $or: [{ miraajExecutionId: { $exists: false } }, { miraajExecutionId: null }, { miraajExecutionId: externalExecutionId }] },
+    { $set: { miraajExecutionId: externalExecutionId, updatedAt: new Date() } },
+    { returnDocument: "after", includeResultMetadata: false },
+  );
+  if (assigned) return MiraajExecution.hydrate(assigned);
+  const existing = await MiraajExecution.findOne({ tenantId, executionId }).select("miraajExecutionId").lean();
+  if (!existing) throw new Error("Miraaj execution not found for external ID assignment");
+  throw new Error("Miraaj external execution ID is immutable after assignment");
+}
 
 export interface IMiraajWebhookInbox { eventId: string; tenantId: string; eventType: string; payloadHash: string; status: "received"|"processed"|"rejected"; processedAt?: Date; }
 const inboxSchema = new Schema<IMiraajWebhookInbox>({ eventId: { type: String, required: true, unique: true }, tenantId: { type: String, required: true, index: true }, eventType: { type: String, required: true }, payloadHash: { type: String, required: true }, status: { type: String, enum: ["received","processed","rejected"], default: "received" }, processedAt: Date }, { timestamps: true, strict: "throw", collection: "miraaj_webhook_inbox" });
