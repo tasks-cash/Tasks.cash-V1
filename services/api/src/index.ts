@@ -60,6 +60,13 @@ import { getMiraajConfig } from "./miraaj/config";
 import { bootstrapEventSystem, shutdownEventSystem } from "./events";
 import { bootstrapJobsSystem, shutdownJobsSystem } from "./jobs";
 import { analyticsPublicRoutes, analyticsAdminRoutes } from "./analytics";
+import {
+  distributionErrorHandler,
+  miraajDistributionAdminRoutes,
+  miraajDistributionCallbackRoutes,
+  miraajDistributionUserRoutes,
+} from "./miraajDistribution/routes";
+import { getMiraajDistributionConfig } from "./miraajDistribution/config";
 
 // Load .env in local dev only — Docker injects env vars directly; never override existing vars
 const rootEnv = path.resolve(__dirname, "../../../.env");
@@ -81,6 +88,12 @@ app.use(cors({
 }));
 app.use(requestContextMiddleware);
 app.use(httpAccessLogMiddleware);
+app.use(
+  "/api/integrations/miraaj/distribution",
+  express.raw({ type: "application/json", limit: getMiraajDistributionConfig().callbackMaxBodyBytes }),
+  miraajDistributionCallbackRoutes,
+  distributionErrorHandler,
+);
 app.use("/api/internal/miraaj", express.raw({ type: "application/json", limit: getMiraajConfig().maxRequestBytes }));
 app.use("/api/internal/miraaj", miraajInternalRoutes);
 app.use("/api/internal/miraaj", (err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
@@ -163,6 +176,9 @@ app.use("/api/admin", adminJobsRoutes);
 app.use("/api/admin", adminDomainRoutes);
 app.use("/api/campaigns", campaignIntelligenceRoutes);
 app.use("/api/admin/miraaj", adminMiraajRoutes);
+app.use("/api/miraaj-distribution", miraajDistributionUserRoutes);
+app.use("/api/admin/miraaj-distribution", miraajDistributionAdminRoutes);
+app.use(distributionErrorHandler);
 
 // 404 handler
 app.use((req, res) => {

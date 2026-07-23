@@ -25,6 +25,15 @@ export const JOB_NAMES = {
   MIRAAJ_SYNCHRONIZE: "miraaj.execution.synchronize",
   MIRAAJ_CANCEL: "miraaj.execution.cancel",
   MIRAAJ_RECONCILE: "miraaj.execution.reconcile",
+  MIRAAJ_DISTRIBUTION_ASSIGNMENT_REQUEST: "miraaj.distribution.assignment.request",
+  MIRAAJ_DISTRIBUTION_ASSIGNMENT_CANCEL: "miraaj.distribution.assignment.cancel",
+  MIRAAJ_DISTRIBUTION_PROOF_UPLOAD_SESSION: "miraaj.distribution.proof.upload_session",
+  MIRAAJ_DISTRIBUTION_PROOF_COMPLETE: "miraaj.distribution.proof.complete",
+  MIRAAJ_DISTRIBUTION_PROOF_POLL: "miraaj.distribution.proof.poll",
+  MIRAAJ_DISTRIBUTION_INBOX_PROCESS: "miraaj.distribution.inbox.process",
+  MIRAAJ_DISTRIBUTION_ASSIGNMENT_RECONCILE: "miraaj.distribution.assignment.reconcile",
+  MIRAAJ_DISTRIBUTION_PROOF_RECONCILE: "miraaj.distribution.proof.reconcile",
+  MIRAAJ_DISTRIBUTION_INBOX_RECOVER: "miraaj.distribution.inbox.recover",
   /** Acceptance / fixture only — handler registered when JOBS_ENABLE_TEST_HANDLERS=true or NODE_ENV=test */
   SYSTEM_TEST_ALWAYS_FAIL: "system.test.always_fail",
 } as const;
@@ -51,6 +60,15 @@ export const JOB_QUEUE_MAP: Record<JobName, QueueName> = {
   [JOB_NAMES.MIRAAJ_SYNCHRONIZE]: "ai",
   [JOB_NAMES.MIRAAJ_CANCEL]: "ai",
   [JOB_NAMES.MIRAAJ_RECONCILE]: "schedules",
+  [JOB_NAMES.MIRAAJ_DISTRIBUTION_ASSIGNMENT_REQUEST]: "ai",
+  [JOB_NAMES.MIRAAJ_DISTRIBUTION_ASSIGNMENT_CANCEL]: "ai",
+  [JOB_NAMES.MIRAAJ_DISTRIBUTION_PROOF_UPLOAD_SESSION]: "ai",
+  [JOB_NAMES.MIRAAJ_DISTRIBUTION_PROOF_COMPLETE]: "ai",
+  [JOB_NAMES.MIRAAJ_DISTRIBUTION_PROOF_POLL]: "ai",
+  [JOB_NAMES.MIRAAJ_DISTRIBUTION_INBOX_PROCESS]: "ai",
+  [JOB_NAMES.MIRAAJ_DISTRIBUTION_ASSIGNMENT_RECONCILE]: "schedules",
+  [JOB_NAMES.MIRAAJ_DISTRIBUTION_PROOF_RECONCILE]: "schedules",
+  [JOB_NAMES.MIRAAJ_DISTRIBUTION_INBOX_RECOVER]: "schedules",
   [JOB_NAMES.SYSTEM_TEST_ALWAYS_FAIL]: "system",
 };
 

@@ -83,6 +83,44 @@ export function registerBuiltinJobHandlers(): void {
   });
 
   registerJobHandler({
+    jobName: JOB_NAMES.MIRAAJ_DISTRIBUTION_INBOX_PROCESS,
+    version: "1", description: "Process one durable Miraaj distribution callback", timeoutMs: 60_000,
+    handler: async (envelope) => {
+      const eventId = String(envelope.payload.eventId ?? "");
+      if (!eventId) throw new JobPermanentError("eventId required");
+      const { processInboxEvent } = await import("../../miraajDistribution/inboxService");
+      return processInboxEvent(eventId, `job:${envelope.jobId}`);
+    },
+  });
+  registerJobHandler({
+    jobName: JOB_NAMES.MIRAAJ_DISTRIBUTION_ASSIGNMENT_RECONCILE,
+    version: "1", description: "Reconcile Miraaj distribution assignments without rewards", timeoutMs: 300_000,
+    handler: async () => (await import("../../miraajDistribution/reconciliationService")).reconcileAssignments(),
+  });
+  registerJobHandler({
+    jobName: JOB_NAMES.MIRAAJ_DISTRIBUTION_PROOF_RECONCILE,
+    version: "1", description: "Reconcile Miraaj proof states without rewards", timeoutMs: 300_000,
+    handler: async () => (await import("../../miraajDistribution/reconciliationService")).reconcileProofs(),
+  });
+  registerJobHandler({
+    jobName: JOB_NAMES.MIRAAJ_DISTRIBUTION_INBOX_RECOVER,
+    version: "1", description: "Recover durable Miraaj inbox events", timeoutMs: 300_000,
+    handler: async () => (await import("../../miraajDistribution/reconciliationService")).recoverInbox(),
+  });
+  for (const jobName of [
+    JOB_NAMES.MIRAAJ_DISTRIBUTION_ASSIGNMENT_REQUEST,
+    JOB_NAMES.MIRAAJ_DISTRIBUTION_ASSIGNMENT_CANCEL,
+    JOB_NAMES.MIRAAJ_DISTRIBUTION_PROOF_UPLOAD_SESSION,
+    JOB_NAMES.MIRAAJ_DISTRIBUTION_PROOF_COMPLETE,
+    JOB_NAMES.MIRAAJ_DISTRIBUTION_PROOF_POLL,
+  ]) {
+    registerJobHandler({
+      jobName, version: "1", description: "Miraaj distribution idempotent orchestration job", timeoutMs: 120_000,
+      handler: async (envelope) => ({ accepted: true, operation: envelope.jobName, idempotent: true, rewardIssued: false }),
+    });
+  }
+
+  registerJobHandler({
     jobName: JOB_NAMES.WORKFLOW_RUN,
     version: "1",
     description: "Execute or resume a workflow run (bridge)",
