@@ -29,6 +29,7 @@
     "test": "pnpm -r --if-present test",
     "test:integration": "pnpm --filter @tasks-cash/api test:integration",
     "test:miraaj": "pnpm --filter @tasks-cash/api test:miraaj",
+    "test:miraaj-distribution": "pnpm --filter @tasks-cash/api test:miraaj-distribution",
     "test:acceptance": "pnpm --filter @tasks-cash/api test:acceptance",
     "seed": "pnpm --filter @tasks-cash/api seed",
     "docker:up": "docker compose up -d",
